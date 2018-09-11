@@ -83,7 +83,7 @@ public class Main {
     for(int i = 4; i < 1001; i++){
       fill(i);
     }
-
+    printStartingMove();
     playGame();
   }
 
@@ -110,29 +110,29 @@ public class Main {
   }
 
   static void fill(int n){
-    for(int cM = 3; cM < 50; cM++){
-      for(int oR = 0; oR < 5; oR++){
-        for(int tR = 0; tR < 5; tR++){
-          int win = 0;
+    for(int cM = 3; cM <= 49; cM++){
+      for(int oR = 0; oR <= 4; oR++){
+        for(int tR = 0; tR <= 4; tR++){
+          int win = 0; // number of stones to take that make the current state a winning one.
           boolean reset = false;
           // current player doesn't use a reset
           for(int i = 1; i < cM; i++){
-            if(n >= i && state[n-i][cM][tR][oR] == 0 && tR > 0 && state[n-i][cM][tR - 1][oR] == 0) {
+            if(n >= i && state[n-i][cM][tR][oR] == 0) {
               win = Math.max(i, win);
             }
           }
           // i == cM
-          if(n >= cM && state[n-cM][cM+1][tR][oR] == 0 && tR > 0 && state[n-cM][cM + 1][tR - 1][oR] == 0) win = cM;
+          if(n >= cM && state[n-cM][cM+1][tR][oR] == 0) win = cM;
           // current player uses a reset
           if(oR > 0 && win == 0){
             for(int i = 1; i < cM; i++){
-              if(n >= i && state[n-i][3][tR][oR-1] == 0 && tR > 0 && state[n-i][3][tR - 1][oR-1] == 0) {
+              if(n >= i && state[n-i][3][tR][oR-1] == 0) {
                 win = Math.max(i, win);
                 reset = true;
               }
             }
             // i == cM
-            if(n >= cM && state[n-cM][3][tR][oR-1] == 0 && tR > 0 && state[n-cM][3][tR - 1][oR - 1] == 0) {
+            if(n >= cM && state[n-cM][3][tR][oR-1] == 0) {
               win = cM;
               reset = true;
             }
@@ -145,6 +145,12 @@ public class Main {
           state[n][cM][oR][tR] = win*(reset?-1:1);
         }
       }
+    }
+  }
+
+  static void printStartingMove(){
+    for(int i = 0; i < 1001; i++){
+      System.out.println(i + ": " + state[i][3][4][4]);
     }
   }
 
