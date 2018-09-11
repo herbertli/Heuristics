@@ -149,9 +149,13 @@ public class Main {
   }
 
   static void printStartingMove(){
+    double wins = 0;
     for(int i = 0; i < 1001; i++){
+      int move = state[i][3][4][4];
       System.out.println(i + ": " + state[i][3][4][4]);
+      if(move != 0) wins++;
     }
+    System.out.println(wins/1001);
   }
 
 }
