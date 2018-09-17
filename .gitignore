@@ -3,3 +3,6 @@
 *.class
 *.o
 *.exe
+
+# VSCode tasks
+.vscode/

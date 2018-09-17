@@ -40,7 +40,8 @@ public class Main {
           reset = 0;
         }
         remain -= Math.abs(best);
-        // TODO: Does picking 3 after a reset cause current move to increase.
+        // TODO: Does picking 3 after a reset cause current max to increase.
+        // YES, if current max is 3
         if (best == currMax) {
           currMax++;
         }
@@ -61,6 +62,7 @@ public class Main {
         }
         remain -= Math.abs(n);
         // TODO: Does picking 3 after a reset cause current move to increase.
+        // YES, if current max is 3
         if (Math.abs(n) == currMax) currMax++;
         if (verbose) {
           System.out.println("Not Algo picks: " + Math.abs(n));
@@ -89,7 +91,7 @@ public class Main {
   public static void main(String[] args) {
     // Initialize AI
     AI ai = new AlgoAI();
-    AI bi = new AlgoAI();
+    RandomAI bi = new RandomAI();
     int numRuns = 1000000;
     for (int i = 0; i < numRuns; i++) {
       if(i % 1000 == 0)System.out.println(i);
