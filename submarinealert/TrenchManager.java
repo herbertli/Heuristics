@@ -1,5 +1,7 @@
 interface TrenchManager {
 
-  Command getMove(GameState)
+  int[] getProbes();
+  void receiveProbeResults(boolean[] probeResults);
+  boolean shouldGoRed();
 
 }
