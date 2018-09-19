@@ -24,7 +24,7 @@ class AlgoAI implements AI {
 
   private void fillBaseCases() {
     // if n = 0, current player loses
-    for (int cM = 3; cM <= 50; cM++) {
+    for (int cM = 0; cM <= 50; cM++) {
       for(int cR = 0; cR <= 1; cR++){
         for (int oR = 0; oR <= 4; oR++) {
           for (int tR = 0; tR <= 4; tR++) {
@@ -36,11 +36,13 @@ class AlgoAI implements AI {
 
     // if n <= 3, current player wins
     for (int n = 1; n <= 3; n++) {
-      for (int cM = 3; cM <= 50; cM++) {
+      for (int cM = 0; cM <= 50; cM++) {
         for(int cR = 0; cR <= 1; cR++){
           for (int oR = 0; oR <= 4; oR++) {
             for (int tR = 0; tR <= 4; tR++) {
-              state[n][cM][cR][oR][tR] = n;
+              if (n <= cM) {
+                state[n][cM][cR][oR][tR] = n;
+              }
             }
           }
         }
