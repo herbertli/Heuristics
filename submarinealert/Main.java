@@ -1,67 +1,104 @@
 import java.util.Random;
+import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main {
 
+  static final boolean randomize = true;
+  static final boolean verbose = false;
   public static void main(String[] args) {
 
-    Random rand = new Random();
-    int d = rand.nextInt(100);
-    int y = rand.nextInt(10) + 1;
-    int r = rand.nextInt(y, y * 2) + 1;
-    int m = rand.nextInt(100) + 100;
-    int L = rand.nextInt(11) + 1;
-    int p = rand.nextInt(20) + 1;
+    int d = 50;
+    int y = 10;
+    int r = 20;
+    int m = 150;
+    int L = 11;
+    int p = 20;
+    int subPosition = 0;
+    if(randomize){
+      Random rand = new Random();
+      d = rand.nextInt(100);
+      y = rand.nextInt(10) + 1;
+      r = rand.nextInt(y) + y + 1;
+      m = rand.nextInt(100) + 100;
+      L = rand.nextInt(11) + 1;
+      p = rand.nextInt(20) + 1;
+      subPosition = rand.nextInt(100);
+    }
 
-    TreeSet<Integer> redZone = new TreeSet();
+    ArrayList<TrenchManager> list = new ArrayList<>();
+    list.add(new AldoTM(d, y, r, m, L, p));
+    list.add(new UselessTrenchManager(d, y, r, m, L, p));
+    for(TrenchManager tm : list){
+      int cost = test(tm, d, y, r, m, L, p, subPosition);
+      System.out.println("Cost: " + cost);
+    }
+    
+  }
+
+  static int test(TrenchManager tm, int d, int y, int r, int m, int L, int p, int subPosition){
+    TreeSet<Integer> redZone = new TreeSet<>();
     for (int i = d; i < d + 6; i++) {
       redZone.add(i % 100);
     }
-
-    int subPosition = rand.nextInt(100);
+    if (verbose) {
+      System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
+    }
     Submarine sub = new RandomSub(subPosition);
 
-    TrenchManager tm = new DPTrench();
     int cost = 0;
 
     boolean failed = false;
 
     for (int i = 0; i < m; i++) {
-      System.out.printf("Time: %d\n", i);
-      System.out.printf("Submarine Position: %d\n", subPosition);
+      if (verbose) {
+        System.out.printf("Time: %d\n", i);
+        System.out.printf("Submarine Position: %d\n", subPosition);
+      }
 
       int[] probes = tm.getProbes();
-      System.out.printf("TM probes: %s\n", Arrays.toString(probes));
+      if (verbose) System.out.printf("TM probes: %s\n", Arrays.toString(probes));
       // calculate which probes are "yes"
-      boolean[] yes;
-      System.out.printf("Probe result: %s\n", Arrays.toString(yes));
-      tm.receiveProbeResult(yes);
+      boolean[] yes = new boolean[probes.length];
+      for (int j = 0; j < probes.length; j++) {
+        int probe = probes[j];
+        int lb = (probe + 100 - L) % 100;
+        int ub = (probe + 100 + L) % 100;
+        if(ub < lb) ub += 100;
+        int tempSubPosition = subPosition;
+        while(tempSubPosition < lb) tempSubPosition+=100;
+        yes[j] = (tempSubPosition <= ub);
+      }
+      if (verbose) System.out.printf("Probe result: %s\n", Arrays.toString(yes));
+      tm.receiveProbeResults(yes);
 
       boolean redAlert = tm.shouldGoRed();
       if (redAlert) {
         cost += r;
-        System.out.println("TM goes on red alert");
+        if (verbose) System.out.println("TM goes on red alert");
       } else {
         cost += y;
-        System.out.println("TM goes on yellow alert");
+        if (verbose) System.out.println("TM goes on yellow alert");
         if (redZone.contains(subPosition)) {
-          System.out.println("Uh oh! Game over!");
+          if (verbose) System.out.println("Uh oh! Game over!");
           failed = true;
+          break;
         }
       }
 
       boolean probed = false;
       // send to sub if it has been probed
 
-      sub.hasBeenProbed(probed)
-      subPosition += sub.getMove();
+      sub.hasBeenProbed(probed);
+      subPosition = (subPosition + sub.getMove() + 100) % 100;
     }
 
     if (!failed) {
-      System.out.printf("Cost: %d\n", cost)
+      return cost;
     } else {
-      System.out.printf("Cost: %d\n", 5 * m * p + r * m);
+      return 5 * m * p + r * m;
     }
     
   }
-
 }
