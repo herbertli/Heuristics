@@ -1,4 +1,4 @@
-import java.util.Random;
+ import java.util.Random;
 import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,19 +11,17 @@ public class Main {
   static int fails = 0;
   public static void main(String[] args) {
 
-    int d = 50;
+    // d: 13, y: 10, r: 13, m: 197, L: 8, p: 8, subPosition: 30
+    int d = 13;
     int y = 10;
-    int r = 20;
-    int m = 150;
-    int L = 11;
-    int p = 20;
-    int subPosition = 0;
+    int r = 13;
+    int m = 197;
+    int L = 8;
+    int p = 8;
+    int subPosition = 30;
 
-    ArrayList<TrenchManager> list = new ArrayList<>();
-    list.add(new AldoTM(d, y, r, m, L, p));
-    list.add(new UselessTrenchManager(d, y, r, m, L, p));
-    list.add(new TernaryTrench(d, y, r, m, L, p));
-    int[] wins = new int[list.size()];
+    ArrayList<TrenchManager> list;
+    int[] wins = new int[3];
     for (int i = 0; i < 100000; i++) {
 
       if(randomize){
@@ -36,6 +34,11 @@ public class Main {
         p = rand.nextInt(20) + 1;
         subPosition = rand.nextInt(100);
       }
+
+      list = new ArrayList<>();
+      // list.add(new AldoTM(d, y, r, m, L, p));
+      list.add(new UselessTrenchManager(d, y, r, m, L, p));
+      // list.add(new TernaryTrench(d, y, r, m, L, p));
 
       if (i % 10000 == 0)
         System.out.printf("Run: %d\n", i);
@@ -96,6 +99,7 @@ public class Main {
       tm.receiveProbeResults(yes);
 
       boolean redAlert = tm.shouldGoRed();
+      // System.out.println("Sub pos: " + subPosition);
       if (redAlert) {
         cost += r;
         if (verbose) System.out.println("TM goes on red alert");
@@ -103,8 +107,12 @@ public class Main {
         cost += y;
         if (verbose) System.out.println("TM goes on yellow alert");
         if (redZone.contains(subPosition)) {
-          if (verbose)
-            System.out.println("Uh oh! Game over!");
+          // if (verbose) {
+            // System.out.printf("Time: %d\n", i);
+            // System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
+            // System.out.println("Uh oh! Game over!");
+            // System.exit(1);
+          // }
           failed = true;
           fails++;
           break;

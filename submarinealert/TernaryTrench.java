@@ -13,8 +13,10 @@ public class TernaryTrench implements TrenchManager {
   TreeSet<Integer> redZone;
   boolean redAlert = false;
   int time;
-  int[] scannedLocations;
-  boolean verbose = false;
+  boolean subFound = false;
+
+  int leftProbe;
+  int rightProbe;
 
   TernaryTrench(int d, int y, int r, int m, int L, int p) {
     this.time = 0;
@@ -30,48 +32,68 @@ public class TernaryTrench implements TrenchManager {
     }
   }
 
-  // send enough probes to cover the entire trench
+  int[] sendBoundaryScan() {
+    return new int[]{this.leftProbe, this.rightProbe};
+  }
+
+  // send enough probes to cover the red zone
+  // as well as probes on the extreme left and right
+  int[] scannedLocations;
   int[] sendInitialScan() {
-    assert this.time == 0 : "Not the time for an initial scan";
-    int probesNeeded = (100 - 1) / (2 * this.scanRange + 1) + 1;
     ArrayList<Integer> probeLocations = new ArrayList();
-    int curr = this.scanRange;
-    for (int i = 0; i < probesNeeded; i++) {
-      probeLocations.add(curr % 100);
-      curr += 2 * this.scanRange + 1;
+    probeLocations.add((this.redZoneStart + 2) % 100);
+
+    int left = (this.redZoneStart + 2 - this.scanRange + 100) % 100;
+    while (left > this.redZoneStart) {
+      probeLocations.add((left - this.scanRange - 1 + 100) % 100);
+      left = left - 2 * this.scanRange - 1;
     }
+    probeLocations.add((left - this.scanRange - 1 + 100) % 100);
+    this.leftProbe = (left - this.scanRange - 1 + 100) % 100;
+    
+    int right = (this.redZoneStart + 2 + this.scanRange) % 100;
+    while (this.redZone.contains(right)) {
+      probeLocations.add((right + this.scanRange + 1) % 100);
+      right = right + 2 * this.scanRange + 1;
+    }
+    this.rightProbe = (right + this.scanRange + 1) % 100;
+    probeLocations.add((right + this.scanRange + 1) % 100);
+
     this.scannedLocations = new int[probeLocations.size()];
     for (int i = 0; i < probeLocations.size(); i++) {
       this.scannedLocations[i] = probeLocations.get(i);
     }
-    return scannedLocations;
+    return this.scannedLocations;
   }
 
   int[] sendScan() {
-    if (time % this.scanRange == 0) return this.scannedLocations;
+    if (time % (2 * this.scanRange + 1) == 0) return new int[]{this.leftProbe, this.rightProbe};
     else return new int[0];
   }
 
   public void receiveProbeResults(boolean[] results) {
-    if (time % this.scanRange != 0) return;
-
+    if (results.length == 0) return;
+    
     int subLoc = -1;
-
-    // handle case where initial scan produces overlapping interval
-    // in this case, the interval is the intersection....  
-    if (time == 0 && results[0] && results[results.length - 1]) {
-      subLoc = ((this.scannedLocations[0] + this.scannedLocations[scannedLocations.length - 1]) / 2) % 100;
-    } else {
-      for (int i = 0; i < results.length; i++) {
+    for (int i = 0; i < results.length; i++) {
+      if (time == 0) {
         if (results[i]) {
           subLoc = this.scannedLocations[i];
+          this.subFound = true;
+          break;
+        }
+      }
+      else {
+        if (results[i]) {
+          if (i == 0)
+            subLoc = this.leftProbe;
+          else
+            subLoc = this.rightProbe;
+          this.subFound = true;
           break;
         }
       }
     }
-
-    if (verbose)
-      System.out.printf("Sub interval: %d\n", subLoc);
 
     // now let's get the intervals for the next scan
     // assume you knew that the sub is in interval M at time t - probeRange
@@ -82,56 +104,30 @@ public class TernaryTrench implements TrenchManager {
     // 2. R returns true: deploy probes at M and RR at time t + probeRange 
     // 3. L and R return false: deploy probes at L and R at time t + probeRange
     // if L, M, R overlap with redzone, go to red alert over the next probeRange time
-    TreeSet<Integer> scanZone = new TreeSet<>();
-    ArrayList<Integer> scanIntervals = new ArrayList();
-
-    // sub has moved to L
-    int i;
+    
+    // System.out.printf("Sub loc: %d\n", subLoc);
+    // sub has moved to L or R, unscanned interval
     if (subLoc != -1) {
-      int interval1 = (subLoc + 100 - 3 * this.scanRange) % 100;
-      for (i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
-        scanZone.add((i + 100) % 100);
+      if (subLoc == this.leftProbe) {
+        this.rightProbe = (this.leftProbe + this.scanRange * 2 + 1) % 100;
+        this.leftProbe = (this.leftProbe - this.scanRange * 2 - 1 + 100) % 100;
+      } else if (subLoc == this.rightProbe) {
+        this.leftProbe = (this.rightProbe - this.scanRange * 2 - 1 + 100) % 100;
+        this.rightProbe = (this.rightProbe + this.scanRange * 2 + 1) % 100;
       }
-      scanIntervals.add(interval1);
-    } 
-    // sub has stayed in M
-    else {
-      int interval1 = this.scannedLocations[0];
-      for (i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
-        scanZone.add((i + 100) % 100);
-      }
-      scanIntervals.add(interval1);
     }
 
-    // fill in middle interval
-    int end = i;
-    for (; i < end + scanRange + 1; i++) {
+    TreeSet<Integer> scanZone = new TreeSet<>();
+    // System.out.println(this.leftProbe + " " + this.rightProbe);
+    for (int i = this.leftProbe - this.scanRange; i != (this.rightProbe + this.scanRange + 1) % 100; i=(i+1)%100) {
       scanZone.add((i + 100) % 100);
     }
-    
-    // sub has moved to R
-    if (subLoc != -1) {
-      int interval2 = (subLoc + 100 + 3 * this.scanRange) % 100;
-      for (int j = interval2 - scanRange; j < interval2 + scanRange + 1; j++) {
-        scanZone.add((j + 100) % 100);
-      }
-      scanIntervals.add(interval2);
-    }
-    // sub has stayed in M
-    else {
-      int interval2 = this.scannedLocations[1];
-      for (int j = interval2 - scanRange; j < interval2 + scanRange + 1; j++) {
-        scanZone.add((j + 100) % 100);
-      }
-      scanIntervals.add(interval2);
-    }
-  
-    this.scannedLocations = new int[scanIntervals.size()];
-    for (int j = 0; j < scanIntervals.size(); j++) {
-      this.scannedLocations[j] = scanIntervals.get(j);
-    }
-    if (verbose)
-      System.out.printf("New scan locations: %s\n", Arrays.toString(this.scannedLocations));
+
+    // System.out.print("Scan Zone:");
+    // for (int j: scanZone) {
+    //   System.out.print(j + " ");
+    // }
+    // System.out.println();
 
     // SPECIAL CASE: scanZone is too far from redZone to matter
     int minScan = scanZone.first();
@@ -144,16 +140,8 @@ public class TernaryTrench implements TrenchManager {
       return;
     }
 
-    // using scan interval, and check for overlap with red zone
+    // using scan zone, check for overlap with red zone
     // if so, go red for the next scanRange seconds, otherwise go yellow
-    if (verbose) {
-      System.out.print("Scan interval: ");
-      for (int j : scanZone) {
-        System.out.print(j + " ");
-      }
-      System.out.println();
-    }
-
     this.redAlert = false;
     for (int j: this.redZone) {
       if (scanZone.contains(j)) {
@@ -169,12 +157,12 @@ public class TernaryTrench implements TrenchManager {
   }
 
   public int[] getProbes() {
-    if (this.time % probeCost == 0) {
-      if (this.time == 0) {
-        return sendInitialScan();
-      } else {
-        return sendScan();
-      }
+    if (this.time == 0) {
+      return sendInitialScan();
+    } else if (!this.subFound && (this.time % (2 * this.scanRange + 1) == 0)) {
+      return sendBoundaryScan();
+    } else if (this.subFound && (this.time % (2 * this.scanRange + 1) == 0)) {
+      return sendScan();
     } else {
       return new int[0];
     }
