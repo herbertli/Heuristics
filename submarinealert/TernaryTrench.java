@@ -130,12 +130,19 @@ public class TernaryTrench implements TrenchManager {
     // System.out.println();
 
     // SPECIAL CASE: scanZone is too far from redZone to matter
-    int minScan = scanZone.first();
-    int maxScan = scanZone.last();
-    if (
-      Math.abs(minScan - this.redZoneStart) > this.gameTime - this.time &&
-      Math.abs(maxScan - this.redZoneStart + 5) > this.gameTime - this.time
-    ) {
+    boolean tooFar = true;
+    int d = this.redZoneStart;
+    for (int i: scanZone) {
+      if (Math.abs(i - d) <= this.gameTime - this.time) {
+        tooFar = false;
+        break;
+      } else if (Math.abs(i - ((d + 5) % 100)) <= this.gameTime - this.time) {
+        tooFar = false;
+        break;
+      }
+    }
+      
+    if (tooFar) {
       this.redAlert = false;
       return;
     }

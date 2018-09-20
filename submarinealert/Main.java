@@ -24,7 +24,7 @@ public class Main {
     int[] wins = new int[3];
     for (int i = 0; i < 100000; i++) {
 
-      if(randomize){
+      if (randomize) {
         Random rand = new Random();
         d = rand.nextInt(100);
         y = rand.nextInt(10) + 1;
@@ -36,9 +36,9 @@ public class Main {
       }
 
       list = new ArrayList<>();
-      // list.add(new AldoTM(d, y, r, m, L, p));
-      list.add(new UselessTrenchManager(d, y, r, m, L, p));
-      // list.add(new TernaryTrench(d, y, r, m, L, p));
+      list.add(new AldoTM(d, y, r, m, L, p));
+      // list.add(new UselessTrenchManager(d, y, r, m, L, p));
+      list.add(new TernaryTrench(d, y, r, m, L, p));
 
       if (i % 10000 == 0)
         System.out.printf("Run: %d\n", i);
@@ -83,6 +83,7 @@ public class Main {
       }
 
       int[] probes = tm.getProbes();
+      cost += probes.length * p;
       if (verbose) System.out.printf("TM probes: %s\n", Arrays.toString(probes));
       // calculate which probes are "yes"
       boolean[] yes = new boolean[probes.length];
