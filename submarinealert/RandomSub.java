@@ -13,4 +13,8 @@ public class RandomSub implements Submarine {
     return rand.nextInt(3) - 1;
   }
 
+  public void hasBeenProbed(boolean probed) {
+
+  }
+
 }
