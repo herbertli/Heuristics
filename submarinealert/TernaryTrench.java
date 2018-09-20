@@ -14,6 +14,7 @@ public class TernaryTrench implements TrenchManager {
   boolean redAlert = false;
   int time;
   int[] scannedLocations;
+  boolean verbose = false;
 
   TernaryTrench(int d, int y, int r, int m, int L, int p) {
     this.time = 0;
@@ -69,7 +70,8 @@ public class TernaryTrench implements TrenchManager {
       }
     }
 
-    // System.out.printf("Sub interval: %d\n", subLoc);
+    if (verbose)
+      System.out.printf("Sub interval: %d\n", subLoc);
 
     // now let's get the intervals for the next scan
     // assume you knew that the sub is in interval M at time t - probeRange
@@ -84,9 +86,10 @@ public class TernaryTrench implements TrenchManager {
     ArrayList<Integer> scanIntervals = new ArrayList();
 
     // sub has moved to L
+    int i;
     if (subLoc != -1) {
       int interval1 = (subLoc + 100 - 3 * this.scanRange) % 100;
-      for (int i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
+      for (i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
         scanZone.add((i + 100) % 100);
       }
       scanIntervals.add(interval1);
@@ -94,34 +97,41 @@ public class TernaryTrench implements TrenchManager {
     // sub has stayed in M
     else {
       int interval1 = this.scannedLocations[0];
-      for (int i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
+      for (i = interval1 - scanRange; i < interval1 + scanRange + 1; i++) {
         scanZone.add((i + 100) % 100);
       }
       scanIntervals.add(interval1);
+    }
+
+    // fill in middle interval
+    int end = i;
+    for (; i < end + scanRange + 1; i++) {
+      scanZone.add((i + 100) % 100);
     }
     
     // sub has moved to R
     if (subLoc != -1) {
       int interval2 = (subLoc + 100 + 3 * this.scanRange) % 100;
-      for (int i = interval2 - scanRange; i < interval2 + scanRange + 1; i++) {
-        scanZone.add((i + 100) % 100);
+      for (int j = interval2 - scanRange; j < interval2 + scanRange + 1; j++) {
+        scanZone.add((j + 100) % 100);
       }
       scanIntervals.add(interval2);
     }
     // sub has stayed in M
     else {
       int interval2 = this.scannedLocations[1];
-      for (int i = interval2 - scanRange; i < interval2 + scanRange + 1; i++) {
-        scanZone.add((i + 100) % 100);
+      for (int j = interval2 - scanRange; j < interval2 + scanRange + 1; j++) {
+        scanZone.add((j + 100) % 100);
       }
       scanIntervals.add(interval2);
     }
   
     this.scannedLocations = new int[scanIntervals.size()];
-    for (int i = 0; i < scanIntervals.size(); i++) {
-      this.scannedLocations[i] = scanIntervals.get(i);
+    for (int j = 0; j < scanIntervals.size(); j++) {
+      this.scannedLocations[j] = scanIntervals.get(j);
     }
-    // System.out.printf("New scan locations: %s\n", Arrays.toString(this.scannedLocations));
+    if (verbose)
+      System.out.printf("New scan locations: %s\n", Arrays.toString(this.scannedLocations));
 
     // SPECIAL CASE: scanZone is too far from redZone to matter
     int minScan = scanZone.first();
@@ -136,9 +146,17 @@ public class TernaryTrench implements TrenchManager {
 
     // using scan interval, and check for overlap with red zone
     // if so, go red for the next scanRange seconds, otherwise go yellow
+    if (verbose) {
+      System.out.print("Scan interval: ");
+      for (int j : scanZone) {
+        System.out.print(j + " ");
+      }
+      System.out.println();
+    }
+
     this.redAlert = false;
-    for (int i: this.redZone) {
-      if (scanZone.contains(i)) {
+    for (int j: this.redZone) {
+      if (scanZone.contains(j)) {
         this.redAlert = true;
         return;
       }

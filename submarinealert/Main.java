@@ -2,11 +2,13 @@ import java.util.Random;
 import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class Main {
 
   static final boolean randomize = true;
   static final boolean verbose = false;
+  static int fails = 0;
   public static void main(String[] args) {
 
     int d = 50;
@@ -31,10 +33,27 @@ public class Main {
     list.add(new AldoTM(d, y, r, m, L, p));
     list.add(new UselessTrenchManager(d, y, r, m, L, p));
     list.add(new TernaryTrench(d, y, r, m, L, p));
-    for(TrenchManager tm : list){
-      int cost = test(tm, d, y, r, m, L, p, subPosition);
-      System.out.println("Cost: " + cost);
+    int[] wins = new int[list.size()];
+    for (int i = 0; i < 100000; i++) {
+      if (i % 10000 == 0)
+        System.out.printf("Run: %d\n", i);
+      
+      Integer[] costs = new Integer[list.size()];
+      int pt = 0;
+      for(TrenchManager tm : list){
+        int cost = test(tm, d, y, r, m, L, p, subPosition);
+        costs[pt] = cost; 
+        pt++;
+        if (verbose)
+          System.out.println("Cost: " + cost);
+      }
+      Integer minCost = Collections.min(Arrays.asList(costs));
+      for (int j = 0; j < costs.length; j++) {
+        if (costs[j] == minCost) wins[j]++;
+      }
     }
+    System.out.printf("Failures: %d\n", fails);
+    System.out.printf("Wins: %s\n", Arrays.toString(wins));
     
   }
 
@@ -43,9 +62,9 @@ public class Main {
     for (int i = d; i < d + 6; i++) {
       redZone.add(i % 100);
     }
-    // if (verbose) {
+    if (verbose) {
       System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
-    // }
+    }
     Submarine sub = new RandomSub(subPosition);
 
     int cost = 0;
@@ -82,9 +101,10 @@ public class Main {
         cost += y;
         if (verbose) System.out.println("TM goes on yellow alert");
         if (redZone.contains(subPosition)) {
-          // if (verbose) 
+          if (verbose)
             System.out.println("Uh oh! Game over!");
           failed = true;
+          fails++;
           break;
         }
       }
