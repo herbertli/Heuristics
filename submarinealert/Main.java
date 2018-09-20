@@ -18,16 +18,6 @@ public class Main {
     int L = 11;
     int p = 20;
     int subPosition = 0;
-    if(randomize){
-      Random rand = new Random();
-      d = rand.nextInt(100);
-      y = rand.nextInt(10) + 1;
-      r = rand.nextInt(y) + y + 1;
-      m = rand.nextInt(100) + 100;
-      L = rand.nextInt(11) + 1;
-      p = rand.nextInt(20) + 1;
-      subPosition = rand.nextInt(100);
-    }
 
     ArrayList<TrenchManager> list = new ArrayList<>();
     list.add(new AldoTM(d, y, r, m, L, p));
@@ -35,6 +25,18 @@ public class Main {
     list.add(new TernaryTrench(d, y, r, m, L, p));
     int[] wins = new int[list.size()];
     for (int i = 0; i < 100000; i++) {
+
+      if(randomize){
+        Random rand = new Random();
+        d = rand.nextInt(100);
+        y = rand.nextInt(10) + 1;
+        r = rand.nextInt(y) + y + 1;
+        m = rand.nextInt(100) + 100;
+        L = rand.nextInt(11) + 1;
+        p = rand.nextInt(20) + 1;
+        subPosition = rand.nextInt(100);
+      }
+
       if (i % 10000 == 0)
         System.out.printf("Run: %d\n", i);
       
