@@ -30,6 +30,7 @@ public class Main {
     ArrayList<TrenchManager> list = new ArrayList<>();
     list.add(new AldoTM(d, y, r, m, L, p));
     list.add(new UselessTrenchManager(d, y, r, m, L, p));
+    list.add(new TernaryTrench(d, y, r, m, L, p));
     for(TrenchManager tm : list){
       int cost = test(tm, d, y, r, m, L, p, subPosition);
       System.out.println("Cost: " + cost);
@@ -42,9 +43,9 @@ public class Main {
     for (int i = d; i < d + 6; i++) {
       redZone.add(i % 100);
     }
-    if (verbose) {
+    // if (verbose) {
       System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
-    }
+    // }
     Submarine sub = new RandomSub(subPosition);
 
     int cost = 0;
@@ -81,7 +82,8 @@ public class Main {
         cost += y;
         if (verbose) System.out.println("TM goes on yellow alert");
         if (redZone.contains(subPosition)) {
-          if (verbose) System.out.println("Uh oh! Game over!");
+          // if (verbose) 
+            System.out.println("Uh oh! Game over!");
           failed = true;
           break;
         }
