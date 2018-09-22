@@ -47,38 +47,33 @@ void send_move(){
         {"num_stones", num_stones_to_take},
         {"reset", reset}
     };
-    std::cout << "I take " << num_stones_to_take << " " << std::endl;
+    //std::cout << "I take " << num_stones_to_take << " " << std::endl;
     const char * move_c_str = move.dump().c_str();
     //std::cout << move_c_str << std::endl;
     send(sock, move_c_str, strlen(move_c_str), 0);
+    std::fill(buffer, buffer+1024, 0);
+    read(sock, buffer, 1024);
 }
 
 void get_move(){
-    bool success = false;   // I think read doesn't block and just keep sending so 
-                            // I have this success variable to only continue if stones_left
-                            // changes.
-    while(!finished && !success){
-        int n = 0;
-        std::fill(buffer, buffer+1024, 0);
-        n = read(sock, buffer, 1024);
-        if(n <= 0) { // socket closes or some other error.
-            finished = true;
-            return;
-        }
-        std::cout << buffer << std::endl;
-        nlohmann::json game_state = nlohmann::json::parse(buffer);
-        finished = game_state["finished"];
-        // deal with current max issues.
-        current_max = game_state["current_max"];
-        current_max++;
-        if(current_max < 3) current_max = 3;
-        if(stones_left == game_state["stones_left"]) continue;
-        stones_left = game_state["stones_left"];
-        success = true;
-        reset_used = game_state["reset_used"];
-        player_0.resets_left = game_state["player_0"]["resets_left"];
-        player_1.resets_left = game_state["player_1"]["resets_left"];
+    int n = 0;
+    std::fill(buffer, buffer+1024, 0);
+    n = read(sock, buffer, 1024);
+    if(n <= 0) { // socket closes or some other error.
+        finished = true;
+        return;
     }
+    //std::cout << buffer << std::endl;
+    nlohmann::json game_state = nlohmann::json::parse(buffer);
+    finished = game_state["finished"];
+    // deal with current max issues.
+    current_max = game_state["current_max"];
+    current_max++;
+    if(current_max < 3) current_max = 3;
+    stones_left = game_state["stones_left"];
+    reset_used = game_state["reset_used"];
+    player_0.resets_left = game_state["player_0"]["resets_left"];
+    player_1.resets_left = game_state["player_1"]["resets_left"];
 }
 
 int main(int argc, char const *argv[])
@@ -123,7 +118,7 @@ int main(int argc, char const *argv[])
     };
     const char * init_c_str = init_json.dump().c_str();
     send(sock , init_c_str, strlen(init_c_str), 0 );
-    printf("Initial message sent\n");
+    //printf("Initial message sent\n");
     valread = read( sock , buffer, 1024);
     nlohmann::json init_state = nlohmann::json::parse(buffer);
 
