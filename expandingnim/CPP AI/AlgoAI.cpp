@@ -5,11 +5,12 @@
 AlgoAI::AlgoAI() {
     fillBaseCases();
     for(int i = 4; i < 1001; i++){
-    fill(i);
+        fill(i);
     }
 }
 
 int AlgoAI::getMove(int n, int cM, int cR, int oR, int eR) {
+    if(cM < 3) cM = 3;
     return state[n][cM][cR][oR][eR];
 }
 
@@ -25,10 +26,10 @@ void AlgoAI::fillBaseCases() {
     for (int n = 1; n <= 3; n++)
         for (int cM = 0; cM <= 50; cM++)
             for(int cR = 0; cR <= 1; cR++)
-            for (int oR = 0; oR <= 4; oR++)
-                for (int tR = 0; tR <= 4; tR++)
-                    if (n <= cM)
-                        state[n][cM][cR][oR][tR] = n;
+                for (int oR = 0; oR <= 4; oR++)
+                    for (int tR = 0; tR <= 4; tR++)
+                        if (n <= cM)
+                            state[n][cM][cR][oR][tR] = n;
 }
 
 void AlgoAI::fill(int n){
