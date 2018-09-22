@@ -6,3 +6,6 @@
 
 # VSCode tasks
 .vscode/
+
+# python
+*.pyc

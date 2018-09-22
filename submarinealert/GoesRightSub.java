@@ -7,7 +7,7 @@ public class GoesRightSub implements Submarine {
   }
 
   public int getMove() {
-      return 1;
+    return 1;
   }
 
   public void hasBeenProbed(boolean probed) {

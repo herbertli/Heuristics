@@ -14,6 +14,7 @@ public class TernaryTrench implements TrenchManager {
   boolean redAlert = false;
   int time;
   boolean subFound = false;
+  boolean verbose = false;
 
   int leftProbe;
   int rightProbe;
@@ -40,7 +41,7 @@ public class TernaryTrench implements TrenchManager {
   // as well as probes on the extreme left and right
   int[] scannedLocations;
   int[] sendInitialScan() {
-    ArrayList<Integer> probeLocations = new ArrayList();
+    ArrayList<Integer> probeLocations = new ArrayList<>();
     probeLocations.add((this.redZoneStart + 2) % 100);
 
     int left = (this.redZoneStart + 2 - this.scanRange + 100) % 100;
@@ -105,7 +106,8 @@ public class TernaryTrench implements TrenchManager {
     // 3. L and R return false: deploy probes at L and R at time t + probeRange
     // if L, M, R overlap with redzone, go to red alert over the next probeRange time
     
-    // System.out.printf("Sub loc: %d\n", subLoc);
+    if (verbose)
+      System.out.printf("Sub loc: %d\n", subLoc);
     // sub has moved to L or R, unscanned interval
     if (subLoc != -1) {
       if (subLoc == this.leftProbe) {
@@ -118,21 +120,23 @@ public class TernaryTrench implements TrenchManager {
     }
 
     TreeSet<Integer> scanZone = new TreeSet<>();
-    // System.out.println(this.leftProbe + " " + this.rightProbe);
     for (int i = this.leftProbe - this.scanRange; i != (this.rightProbe + this.scanRange + 1) % 100; i=(i+1)%100) {
       scanZone.add((i + 100) % 100);
     }
 
-    // System.out.print("Scan Zone:");
-    // for (int j: scanZone) {
-    //   System.out.print(j + " ");
-    // }
-    // System.out.println();
+    if (verbose) {
+      System.out.print("Scan Zone:");
+      for (int j: scanZone) {
+        System.out.print(j + " ");
+      }
+      System.out.println();
+    }
 
-    // SPECIAL CASE: scanZone is too far from redZone to matter
+    // SPECIAL CASE: subLoc is too far from redZone to matter
+    // should just check middle interval!
     boolean tooFar = true;
     int d = this.redZoneStart;
-    for (int i: scanZone) {
+    for (int i = this.leftProbe + this.scanRange + 1; i != (this.rightProbe - this.scanRange - 1) % 100; i = (i + 1) % 100) {
       if (Math.abs(i - d) <= this.gameTime - this.time) {
         tooFar = false;
         break;
@@ -143,6 +147,8 @@ public class TernaryTrench implements TrenchManager {
     }
       
     if (tooFar) {
+      if (verbose)
+        System.out.println("Special case!");
       this.redAlert = false;
       return;
     }
