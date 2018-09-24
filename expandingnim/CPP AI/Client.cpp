@@ -1,6 +1,10 @@
 // Client side C/C++ program to demonstrate Socket programming
 
+// Use "module avail" on crunchy5 to find latest gcc
+// Update to latest with "module load gcc=x.x" on crunchy5
 // Set "ulimit -s 16384" in bash.
+// Compile with
+// g++ -std=c++11 Client.cpp -o Client
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -8,6 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
+#include <thread>
 #include "AlgoAI.cpp"
 #include "json.hpp"
 #define PORT 9000
@@ -35,7 +40,9 @@ int sock, valread;
 char buffer[2048] = {0};
 
 void send_move(){
-    sleep(1);
+    // Apparently if I send moves too fast, it crashes...
+    // https://stackoverflow.com/a/10613664
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // std::cout << stones_left << " " << current_max << " " << reset_used << " " << player_0.resets_left << " " << player_1.resets_left << std::endl;
     int num_stones_to_take = my_ai.getMove(stones_left, current_max, (reset_used ? 1 : 0), player_0.resets_left, player_1.resets_left);
     bool reset = false;
@@ -57,6 +64,8 @@ void send_move(){
     send(sock, move_c_str, strlen(move_c_str), 0);
     std::fill(buffer, buffer+2048, 0);
     read(sock, buffer, 2048);
+    nlohmann::json game_state = nlohmann::json::parse(buffer);
+    finished = game_state["finished"];
 }
 
 void get_move(){
@@ -149,7 +158,13 @@ int main(int argc, char const *argv[])
     }
     while(!finished){
         get_move();
+        if(finished) {
+            std::cout << bot_name << " lost. Unlucky." << std::endl;
+        }
         send_move();
+        if(finished) {
+            std::cout << bot_name << " won." << std::endl;
+        }
     }
     return 0;
 }
