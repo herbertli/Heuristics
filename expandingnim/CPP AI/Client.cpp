@@ -95,7 +95,7 @@ int main(int argc, char const *argv[])
     // connect to server
     // https://www.geeksforgeeks.org/socket-programming-cc/
     struct sockaddr_in address;
-    sock = 0, valread;
+    sock = 0;
     struct sockaddr_in serv_addr;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -160,6 +160,7 @@ int main(int argc, char const *argv[])
         get_move();
         if(finished) {
             std::cout << bot_name << " lost. Unlucky." << std::endl;
+            break;
         }
         send_move();
         if(finished) {
