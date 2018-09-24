@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <thread>
+#include <algorithm>
 #include "AlgoAI.cpp"
 #include "json.hpp"
 #define PORT 9000
@@ -44,7 +45,10 @@ void send_move(){
     // https://stackoverflow.com/a/10613664
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // std::cout << stones_left << " " << current_max << " " << reset_used << " " << player_0.resets_left << " " << player_1.resets_left << std::endl;
-    int num_stones_to_take = my_ai.getMove(stones_left, current_max, (reset_used ? 1 : 0), player_0.resets_left, player_1.resets_left);
+    int our_resets = player_0.resets_left;
+    int enemy_resets = player_1.resets_left;
+    if(order == 1) std::swap(our_resets, enemy_resets);
+    int num_stones_to_take = my_ai.getMove(stones_left, current_max, (reset_used ? 1 : 0), our_resets, enemy_resets);
     bool reset = false;
     if(num_stones_to_take == 0) num_stones_to_take++;   // if in losing state, just take 1 stone.
     if(num_stones_to_take < 0){                         // handle reset
