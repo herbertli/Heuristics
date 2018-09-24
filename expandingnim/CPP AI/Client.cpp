@@ -1,4 +1,6 @@
 // Client side C/C++ program to demonstrate Socket programming
+
+// Set "ulimit -s 16384" in bash.
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -30,9 +32,10 @@ player_info player_1;
 bool reset_used;
 int init_max;
 int sock, valread;
-char buffer[1024] = {0};
+char buffer[2048] = {0};
 
 void send_move(){
+    sleep(1);
     // std::cout << stones_left << " " << current_max << " " << reset_used << " " << player_0.resets_left << " " << player_1.resets_left << std::endl;
     int num_stones_to_take = my_ai.getMove(stones_left, current_max, (reset_used ? 1 : 0), player_0.resets_left, player_1.resets_left);
     bool reset = false;
@@ -47,23 +50,25 @@ void send_move(){
         {"num_stones", num_stones_to_take},
         {"reset", reset}
     };
-    //std::cout << "I take " << num_stones_to_take << " " << std::endl;
-    const char * move_c_str = move.dump().c_str();
-    //std::cout << move_c_str << std::endl;
+    // std::cout << "I take " << num_stones_to_take << " " << std::endl;
+    std::string dump = move.dump();
+    const char * move_c_str = dump.c_str();
+    // std::cout << move_c_str << std::endl;
     send(sock, move_c_str, strlen(move_c_str), 0);
-    std::fill(buffer, buffer+1024, 0);
-    read(sock, buffer, 1024);
+    std::fill(buffer, buffer+2048, 0);
+    read(sock, buffer, 2048);
 }
 
 void get_move(){
     int n = 0;
-    std::fill(buffer, buffer+1024, 0);
-    n = read(sock, buffer, 1024);
+    std::fill(buffer, buffer+2048, 0);
+    n = read(sock, buffer, 2048);
     if(n <= 0) { // socket closes or some other error.
+        printf("\n socket error while getting move \n");
         finished = true;
         return;
     }
-    //std::cout << buffer << std::endl;
+    // std::cout << buffer << std::endl;
     nlohmann::json game_state = nlohmann::json::parse(buffer);
     finished = game_state["finished"];
     // deal with current max issues.
@@ -116,11 +121,16 @@ int main(int argc, char const *argv[])
         {"name", bot_name}, 
         {"order", order}
     };
-    const char * init_c_str = init_json.dump().c_str();
-    send(sock , init_c_str, strlen(init_c_str), 0 );
-    //printf("Initial message sent\n");
-    valread = read( sock , buffer, 1024);
+    std::string dump = init_json.dump();
+    const char * init_c_str = dump.c_str();
+    // std::cout << init_c_str << std::endl;
+    valread = send(sock , init_c_str, strlen(init_c_str), 0 );
+    printf("Initial message sent\n");
+    // std::cout << valread << std::endl; 
+    valread = read( sock , buffer, 2048);
     nlohmann::json init_state = nlohmann::json::parse(buffer);
+    // std::cout << valread << std::endl;
+    // std::cout << init_state << std::endl;
 
     // init everything to defaults;
     AlgoAI my_ai;
