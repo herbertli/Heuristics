@@ -6,22 +6,22 @@ import java.util.Collections;
 
 public class Main {
 
-  static final boolean randomize = false;
+  static final boolean randomize = true;
   static final boolean verbose = false;
   static int fails = 0;
   public static void main(String[] args) {
 
     int d = 13;
-    int y = 10;
+    int y = 2;
     int r = 20;
-    int m = 197;
-    int L = 8;
-    int p = 8;
-    int subPosition = 30;
+    int m = 107;
+    int L = 9;
+    int p = 15;
+    int subPosition = 13;
 
     ArrayList<TrenchManager> list;
     int[] wins = new int[3];
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 100000; i++) {
 
       if (randomize) {
         Random rand = new Random();
@@ -35,8 +35,8 @@ public class Main {
       }
 
       list = new ArrayList<>();
-      list.add(new AldoTM(d, y, r, m, L, p));
-      list.add(new UselessTrenchManager(d, y, r, m, L, p));
+      // list.add(new AldoTM(d, y, r, m, L, p));
+      // list.add(new UselessTrenchManager(d, y, r, m, L, p));
       list.add(new TernaryTrench(d, y, r, m, L, p));
 
       if (i % 10000 == 0)
@@ -45,11 +45,12 @@ public class Main {
       Integer[] costs = new Integer[list.size()];
       int pt = 0;
       for(TrenchManager tm : list){
-        int cost = test(tm, d, y, r, m, L, p, subPosition);
+        int cost = test(i, tm, d, y, r, m, L, p, subPosition);
         costs[pt] = cost; 
         pt++;
-        // if (verbose)
+        if (verbose) {
           System.out.println("Cost: " + cost);
+        }
       }
       Integer minCost = Collections.min(Arrays.asList(costs));
       for (int j = 0; j < costs.length; j++) {
@@ -61,15 +62,15 @@ public class Main {
     
   }
 
-  static int test(TrenchManager tm, int d, int y, int r, int m, int L, int p, int subPosition){
+  static int test(int run, TrenchManager tm, int d, int y, int r, int m, int L, int p, int subPosition){
     TreeSet<Integer> redZone = new TreeSet<>();
     for (int i = d; i < d + 6; i++) {
       redZone.add(i % 100);
     }
-    // if (verbose) {
+    if (verbose) {
       System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
-    // }
-    Submarine sub = new SmartSub(subPosition, m);
+    }
+    Submarine sub = new SmartSub(subPosition, m, L);
 
     int cost = 0;
 
@@ -77,6 +78,8 @@ public class Main {
     int probesUsed = 0;
 
     for (int i = 0; i < m; i++) {
+      subPosition = (subPosition + sub.getMove() + 100) % 100;
+
       if (verbose) {
         System.out.printf("Time: %d\n", i);
         System.out.printf("Submarine Position: %d\n", subPosition);
@@ -85,7 +88,9 @@ public class Main {
       int[] probes = tm.getProbes();
       cost += probes.length * p;
       probesUsed += probes.length;
-      if (verbose) System.out.printf("TM probes: %s\n", Arrays.toString(probes));
+      if (verbose) {
+        System.out.printf("TM probes: %s\n", Arrays.toString(probes));
+      }
       // calculate which probes are "yes"
       boolean[] yes = new boolean[probes.length];
       boolean probed = false;
@@ -99,7 +104,9 @@ public class Main {
         yes[j] = (tempSubPosition <= ub);
         probed |= yes[j];
       }
-      if (verbose) System.out.printf("Probe result: %s\n", Arrays.toString(yes));
+      if (verbose) {
+        System.out.printf("Probe result: %s\n", Arrays.toString(yes));
+      }
       tm.receiveProbeResults(yes);
 
       boolean redAlert = tm.shouldGoRed();
@@ -111,12 +118,13 @@ public class Main {
         cost += y;
         if (verbose) System.out.println("TM goes on yellow alert");
         if (redZone.contains(subPosition)) {
-          if (verbose) {
+          // if (verbose) {
+            System.out.printf("Run %d:\n", run);
             System.out.printf("Time: %d\n", i);
             System.out.printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
             System.out.println("Uh oh! Game over!");
             System.exit(1);
-          }
+          // }
           failed = true;
           fails++;
           break;
@@ -125,10 +133,9 @@ public class Main {
 
       // send to sub if it has been probed
       sub.hasBeenProbed(probed);
-      subPosition = (subPosition + sub.getMove() + 100) % 100;
     }
 
-    System.out.printf("Probes Used: %d\n", probesUsed);
+    // System.out.printf("Probes Used: %d\n", probesUsed);
 
     if (!failed) {
       return cost;

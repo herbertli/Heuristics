@@ -136,11 +136,12 @@ public class TernaryTrench implements TrenchManager {
     // should just check middle interval!
     boolean tooFar = true;
     int d = this.redZoneStart;
-    for (int i = this.leftProbe + this.scanRange + 1; i != (this.rightProbe - this.scanRange - 1) % 100; i = (i + 1) % 100) {
+    for (int i = (this.leftProbe - this.scanRange - 1 + 100) % 100; i != (this.rightProbe + this.scanRange + 1) % 100; i = (i + 1) % 100) {
       if (Math.abs(i - d) <= this.gameTime - this.time) {
         tooFar = false;
         break;
-      } else if (Math.abs(i - ((d + 5) % 100)) <= this.gameTime - this.time) {
+      }
+      if (Math.abs(i - ((d + 5) % 100)) <= this.gameTime - this.time) {
         tooFar = false;
         break;
       }
