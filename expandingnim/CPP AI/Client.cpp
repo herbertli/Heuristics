@@ -100,14 +100,8 @@ int main(int argc, char const *argv[])
     int PORT = 9000;
     std::string ADDR = "127.0.0.1";
     order = 1; //0 if going first, 1 otherwise.
-    for (int i = 1; i < argc; i++) {
-        if(strcmp(argv[i], "-f") == 0){
-            order = 0;
-        } else if (strcmp(argv[i], "-p") == 0) {
-            PORT = std::stoi(argv[i]);
-        } else if (strcmp(argv[i], "-h") == 0) {
-            ADDR = argv[i];
-        }
+    if (argc == 2 && strcmp(argv[1], "-f") == 0){
+        order = 0;
     }
 
     // connect to server
