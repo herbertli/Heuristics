@@ -1,3 +1,5 @@
+#pragma once
+
 class Submarine {
   public: 
     virtual int getMove() = 0;

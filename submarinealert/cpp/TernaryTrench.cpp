@@ -21,16 +21,16 @@ TernaryTrench::TernaryTrench(int d, int y, int r, int m, int L, int p) {
   }
 }
 
-int* TernaryTrench::sendBoundaryScan() {
-  this->scannedLocations = new int[2];
-  this->scannedLocations[0] = this->leftProbe;
-  this->scannedLocations[1] = this->rightProbe;
+vector<int> TernaryTrench::sendBoundaryScan() {
+  this->scannedLocations = vector<int>();
+  this->scannedLocations.push_back(this->leftProbe);
+  this->scannedLocations.push_back(this->rightProbe);
   return this->scannedLocations;
 }
 
 // send enough probes to cover the red zone
 // as well as probes on the extreme left and right
-int* TernaryTrench::sendInitialScan() {
+vector<int> TernaryTrench::sendInitialScan() {
   vector<int> probeLocations;
   probeLocations.push_back((this->redZoneStart + 2) % 100);
 
@@ -50,30 +50,30 @@ int* TernaryTrench::sendInitialScan() {
   this->rightProbe = (right + this->scanRange + 1) % 100;
   probeLocations.push_back((right + this->scanRange + 1) % 100);
 
-  this->scannedLocations = new int[probeLocations.size()];
+  this->scannedLocations = vector<int>();
   for (int i = 0; i < probeLocations.size(); i++) {
-    this->scannedLocations[i] = probeLocations[i];
+    this->scannedLocations.push_back(probeLocations[i]);
   }
   return this->scannedLocations;
 }
 
-int* TernaryTrench::sendScan() {
+vector<int> TernaryTrench::sendScan() {
   if (time % (2 * this->scanRange + 1) == 0) {
-    this->scannedLocations = new int[2];
-    this->scannedLocations[0] = this->leftProbe;
-    this->scannedLocations[1] = this->rightProbe;
+    this->scannedLocations = vector<int>();
+    this->scannedLocations.push_back(this->leftProbe);
+    this->scannedLocations.push_back(this->rightProbe);
     return this->scannedLocations;
   } else {
-    this->scannedLocations = new int[0];
-    return this->scannedLocations;
+    vector<int> temp = vector<int>();
+    return temp;
   }
 }
 
-void TernaryTrench::receiveProbeResults(bool* results) {
-  if (sizeof(results) / sizeof(results[0]) == 0) return;
+void TernaryTrench::receiveProbeResults(vector<bool> results) {
+  if (results.size() == 0) return;
 
   int subLoc = -1;
-  for (int i = 0; i < sizeof(&results) / sizeof(results[0]); i++) {
+  for (int i = 0; i < results.size(); i++) {
     if (time == 0) {
       if (results[i]) {
         subLoc = this->scannedLocations[i];
@@ -102,8 +102,11 @@ void TernaryTrench::receiveProbeResults(bool* results) {
   // 2. R returns true: deploy probes at M and RR at time t + probeRange
   // 3. L and R return false: deploy probes at L and R at time t + probeRange
   // if L, M, R overlap with redzone, go to red alert over the next probeRange time
-  if (verbose)
+  if (verbose) {
+    printf("============================\n");
+    printf("Time: %d\n", this->time);
     printf("Sub loc: %d\n", subLoc);
+  }
   // sub has moved to L or R, unscanned interval
   if (subLoc != -1) {
     if (subLoc == this->leftProbe) {
@@ -162,11 +165,11 @@ void TernaryTrench::receiveProbeResults(bool* results) {
 }
 
 bool TernaryTrench::shouldGoRed() {
-  this->time++;
+  this->time = this->time + 1;
   return this->redAlert;
 }
 
-int* TernaryTrench::getProbes() {
+vector<int> TernaryTrench::getProbes() {
   if (this->time == 0) {
     return sendInitialScan();
   } else if (!this->subFound && (this->time % (2 * this->scanRange + 1) == 0)) {
@@ -174,7 +177,7 @@ int* TernaryTrench::getProbes() {
   } else if (this->subFound && (this->time % (2 * this->scanRange + 1) == 0)) {
     return sendScan();
   } else {
-    this->scannedLocations = new int[0];
-    return this->scannedLocations;
+    vector<int> temp = vector<int>();
+    return temp;
   }
 }

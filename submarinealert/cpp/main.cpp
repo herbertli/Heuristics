@@ -1,7 +1,7 @@
-// #include "TrenchManager.hpp"
-#include "TernaryTrench.hpp"
-// #include "Submarine.hpp"
-#include "GoesRightSub.hpp"
+#include "TrenchManager.hpp"
+#include "TernaryTrench.cpp"
+#include "Submarine.hpp"
+#include "GoesRightSub.cpp"
 #include <algorithm>
 #include <set>
 #include <vector>
@@ -9,8 +9,6 @@
 #include <iterator>
 #include <utility>
 #include <random>
-#include <stdio.h>
-#include <stdlib.h>
 
 using namespace std;
 
@@ -26,7 +24,8 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
   if (verbose) {
     printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
   }
-  GoesRightSub sub = GoesRightSub(m);
+  GoesRightSub gr(m);
+  Submarine* sub = &gr;
 
   int cost = 0;
 
@@ -34,15 +33,15 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
   int probesUsed = 0;
 
   for (int i = 0; i < m; i++) {
-    subPosition = (subPosition + sub.getMove() + 100) % 100;
+    subPosition = (subPosition + sub->getMove() + 100) % 100;
 
     if (verbose) {
       printf("Time: %d\n", i);
       printf("Submarine Position: %d\n", subPosition);
     }
 
-    int* probes = tm->getProbes();
-    int numProbes = sizeof(probes) / sizeof(probes[0]);
+    vector<int> probes = tm->getProbes();
+    int numProbes = probes.size();
     cost += numProbes * p;
     probesUsed += numProbes;
     if (verbose) {
@@ -52,7 +51,7 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
       printf("\n");
     }
     // calculate which probes are "yes"
-    bool yes[numProbes];
+    vector<bool> yes;
     bool probed = false;
     for (int j = 0; j < numProbes; j++) {
       int probe = probes[j];
@@ -61,7 +60,7 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
       if(ub < lb) ub += 100;
       int tempSubPosition = subPosition;
       while(tempSubPosition < lb) tempSubPosition+=100;
-      yes[j] = (tempSubPosition <= ub);
+      yes.push_back(tempSubPosition <= ub);
       probed |= yes[j];
     }
     if (verbose) {
@@ -73,7 +72,6 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
     tm->receiveProbeResults(yes);
 
     bool redAlert = tm->shouldGoRed();
-    // System.out.println("Sub pos: " + subPosition);
     if (redAlert) {
       cost += r;
       if (verbose) printf("TM goes on red alert\n");
@@ -81,13 +79,13 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
       cost += y;
       if (verbose) printf("TM goes on yellow alert\n");
       if (redZone.count(subPosition)) {
-        if (verbose) {
+        // if (verbose) {
           printf("Run %d:\n", run);
           printf("Time: %d\n", i);
           printf("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d\n", d, y, r, m, L, p, subPosition);
           printf("Uh oh! Game over!\n");
-          return 1;
-        }
+          exit(1);
+        // }
         failed = true;
         fails++;
         break;
@@ -95,10 +93,8 @@ int test(int run, TrenchManager* tm, int d, int y, int r, int m, int L, int p, i
     }
 
     // send to sub if it has been probed
-    sub.hasBeenProbed(probed);
+    sub->hasBeenProbed(probed);
   }
-
-  // System.out.printf("Probes Used: %d\n", probesUsed);
 
   if (!failed) {
     return cost;
@@ -117,7 +113,8 @@ int main(int argc, char *argv[]) {
   int p = 15;
   int subPosition = 13;
 
-  vector<pair<TrenchManager*, int>> list;
+  vector<TrenchManager*> list;
+  vector<int> wins;
   for (int i = 0; i < 100000; i++) {
     // if (randomize) {
     //   default_random_engine generator;        
@@ -130,17 +127,25 @@ int main(int argc, char *argv[]) {
     //   subPosition = rand.nextInt(100);
     // }
 
+    list.clear();
     // list.add(new AldoTM(d, y, r, m, L, p));
     // list.add(new UselessTrenchManager(d, y, r, m, L, p));
-    TrenchManager* tm = new TernaryTrench(d, y, r, m, L, p);
-    list.push_back(make_pair(tm, 0));
+    TernaryTrench tt = TernaryTrench(d, y, r, m, L, p);
+    TrenchManager* tm = &tt;
+    list.push_back(tm);
+
+    if (i == 0) {
+      for (int i = 0; i < list.size(); i++) {
+        wins.push_back(0);
+      }
+    }
 
     if (i % 10000 == 0) 
       printf("Run: %d\n", i);
     
     vector<int> costs;
     for(auto tm : list){
-      int cost = test(i, tm.first, d, y, r, m, L, p, subPosition);
+      int cost = test(i, tm, d, y, r, m, L, p, subPosition);
       costs.push_back(cost); 
       if (verbose) {
         printf("Cost: %d\n", cost);
@@ -149,12 +154,12 @@ int main(int argc, char *argv[]) {
     vector<int>::iterator result = min_element(begin(costs), end(costs));
     int minCost = costs[distance(begin(costs), result)];
     for (int j = 0; j < costs.size(); j++) {
-      if (costs[j] == minCost) list[j].second++;
+      if (costs[j] == minCost) wins[j]++;
     }
   }
   printf("Failures: %d\nWins: ", fails);
-  for (auto i: list)
-    printf("%d ", i.second);
+  for (auto i: wins)
+    printf("%d ", i);
   printf("\n");
 
 }

@@ -1,5 +1,6 @@
 #include "TrenchManager.hpp"
 #include <set>
+#include <vector>
 
 using namespace std;
 
@@ -18,14 +19,14 @@ class TernaryTrench : public TrenchManager {
     bool verbose = false;
     int leftProbe;
     int rightProbe;
-    int* scannedLocations;
+    vector<int> scannedLocations;
 
     TernaryTrench(int, int, int, int, int, int);
-    int* sendBoundaryScan();
-    int* sendInitialScan();
-    int* sendScan();
-    void receiveProbeResults(bool[]);
-    int* getProbes();
+    vector<int> sendBoundaryScan();
+    vector<int> sendInitialScan();
+    vector<int> sendScan();
+    void receiveProbeResults(vector<bool>);
+    vector<int> getProbes();
     bool shouldGoRed();
 
 };
