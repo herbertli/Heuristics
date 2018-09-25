@@ -14,9 +14,9 @@
 #include <string>
 #include <thread>
 #include <algorithm>
+#include <unistd.h>
 #include "AlgoAI.cpp"
 #include "json.hpp"
-#define PORT 9000
 
 const std::string bot_name = "Botty McBotFace";
 
@@ -94,8 +94,33 @@ void get_move(){
     player_1.resets_left = game_state["player_1"]["resets_left"];
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
+    int opt; 
+    order = 1; //0 if going first, 1 otherwise.
+    /*
+    if(argc == 2 && strcmp(argv[1], "f") == 0){
+        order = 0;
+    }
+    */
+    std::string ADDR = "127.0.0.1";
+    int PORT = 9000;
+    while ((opt = getopt(argc, argv, "p:h:f")) != -1) {
+        switch (opt) {
+            case 'p':
+                PORT = atoi(optarg);
+                break;
+            case 'f':
+                order = 0;
+                break;
+            case 'h':
+                ADDR = optarg;
+                break;
+            default: /* '?' */
+                break;
+        }
+    } 
+
     // connect to server
     // https://www.geeksforgeeks.org/socket-programming-cc/
     struct sockaddr_in address;
@@ -113,7 +138,7 @@ int main(int argc, char const *argv[])
     serv_addr.sin_port = htons(PORT);
 
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) 
+    if(inet_pton(AF_INET, ADDR.c_str(), &serv_addr.sin_addr)<=0) 
     {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
@@ -124,11 +149,7 @@ int main(int argc, char const *argv[])
         printf("\nConnection Failed \n");
         return -1;
     }
-
-    order = 1; //0 if going first, 1 otherwise.
-    if(argc == 2 && strcmp(argv[1], "f") == 0){
-        order = 0;
-    }
+    
     // send initial message
     nlohmann::json init_json = {
         {"name", bot_name}, 
