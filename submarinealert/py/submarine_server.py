@@ -9,7 +9,7 @@ PORT = 5000
 
 
 class GameServer(object):
-    def __init__(self, d=36, y=6, r=6, m=10, L=4, p=2):
+    def __init__(self, d=36, y=6, r=12, m=10, L=4, p=2):
         self.d = d
         self.y = y
         self.r = r
