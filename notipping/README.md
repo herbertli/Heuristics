@@ -28,8 +28,8 @@ def isGameOver():
         if blockedPlacedAt[i]:
             leftTorque += (i + 3)
             rightTorque += (i + 1)
-	# add torque for initial blocks
+    # add torque for initial blocks
     leftTorque += 3 * boardWeight;
-	rightTorque += boardWeight;
-	return leftTorque < 0 or rightTorque > 0
+    rightTorque += boardWeight;
+    return leftTorque < 0 or rightTorque > 0
 ```
