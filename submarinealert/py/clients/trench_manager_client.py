@@ -1,8 +1,7 @@
-
 import json
 from random import randint, choice
 
-from client_abstract_class import Player
+from clients.client_abstract_class import Player
 
 
 class TrenchManager(Player):
@@ -30,6 +29,7 @@ class TrenchManager(Player):
                 print(f"Your final cost is: {response['trench_cost']}. " +
                       f"The safety condition {'was' if response['was_condition_achieved'] else 'was not'} satisfied.")
                 exit(0)
+            self.m -= 1
 
     def send_probes(self):
         """
@@ -51,4 +51,5 @@ class TrenchManager(Player):
         This means that deploying the probe x returned True, y returned False, and z returned False
         You must return one of two options: 'red' or 'yellow'
         """
-        return choice(['red', 'yellow'])
+        return 'red'
+        # return choice(['red', 'yellow'])
