@@ -23,8 +23,7 @@ class TrenchManager(Player):
             probes_to_send = self.send_probes()
             self.client.send_data(json.dumps({"probes": probes_to_send}))
             response = json.loads(self.client.receive_data())
-            alert = self.choose_alert(
-                probes_to_send, response['probe_results'])
+            alert = self.choose_alert(probes_to_send, response['probe_results'])
             self.client.send_data(json.dumps({"region": alert}))
             response = json.loads(self.client.receive_data())
             if 'game_over' in response:
@@ -36,6 +35,7 @@ class TrenchManager(Player):
     def send_probes(self):
         """
         PLACE YOUR PROBE ALGORITHM HERE
+        
         As the trench manager, you have access to the start of the red alert region (self.d),
         the cost for yellow alerts (self.y), the cost for red alerts (self.r), how long is
         the game (self.m), the range of the probes (self.L), and the cost to deploy a probe (self.p)
