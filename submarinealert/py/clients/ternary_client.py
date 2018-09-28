@@ -2,8 +2,23 @@ from clients.trench_manager_client import TrenchManager
 
 class TernaryManager(TrenchManager):
 
-    def __init__(self):
-        super().__init__("Trenchy McTrenchFace")
+    def __init__(self, d=None, y=None, r=None, m=None, L=None, p=None):
+        if d is None:
+            super().__init__("Trenchy McTrenchFace")
+            self.redZoneStart = self.d
+            self.yellowAlertCost = self.y
+            self.redAlertCost = self.r
+            self.gameTime = self.m
+            self.scanRange = self.L
+            self.probeCost = self.p
+        else:
+            self.redZoneStart = d
+            self.yellowAlertCost = y
+            self.redAlertCost = r
+            self.gameTime = m
+            self.scanRange = L
+            self.probeCost = p
+        self.isSpecial = False
         self.redZone = set()
         self.redAlert = False
         self.time = 0
@@ -11,13 +26,7 @@ class TernaryManager(TrenchManager):
         self.verbose = False
         self.leftProbe = False
         self.rightProbe = False
-        self.redZoneStart = self.d
-        self.yellowAlertCost = self.y
-        self.redAlertCost = self.r
-        self.gameTime = self.m
-        self.scanRange = self.L
-        self.probeCost = self.p
-        for i in range(self.d, self.d + 6):
+        for i in range(self.redZoneStart, self.redZoneStart + 6):
             self.redZone.add(i % 100)
         self.scannedLocations = []
 
@@ -133,6 +142,7 @@ class TernaryManager(TrenchManager):
             if self.verbose:
                 print("Special case!")
             self.redAlert = False
+            self.isSpecial = True 
             return
 
         # using scan zone, check for overlap with red zone
