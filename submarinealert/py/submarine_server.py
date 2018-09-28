@@ -14,20 +14,12 @@ WEB_PORT = 8000
 
 class GameServer(object):
     def __init__(self, d=36, y=6, r=6, m=10, L=4, p=2, gui=False):
-        self.d = 0
-        self.y = 0
-        self.r = 1
-        self.m = 100
-        self.L = 1
-        self.p = 1
-        """
         self.d = d
         self.y = y
         self.r = r
         self.m = m
         self.L = L
         self.p = p
-        """
         self.trench_cost = 0
         self.trench_condition_achieved = True
         self.red_alert = [i % 100 for i in range(d, d+6)]
