@@ -40,7 +40,7 @@ def main():
         d = randint(0, 99)
         y = randint(1, 1000)
         r = y + randint(1, 1000)
-        m = randint(1, 1000)
+        m = randint(1, 50)
         L = randint(1, 11)
         p = randint(1, 1000)
         cost = [0] * n
