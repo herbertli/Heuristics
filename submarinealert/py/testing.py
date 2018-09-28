@@ -12,22 +12,22 @@ from clients.aldo_client import ATrenchManager
 from clients.useless_client import UTrenchManager
 
 def init_submarine_captain(name, is_manual_mode, fd):
-    sleep(0.1)
+    sleep(0.2)
     player = SubmarineCaptain(name=name)
     player.play_game()
 
 def init_trench_manager(name, is_manual_mode, fd):
-    sleep(0.1)
+    sleep(0.2)
     player = TrenchManager(name=name)
     player.play_game()
 
 def init_atrench_manager(name, is_manual_mode, fd):
-    sleep(0.1)
+    sleep(0.2)
     player = ATrenchManager(name=name)
     player.play_game()
 
 def init_utrench_manager(name, is_manual_mode, fd):
-    sleep(0.1)
+    sleep(0.2)
     player = UTrenchManager(name=name)
     player.play_game()
 
