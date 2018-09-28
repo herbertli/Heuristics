@@ -26,7 +26,8 @@ class TernaryTrench():
         probeLocations.append((self.redZoneStart + 2) % 100)
 
         left = (self.redZoneStart + 2 - self.scanRange + 100) % 100
-        while left > self.redZoneStart:
+        while left in self.redZone:
+        #while left > self.redZoneStart:
             probeLocations.append((left - self.scanRange - 1 + 100) % 100)
             left = left - 2 * self.scanRange - 1
         probeLocations.append((left - self.scanRange - 1 + 100) % 100)
@@ -112,8 +113,8 @@ class TernaryTrench():
         # should just check middle interval!
         tooFar = True
         d = self.redZoneStart
-        i = (self.leftProbe - self.scanRange - 1 + 100) % 100
-        while i != (self.rightProbe + self.scanRange + 1) % 100:
+        i = (self.leftProbe + self.scanRange + 1 + 100) % 100
+        while i != (self.rightProbe - self.scanRange) % 100:
             if abs(i - d) <= self.gameTime - self.time:
                 tooFar = False
                 break
