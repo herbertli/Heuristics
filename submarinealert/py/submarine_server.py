@@ -6,6 +6,8 @@ from hps.servers import SocketServer
 # uncomment the following line if want to see the gui
 #from websocket_server import WebsocketServer
 
+verbose = False
+
 HOST = '127.0.0.1'
 PORT = 5000
 
@@ -27,7 +29,8 @@ class GameServer(object):
         self.submarine_location = randint(0, 99)
         self.is_submarine_in_red = self.submarine_location in self.red_alert
         self.web_server = None
-        print('Waiting on port %s for players...' % PORT)
+        if verbose:
+            print('Waiting on port %s for players...' % PORT)
         if gui:
             self.web_server = WebsocketServer(WEB_PORT, host=WEB_HOST)
             self.web_server.new_client = self.accept_player_connections
@@ -140,15 +143,15 @@ class GameServer(object):
                     'trench_alert': trench_move['region'],
                     'probes': trench_probe_move['probes']
                 }))
-
-            print("**********************************************")
-            print(f"Submarine moved by {submarine_move['move']} (current position: {self.submarine_location})")
-            print(f"Submarine is {'not' if not self.is_submarine_in_red else ''} in red region")
-            print(f"Probes were placed at {trench_probe_move['probes']}")
-            print(f"The results were: {probe_results}")
-            print(f"Trench manager sent {trench_move['region']} alert")
-            print(f"Safety condition {'not' if not self.trench_condition_achieved else ''} achieved")
-            print("**********************************************")
+            if verbose:
+                print("**********************************************")
+                print(f"Submarine moved by {submarine_move['move']} (current position: {self.submarine_location})")
+                print(f"Submarine is {'not' if not self.is_submarine_in_red else ''} in red region")
+                print(f"Probes were placed at {trench_probe_move['probes']}")
+                print(f"The results were: {probe_results}")
+                print(f"Trench manager sent {trench_move['region']} alert")
+                print(f"Safety condition {'not' if not self.trench_condition_achieved else ''} achieved")
+                print("**********************************************")
 
             if m > 1:
                 submarine_move, submarine_time_spent = self.timed_request(
