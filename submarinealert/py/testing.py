@@ -52,6 +52,7 @@ def main():
             controller = GameServer(d, y, r, m, L, p)
             cost[j] = controller.trench_cost
             if not controller.trench_condition_achieved:
+                input("check fail " + str(j))
                 failCount[j] += 1
             controller.server.close()
         minCost = min(cost)
