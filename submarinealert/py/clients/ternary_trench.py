@@ -101,10 +101,14 @@ class TernaryTrench():
                                    self.scanRange * 2 + 1) % 100
 
         scanZone = set()
-        i = self.leftProbe - self.scanRange
-        while i != (self.rightProbe + self.scanRange + 1) % 100:
-            scanZone.add((i + 100) % 100)
-            i = (i + 1) % 100
+        if self.scanRange > 16:
+            for i in range(0, 100):
+                scanZone.add(i)
+        else:
+            i = self.leftProbe - self.scanRange
+            while i != (self.rightProbe + self.scanRange + 1) % 100:
+                scanZone.add((i + 100) % 100)
+                i = (i + 1) % 100
 
         if self.verbose:
             print("Scan Zone:", scanZone)
