@@ -7,8 +7,8 @@ class Aldo_TM():
         self.probes = []
         self.subFound = False
         self.verbose = False
-        self.lowerBound = False
-        self.upperBound = False
+        self.lowerBound = -1
+        self.upperBound = -1
         self.safe = False
         self.redZoneStart = d
         self.yellowAlertCost = y
@@ -38,6 +38,7 @@ class Aldo_TM():
         while i < len(results):
             if self.probes[i] + self.scanRange <= tempLowerBound:
                 self.probes[i] += 100
+            #print(str(self.probes[i] - self.scanRange) + " " + str(self.probes[i] + self.scanRange) + " probe")
             if results[i]:
                 tempLowerBound = max(tempLowerBound, self.probes[i] - self.scanRange)
                 tempUpperBound = min(tempUpperBound, self.probes[i] + self.scanRange)
@@ -47,26 +48,31 @@ class Aldo_TM():
                 if tempUpperBound < self.probes[i] + self.scanRange:
                     tempUpperBound = min(tempUpperBound, self.probes[i] - self.scanRange)
             i += 1
+            #print(str(tempLowerBound) + " " + str(tempUpperBound) + "\n")
         self.lowerBound = (tempLowerBound + 100) % 100
         self.upperBound = (tempUpperBound + 100) % 100
 
     def shouldGoRed(self) -> bool:
+        #print(str(self.lowerBound) + " " + str(self.upperBound))
         self.time += 1
-        tempRedZoneStart = self.redZoneStart
-        tempLowerBound = self.lowerBound
-        tempUpperBound = self.upperBound
-        if tempUpperBound < tempLowerBound:
-            tempUpperBound += 100
-        if tempRedZoneStart + 5 < tempLowerBound:
-            tempRedZoneStart += 100
-        if tempRedZoneStart >= tempLowerBound and tempRedZoneStart <= tempUpperBound:
-            return True
-        if tempRedZoneStart + 5 >= tempLowerBound and tempRedZoneStart + 5 <= tempUpperBound:
-            return True
-        if (abs(tempRedZoneStart - tempUpperBound) > self.gameTime - self.time 
-            and abs((tempRedZoneStart + 5) - tempLowerBound) > self.gameTime - self.time):
-            self.safe = True
-        return False
+        self.redAlert = False
+        pos = self.lowerBound
+        while True:
+            #print(pos)
+            if(pos == ((self.upperBound + 1) % 100)):
+                break
+            if pos in self.redZone:
+                #print(pos)
+                self.redAlert = True
+            pos = (pos + 1) % 100
+        allSafe = True
+        for red in self.redZone:
+            if(abs(red - self.lowerBound) > (self.gameTime - self.time) 
+            and abs(red - self.upperBound) > (self.gameTime - self.time)):
+                allSafe = False
+        if allSafe:
+            safe = True
+        return self.redAlert
 
     def getProbes(self) -> list:
         if (self.safe):
