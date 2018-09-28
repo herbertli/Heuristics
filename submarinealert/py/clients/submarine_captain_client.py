@@ -36,4 +36,4 @@ class SubmarineCaptain(Player):
 
         You must return an integer between [-1, 1]
         """
-        return randint(-1, 1)
+        pass

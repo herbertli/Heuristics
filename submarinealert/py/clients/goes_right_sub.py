@@ -1,7 +1,9 @@
-class GoesRightSub():
+from clients.submarine_captain_client import SubmarineCaptain
+
+class GoesRightSub(SubmarineCaptain):
 
     def __init__(self: GoesRightSub, position: int):
-        self.position = position
+        super().__init__("Subby McSubFace")
         self.probedTimes = []
         self.time = 0
 

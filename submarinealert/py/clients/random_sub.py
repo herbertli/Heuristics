@@ -1,12 +1,16 @@
 import random
 import collections
 
+from clients.submarine_captain_client import SubmarineCaptain
 
-class RandomSub():
+class RandomSub(SubmarineCaptain):
 
     def __init__(self, position: int):
-        self.position = position
+        super().__init__("Subby McSubFace")
         self.commandList = collections.deque()
+
+    def your_algorithm(self, times_probed):
+        return self.getMove()
 
     def generateNewCommand(self):
         magnitude = random.randint(1, 10)

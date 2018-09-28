@@ -2,7 +2,6 @@ import json
 from random import randint, choice
 
 from clients.client_abstract_class import Player
-from clients.ternary_trench import TernaryTrench
 
 
 class TrenchManager(Player):
@@ -16,7 +15,6 @@ class TrenchManager(Player):
         self.m = game_info['m']
         self.L = game_info['L']
         self.p = game_info['p']
-        self.tt = TernaryTrench(self.d, self.y, self.r, self.m, self.L, self.p)
 
     def play_game(self):
         while True:
@@ -42,8 +40,7 @@ class TrenchManager(Player):
         For this function, you must return an array of integers between 0 and 99 determining the
         location you would like to send the probes
         """
-        return self.tt.getProbes()
-        # return [randint(0, 99), randint(0, 99), randint(0, 99)]
+        pass
 
     def choose_alert(self, sent_probes, results):
         """
@@ -54,6 +51,4 @@ class TrenchManager(Player):
         This means that deploying the probe x returned True, y returned False, and z returned False
         You must return one of two options: 'red' or 'yellow'
         """
-        self.tt.receiveProbeResults(results)
-        return "red" if self.tt.shouldGoRed() else "yellow"
-        # return choice(['red', 'yellow'])
+        pass

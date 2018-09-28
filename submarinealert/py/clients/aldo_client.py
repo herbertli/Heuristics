@@ -1,59 +1,99 @@
 import json
 from random import randint, choice
 
-from clients.client_abstract_class import Player
-from clients.aldo_tm import Aldo_TM
+from clients.trench_manager_client import TrenchManager
 
-
-class ATrenchManager(Player):
-    def __init__(self, name):
-        super(ATrenchManager, self).__init__(name=name, is_trench_manager=True)
-        game_info = json.loads(self.client.receive_data())
-        print('trench', game_info)
-        self.d = game_info['d']
-        self.y = game_info['y']
-        self.r = game_info['r']
-        self.m = game_info['m']
-        self.L = game_info['L']
-        self.p = game_info['p']
-        self.at = Aldo_TM(self.d, self.y, self.r, self.m, self.L, self.p)
-
-    def play_game(self):
-        while True:
-            probes_to_send = self.send_probes()
-            self.client.send_data(json.dumps({"probes": probes_to_send}))
-            response = json.loads(self.client.receive_data())
-            alert = self.choose_alert(probes_to_send, response['probe_results'])
-            self.client.send_data(json.dumps({"region": alert}))
-            response = json.loads(self.client.receive_data())
-            if 'game_over' in response:
-                print(f"Your final cost is: {response['trench_cost']}. " +
-                      f"The safety condition {'was' if response['was_condition_achieved'] else 'was not'} satisfied.")
-                exit(0)
-            self.m -= 1
+class ATrenchManager(TrenchManager):
+    def __init__(self):
+        super().__init__("Trenchy McTrenchFace")
+        self.redZone = set()
+        self.redAlert = False
+        self.time = 0
+        self.probes = []
+        self.subFound = False
+        self.verbose = False
+        self.lowerBound = -1
+        self.upperBound = -1
+        self.safe = False
+        self.redZoneStart = self.d
+        self.yellowAlertCost = self.y
+        self.redAlertCost = self.r
+        self.gameTime = self.m
+        self.scanRange = self.L
+        self.probeCost = self.p
+        for i in range(self.d, self.d + 6):
+            self.redZone.add(i % 100)
 
     def send_probes(self):
-        """
-        PLACE YOUR PROBE ALGORITHM HERE
-        
-        As the trench manager, you have access to the start of the red alert region (self.d),
-        the cost for yellow alerts (self.y), the cost for red alerts (self.r), how long is
-        the game (self.m), the range of the probes (self.L), and the cost to deploy a probe (self.p)
-        For this function, you must return an array of integers between 0 and 99 determining the
-        location you would like to send the probes
-        """
-        return self.at.getProbes()
-        # return [randint(0, 99), randint(0, 99), randint(0, 99)]
+        return self.getProbes()
 
     def choose_alert(self, sent_probes, results):
-        """
-        PLACE YOUR ALERT-CHOOSING ALGORITHM HERE
-        This function has access to the probes you just sent and the results. They look like:
-        sent_probes: [x, y, z]
-        results: [True, False, False]
-        This means that deploying the probe x returned True, y returned False, and z returned False
-        You must return one of two options: 'red' or 'yellow'
-        """
-        self.at.receiveProbeResults(results)
-        return "red" if self.at.shouldGoRed() else "yellow"
-        # return choice(['red', 'yellow'])
+        self.receiveProbeResults(results)
+        return "red" if self.shouldGoRed() else "yellow"
+
+    def blanket(self) -> None:
+        for i in range(self.redZoneStart, self.redZoneStart+100, 2*self.scanRange+1):
+            self.probes.append(i % 100)
+
+    def receiveProbeResults(self, results: list) -> None:
+        i = 0
+        if self.time == 0:
+            while self.lowerBound == -1 and i < len(results):
+                if results[i]:
+                    self.lowerBound = (self.probes[i] - self.scanRange + 100) % 100
+                    self.upperBound = (self.probes[i] + self.scanRange + 100) % 100
+                i += 1
+        tempLowerBound = self.lowerBound
+        tempUpperBound = self.upperBound
+        if tempUpperBound < tempLowerBound:
+            tempUpperBound += 100
+        while i < len(results):
+            if self.probes[i] + self.scanRange <= tempLowerBound:
+                self.probes[i] += 100
+            #print(str(self.probes[i] - self.scanRange) + " " + str(self.probes[i] + self.scanRange) + " probe")
+            if results[i]:
+                tempLowerBound = max(tempLowerBound, self.probes[i] - self.scanRange)
+                tempUpperBound = min(tempUpperBound, self.probes[i] + self.scanRange)
+            else:
+                if tempLowerBound > self.probes[i] - self.scanRange:
+                    tempLowerBound = max(tempLowerBound, self.probes[i] + self.scanRange)
+                if tempUpperBound < self.probes[i] + self.scanRange:
+                    tempUpperBound = min(tempUpperBound, self.probes[i] - self.scanRange)
+            i += 1
+            #print(str(tempLowerBound) + " " + str(tempUpperBound) + "\n")
+        self.lowerBound = (tempLowerBound + 100) % 100
+        self.upperBound = (tempUpperBound + 100) % 100
+
+    def shouldGoRed(self) -> bool:
+        #print(str(self.lowerBound) + " " + str(self.upperBound))
+        self.time += 1
+        self.redAlert = False
+        pos = self.lowerBound
+        while True:
+            #print(pos)
+            if(pos == ((self.upperBound + 1) % 100)):
+                break
+            if pos in self.redZone:
+                #print(pos)
+                self.redAlert = True
+            pos = (pos + 1) % 100
+        allSafe = True
+        for red in self.redZone:
+            if(abs(red - self.lowerBound) > (self.gameTime - self.time) 
+            and abs(red - self.upperBound) > (self.gameTime - self.time)):
+                allSafe = False
+        if allSafe:
+            safe = True
+        return self.redAlert
+
+    def getProbes(self) -> list:
+        if (self.safe):
+            return []
+        elif self.time == 0:
+            self.blanket()
+        else:
+            self.lowerBound = (self.lowerBound - 1 + 100) % 100
+            self.upperBound = (self.upperBound + 1 + 100) % 100
+            self.probes = [0]
+            self.probes[0] = (self.lowerBound + self.scanRange + 2 + 100) % 100
+        return self.probes

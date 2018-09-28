@@ -6,37 +6,39 @@ from random import randint
 
 from submarine_server import GameServer
 
-from clients.submarine_captain_client import SubmarineCaptain
-from clients.trench_manager_client import TrenchManager
+from clients.smart_sub import SmartSub
+from clients.ternary_client import TernaryManager
 from clients.aldo_client import ATrenchManager
 from clients.useless_client import UTrenchManager
 
 def init_submarine_captain(name, is_manual_mode, fd):
     sleep(0.2)
-    player = SubmarineCaptain(name=name)
+    player = SmartSub()
     player.play_game()
 
 def init_trench_manager(name, is_manual_mode, fd):
     sleep(0.2)
-    player = TrenchManager(name=name)
+    player = TernaryManager()
     player.play_game()
 
 def init_atrench_manager(name, is_manual_mode, fd):
     sleep(0.2)
-    player = ATrenchManager(name=name)
+    player = ATrenchManager()
     player.play_game()
 
 def init_utrench_manager(name, is_manual_mode, fd):
     sleep(0.2)
-    player = UTrenchManager(name=name)
+    player = UTrenchManager()
     player.play_game()
 
 def main():
     trench_managers = [init_trench_manager, init_atrench_manager, init_utrench_manager]
+    # trench_managers = [init_trench_manager]
     n = len(trench_managers)
     wins = [0] * n
     failCount = [0] * n
-    for i in range(100):
+    while True:
+    # for i in range(100):
         d = randint(0, 99)
         y = randint(1, 1000)
         r = y + randint(1, 1000)
