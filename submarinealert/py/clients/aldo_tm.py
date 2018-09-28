@@ -36,7 +36,7 @@ class Aldo_TM():
         if tempUpperBound < tempLowerBound:
             tempUpperBound += 100
         while i < len(results):
-            while self.probes[i] + self.scanRange <= tempLowerBound:
+            if self.probes[i] + self.scanRange <= tempLowerBound:
                 self.probes[i] += 100
             if results[i]:
                 tempLowerBound = max(tempLowerBound, self.probes[i] - self.scanRange)
@@ -75,7 +75,7 @@ class Aldo_TM():
             self.blanket()
         else:
             self.lowerBound = (self.lowerBound - 1 + 100) % 100
-            self.upperBound = (self.upperBound - 1 + 100) % 100
+            self.upperBound = (self.upperBound + 1 + 100) % 100
             self.probes = [0]
             self.probes[0] = (self.lowerBound + self.scanRange + 2 + 100) % 100
         return self.probes

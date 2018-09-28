@@ -2,6 +2,7 @@ import sys
 
 from multiprocessing import Process
 from time import sleep
+from random import randint
 
 from submarine_server import GameServer
 
@@ -35,14 +36,20 @@ def main():
     n = len(trench_managers)
     wins = [0] * n
     failCount = [0] * n
-    for i in range(10):
+    for i in range(100):
+        d = randint(0, 99)
+        y = randint(1, 1000)
+        r = y + randint(1, 1000)
+        m = randint(1, 1000)
+        L = randint(1, 11)
+        p = randint(1, 1000)
         cost = [0] * n
         for j in range(n):
             player_1 = Process(target=init_submarine_captain, args=('Captain Joe', False, sys.stdin.fileno()))
             player_1.start()
             player_2 = Process(target=trench_managers[j], args=('Manager Zach', False, sys.stdin.fileno()))
             player_2.start()
-            controller = GameServer()
+            controller = GameServer(d, y, r, m, L, p)
             cost[j] = controller.trench_cost
             if not controller.trench_condition_achieved:
                 failCount[j] += 1
