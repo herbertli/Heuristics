@@ -133,9 +133,26 @@ class TernaryManager(TrenchManager):
             if abs(i - d) <= self.gameTime - self.time:
                 tooFar = False
                 break
-            if abs(i - ((d + 5) % 100)) <= self.gameTime - self.time:
+            if (i < d): #i was to the left of red zone in range [0, 99], so check distance if sub goes left
+                if abs(i + 100 - d) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+            else: #i was to the right of redzone so check if i goes right.
+                if abs(i - (d + 100)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+            
+            if abs(i - (d + 5)) <= self.gameTime - self.time:
                 tooFar = False
                 break
+            if (i < (d + 5)):
+                if abs(i + 100 - (d + 5)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+            else:
+                if abs(i - (d + 5 + 100)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
             i = (i + 1) % 100
 
         if tooFar:
