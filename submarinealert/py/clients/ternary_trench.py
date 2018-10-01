@@ -27,7 +27,7 @@ class TernaryTrench():
 
         left = (self.redZoneStart + 2 - self.scanRange + 100) % 100
         while left in self.redZone:
-        #while left > self.redZoneStart:
+            # while left > self.redZoneStart:
             probeLocations.append((left - self.scanRange - 1 + 100) % 100)
             left = left - 2 * self.scanRange - 1
         probeLocations.append((left - self.scanRange - 1 + 100) % 100)
@@ -105,7 +105,7 @@ class TernaryTrench():
             for i in range(0, 100):
                 scanZone.add(i)
         else:
-            i = self.leftProbe - self.scanRange
+            i = (self.leftProbe - self.scanRange) % 100
             while i != (self.rightProbe + self.scanRange + 1) % 100:
                 scanZone.add((i + 100) % 100)
                 i = (i + 1) % 100
@@ -122,15 +122,34 @@ class TernaryTrench():
             if abs(i - d) <= self.gameTime - self.time:
                 tooFar = False
                 break
-            if abs(i - ((d + 5) % 100)) <= self.gameTime - self.time:
+            # i was to the left of red zone in range [0, 99], so check distance if sub goes left
+            if (i < d):
+                if abs(i + 100 - d) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+            else:  # i was to the right of redzone so check if i goes right.
+                if abs(i - (d + 100)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+
+            if abs(i - (d + 5)) <= self.gameTime - self.time:
                 tooFar = False
                 break
+            if (i < (d + 5)):
+                if abs(i + 100 - (d + 5)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
+            else:
+                if abs(i - (d + 5 + 100)) <= self.gameTime - self.time:
+                    tooFar = False
+                    break
             i = (i + 1) % 100
 
         if tooFar:
             if self.verbose:
                 print("Special case!")
             self.redAlert = False
+            self.isSpecial = True
             return
 
         # using scan zone, check for overlap with red zone

@@ -13,7 +13,7 @@ from clients.smart_sub import SmartSub
 
 class TrenchyMcTrenchFace(TrenchManager):
 
-    def __init__(self):
+    def __init__(self, name):
         super().__init__("Trenchy McTrenchFace")
         wins = self.simulate(self.d, self.y, self.r, self.m, self.L, self.p)
         print(wins)
@@ -67,7 +67,7 @@ class TrenchyMcTrenchFace(TrenchManager):
             print("d: %d, y: %d, r: %d, m: %d, L: %d, p: %d, subPosition: %d".format(
                 d, y, r, m, L, p, subPosition))
 
-        sub = SmartSub(subPosition, m, L)
+        sub = SmartSub("something", subPosition, m, L)
 
         cost = 0
 

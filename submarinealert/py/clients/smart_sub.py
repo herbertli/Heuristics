@@ -2,9 +2,10 @@ import random
 
 from clients.submarine_captain_client import SubmarineCaptain
 
+
 class SmartSub(SubmarineCaptain):
 
-    def __init__(self, subPosition=None, m=None, L=None):
+    def __init__(self, name, subPosition=None, m=None, L=None):
         if subPosition is None:
             super().__init__("Subby McSubFace")
             self.gameTime = self.m
@@ -12,21 +13,12 @@ class SmartSub(SubmarineCaptain):
         else:
             self.gameTime = m
             self.scanRange = L
+            self.position = subPosition
         self.tolerance = self.gameTime / 10
-        self.position = subPosition
         self.direction = -1 if random.randint == 0 else 1
         self.probeTimes = []
         self.time = 0
         self.times_probed = 0
-
-    def your_algorithm(self, times_probed):
-        if self.times_probed < times_probed:
-            self.hasBeenProbed(True)
-        return self.getMove()
-
-    def hasBeenProbed(self, probed):
-        if probed:
-            self.probeTimes.append(self.time)
 
     def getMove(self) -> int:
         if len(self.probeTimes) == 0:
@@ -40,3 +32,12 @@ class SmartSub(SubmarineCaptain):
         else:
             self.time += 1
             return self.direction
+
+    def your_algorithm(self, times_probed):
+        if self.times_probed < times_probed:
+            self.hasBeenProbed(True)
+        return self.getMove()
+
+    def hasBeenProbed(self, probed):
+        if probed:
+            self.probeTimes.append(self.time)

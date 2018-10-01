@@ -6,9 +6,10 @@ from time import sleep
 
 from submarine_server import GameServer
 
-from clients.submarine_captain_client import SubmarineCaptain
+# from clients.submarine_captain_client import SubmarineCaptain
 # from clients.trench_manager_client import TrenchManager
 from clients.final_client import TrenchyMcTrenchFace
+from clients.smart_sub import SmartSub
 
 from clients.manual_clients.submarine_captain_client import ManualSubmarineCaptain
 from clients.manual_clients.trench_manager_client import ManualTrenchManager
@@ -16,7 +17,7 @@ from clients.manual_clients.trench_manager_client import ManualTrenchManager
 
 def init_submarine_captain(name, is_manual_mode, fd):
     sleep(1)
-    player = SubmarineCaptain(
+    player = SmartSub(
         name=name) if not is_manual_mode else ManualSubmarineCaptain(name=name, fd=fd)
     player.play_game()
 
@@ -24,7 +25,7 @@ def init_submarine_captain(name, is_manual_mode, fd):
 def init_trench_manager(name, is_manual_mode, fd):
     sleep(1)
     player = TrenchyMcTrenchFace(
-    ) if not is_manual_mode else ManualTrenchManager(name=name, fd=fd)
+        name=name) if not is_manual_mode else ManualTrenchManager(name=name, fd=fd)
     player.play_game()
 
 
