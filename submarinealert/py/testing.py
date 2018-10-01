@@ -20,12 +20,12 @@ def simulate():
         r = y * 10
         m = randint(100, 500)
         L = randint(1, 11)
-        p = randint(1, 50)
+        p = randint(1, 1000)
         subPosition = randint(0, 99)
 
         tms = []
-        tms.append(Aldo_TM(d, y, r, m, L, p))
-        tms.append(Useless_Trench(d, y, r, m, L, p))
+        # tms.append(Aldo_TM(d, y, r, m, L, p))
+        # tms.append(Useless_Trench(d, y, r, m, L, p))
         tms.append(TernaryManager(d, y, r, m, L, p))
 
         if len(wins) == 0:

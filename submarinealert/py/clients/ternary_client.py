@@ -1,5 +1,6 @@
 from clients.trench_manager_client import TrenchManager
 
+
 class TernaryManager(TrenchManager):
 
     def __init__(self, d=None, y=None, r=None, m=None, L=None, p=None):
@@ -37,12 +38,12 @@ class TernaryManager(TrenchManager):
         probeLocations = []
         probeLocations.append((self.redZoneStart + 2) % 100)
 
-        left = (self.redZoneStart + 2 - self.scanRange + 100) % 100
+        left = (self.redZoneStart + 2 - self.scanRange) % 100
         while left in self.redZone:
-            probeLocations.append((left - self.scanRange - 1 + 100) % 100)
+            probeLocations.append((left - self.scanRange - 1) % 100)
             left = left - 2 * self.scanRange - 1
-        probeLocations.append((left - self.scanRange - 1 + 100) % 100)
-        self.leftProbe = (left - self.scanRange - 1 + 100) % 100
+        probeLocations.append((left - self.scanRange - 1) % 100)
+        self.leftProbe = (left - self.scanRange - 1) % 100
 
         right = (self.redZoneStart + 2 + self.scanRange) % 100
         while right in self.redZone:
@@ -54,6 +55,9 @@ class TernaryManager(TrenchManager):
         self.scannedLocations = []
         for i in probeLocations:
             self.scannedLocations.append(i)
+        # print(self.scanRange)
+        # print(self.scannedLocations)
+        # input()
         return self.scannedLocations
 
     def sendScan(self) -> list:
@@ -67,22 +71,34 @@ class TernaryManager(TrenchManager):
             return
 
         subLoc = False
+        # if self.time == 0:
+        # print(self.scannedLocations)
+        # print(self.scanRange)
+        # print(results)
+        # input()
         for i in range(len(results)):
-            if self.time == 0:
-                if results[i]:
+            if results[i]:
+                if self.time == 0:
                     subLoc = self.scannedLocations[i]
                     self.subFound = True
                     break
-            else:
-                if results[i]:
+                else:
                     if i == 0:
                         subLoc = self.leftProbe
                     else:
                         subLoc = self.rightProbe
-                    self.subFound = True
                     break
 
         if not self.subFound:
+            self.redAlert = False
+            return
+
+        if self.time == 0:
+            self.leftProbe = (
+                self.scannedLocations[i] - self.scanRange * 2 - 1) % 100
+            self.rightProbe = (
+                self.scannedLocations[i] + self.scanRange * 2 + 1) % 100
+            self.redAlert = True
             return
 
         # now let's get the intervals for the next scan
@@ -104,10 +120,10 @@ class TernaryManager(TrenchManager):
                 self.rightProbe = (
                     self.leftProbe + self.scanRange * 2 + 1) % 100
                 self.leftProbe = (
-                    self.leftProbe - self.scanRange * 2 - 1 + 100) % 100
+                    self.leftProbe - self.scanRange * 2 - 1) % 100
             elif subLoc == self.rightProbe:
                 self.leftProbe = (self.rightProbe -
-                                  self.scanRange * 2 - 1 + 100) % 100
+                                  self.scanRange * 2 - 1) % 100
                 self.rightProbe = (self.rightProbe +
                                    self.scanRange * 2 + 1) % 100
 
@@ -118,7 +134,7 @@ class TernaryManager(TrenchManager):
         else:
             i = self.leftProbe - self.scanRange
             while i != (self.rightProbe + self.scanRange + 1) % 100:
-                scanZone.add((i + 100) % 100)
+                scanZone.add(i % 100)
                 i = (i + 1) % 100
 
         if self.verbose:
@@ -128,29 +144,30 @@ class TernaryManager(TrenchManager):
         # should just check middle interval!
         tooFar = True
         d = self.redZoneStart
-        i = (self.leftProbe + self.scanRange + 1 + 100) % 100
+        i = (self.leftProbe + self.scanRange + 1) % 100
         while i != (self.rightProbe - self.scanRange) % 100:
-            if abs(i - d) <= self.gameTime - self.time:
+            if abs(i - d) <= self.gameTime - self.time + 1:
                 tooFar = False
                 break
-            if (i < d): #i was to the left of red zone in range [0, 99], so check distance if sub goes left
-                if abs(i + 100 - d) <= self.gameTime - self.time:
+            # i was to the left of red zone in range [0, 99], so check distance if sub goes left
+            if (i < d):
+                if abs(i + 100 - d) <= self.gameTime - self.time + 1:
                     tooFar = False
                     break
-            else: #i was to the right of redzone so check if i goes right.
-                if abs(i - (d + 100)) <= self.gameTime - self.time:
+            else:  # i was to the right of redzone so check if i goes right.
+                if abs(i - (d + 100)) <= self.gameTime - self.time + 1:
                     tooFar = False
                     break
-            
-            if abs(i - (d + 5)) <= self.gameTime - self.time:
+
+            if abs(i - (d + 5)) <= self.gameTime - self.time + 1:
                 tooFar = False
                 break
             if (i < (d + 5)):
-                if abs(i + 100 - (d + 5)) <= self.gameTime - self.time:
+                if abs(i + 100 - (d + 5)) <= self.gameTime - self.time + 1:
                     tooFar = False
                     break
             else:
-                if abs(i - (d + 5 + 100)) <= self.gameTime - self.time:
+                if abs(i - (d + 5 + 100)) <= self.gameTime - self.time + 1:
                     tooFar = False
                     break
             i = (i + 1) % 100
@@ -159,7 +176,7 @@ class TernaryManager(TrenchManager):
             if self.verbose:
                 print("Special case!")
             self.redAlert = False
-            self.isSpecial = True 
+            self.isSpecial = True
             return
 
         # using scan zone, check for overlap with red zone

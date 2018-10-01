@@ -7,7 +7,7 @@ from clients.trench_manager_client import TrenchManager
 # regular clients
 from clients.aldo_tm import Aldo_TM
 from clients.useless_trench import Useless_Trench
-from clients.ternary_trench import TernaryTrench
+from clients.ternary_client import TernaryManager
 from clients.smart_sub import SmartSub
 
 
@@ -21,7 +21,7 @@ class TrenchyMcTrenchFace(TrenchManager):
         self.tms = [
             Aldo_TM(self.d, self.y, self.r, self.m, self.L, self.p),
             Useless_Trench(self.d, self.y, self.r, self.m, self.L, self.p),
-            TernaryTrench(self.d, self.y, self.r, self.m, self.L, self.p)
+            TernaryManager(self.d, self.y, self.r, self.m, self.L, self.p)
         ]
 
     def simulate(self, d, y, r, m, L, p):
@@ -34,7 +34,7 @@ class TrenchyMcTrenchFace(TrenchManager):
             tms = []
             tms.append(Aldo_TM(d, y, r, m, L, p))
             tms.append(Useless_Trench(d, y, r, m, L, p))
-            tms.append(TernaryTrench(d, y, r, m, L, p))
+            tms.append(TernaryManager(d, y, r, m, L, p))
 
             if len(wins) == 0:
                 wins = [0] * len(tms)
