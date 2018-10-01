@@ -6,7 +6,8 @@ from clients.client_abstract_class import Player
 
 class SubmarineCaptain(Player):
     def __init__(self, name):
-        super(SubmarineCaptain, self).__init__(name=name, is_trench_manager=False)
+        super(SubmarineCaptain, self).__init__(
+            name=name, is_trench_manager=False)
         game_info = json.loads(self.client.receive_data())
         print('sub', game_info)
         self.m = game_info['m']
@@ -16,7 +17,8 @@ class SubmarineCaptain(Player):
     def play_game(self):
         response = {}
         while True:
-            move = self.your_algorithm(0 if not response else response['times_probed'])
+            move = self.your_algorithm(
+                0 if not response else response['times_probed'])
             self.client.send_data(json.dumps({"move": move}))
             self.position += move
             response = json.loads(self.client.receive_data())
@@ -36,4 +38,5 @@ class SubmarineCaptain(Player):
 
         You must return an integer between [-1, 1]
         """
+        return 1
         pass

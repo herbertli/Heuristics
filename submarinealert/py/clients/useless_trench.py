@@ -1,5 +1,5 @@
 class Useless_Trench():
-    
+
     def __init__(self, d, y, r, m, L, p):
         pass
 
