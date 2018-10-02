@@ -22,32 +22,14 @@ Given a uniform, flat board 60 meters long and weighing 3 kilograms, consider it
 
 ```python
 def isGameOver():
-    leftTorque = 0;
-    rightTorque = 0;
-    for i in range(-1 * boardLength, boardLength + 1):
+    leftTorque = 0
+    rightTorque = 0
+    for i in range(-1 * boardLength, boardLength + 2):
         if blockedPlacedAt[i]:
-            leftTorque += (i + 3)
-            rightTorque += (i + 1)
+            leftTorque += (i + 3) * blockPlacedAt[i]
+            rightTorque += (i + 1) * blockPlacedAt[i]
     # add torque for initial blocks
-    leftTorque += 3 * boardWeight;
-    rightTorque += boardWeight;
+    leftTorque += 3 * boardWeight
+    rightTorque += boardWeight
     return leftTorque < 0 or rightTorque > 0
-```
-
-## Tip Check from Rons' game architecture:
-```PHP
-public function isGameOver() {
-    $leftTorque = 0;
-    $rightTorque = 0;
-    for ($i = -$this->boardLength; $i <= $this->boardLength; $i++) {
-        $leftTorque += ($i + 3) * $this->boardState[$i];
-        $rightTorque += ($i + 1) * $this->boardState[$i];
-    }
-    // add information about the board weight, now let's do 3
-    $leftTorque += 3 * $this->boardWeight;
-    $rightTorque += 1 * $this->boardWeight;
-    $this->leftTorque = $leftTorque;
-    $this->rightTorque = $rightTorque;
-    return $leftTorque < 0 || $rightTorque >0;
-}
 ```
