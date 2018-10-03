@@ -18,11 +18,9 @@ class COMAPlayer(Player):
         rightTorque += BOARDWEIGHT
         return leftTorque < 0 or rightTorque > 0
 
-    def placeBlock(self) -> dict:
-        board = self.state['board']
-        turn = self.state['current_player']
-        weights = self.state['blocks'][turn]
-        eweights = self.state['blocks'][turn ^ 1]
+    def placeable(self, board: list, weights: int, eweights: int, turns_left: int) -> tuple:
+        if turns_left < 0 or weights == 0:
+            return(0, 0)
         i = 1
         while ((1 << i) <= weights):
             if ((1 << i) & weights) > 0:
@@ -31,38 +29,44 @@ class COMAPlayer(Player):
                     if board[j] == 0:
                         board[j] = i
                         if(not self.isGameOver(board)):
-                            k = 0
-                            while ((1 << k) <= eweights):
-                                if ((1 << k) & eweights) > 0:
-                                    weights ^= (1 << k)
-                                    for l in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-                                        if board[l] == 0:
-                                            board[l] = k
-                                            if(not self.isGameOver(board)):
-                                                m = 0
-                                                while ((1 << m) <= weights):
-                                                    if ((1 << m) & weights) > 0:
-                                                        weights ^= (1 << m)
-                                                        for n in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-                                                            if board[n] == 0:
-                                                                board[n] = i
-                                                                if(not self.isGameOver(board)):
-                                                                    return {'weight' : i, 'loc' : j}
-                                                                board[n] = 0
-                                                        weights ^= (1 << m)
-                                                    m += 1
-                                            board[l] = 0
-                                    weights ^= (1 << k)
-                                k += 1
+                                weight, loc = self.placeable(board, eweights, weights, turns_left - 1)
+                                if(weight != 100):
+                                    return (i, j)
                         board[j] = 0
                 weights ^= (1 << i)
             i += 1
         for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
             if(board[i] == 0):
-                return {'weight' : 100, 'loc' : i}
+                return (100, i)
+        
+
+    def placeBlock(self) -> dict:
+        board = self.state['board']
+        turn = self.state['current_player']
+        weights = self.state['blocks'][turn]
+        eweights = self.state['blocks'][turn ^ 1]
+        weight, loc =  self.placeable(board, weights, eweights, 2)
+        return {'weight': weight , 'loc': loc}
+
+    def removeable(self, board: list, turns_left: int) -> int:
+        if turns_left < 0:
+            return 0
+        for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
+            if board[i] > 0:
+                temp = board[i]
+                board[i] = 0
+                if(not self.isGameOver(board)):
+                        loc = self.removeable(board, turns_left - 1)
+                        if(loc != 100):
+                            return i
+                board[i] = temp
+        for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
+            if(board[i] > 0):
+                return i
 
     def removeBlock(self) -> int:
-        pass
+        board = self.state['board']
+        return self.removeable(board, 2)
 
     def receiveGameState(self, state: dict) -> None:
         self.state = state
