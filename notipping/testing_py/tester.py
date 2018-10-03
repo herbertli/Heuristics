@@ -10,9 +10,9 @@ BOARDWEIGHT = 3
 # number of tests to run. Both players play as first player n times
 n = randint(1, 1)
 # max weight of the block, from 1 to 25
-k = randint(10, 10)
+k = randint(25, 25)
 # print debugging statements
-verbose = False
+verbose = True
 
 def isGameOver(board: list) -> bool:
     leftTorque = 0
@@ -34,7 +34,7 @@ def run_test(p: list) -> list:
     blocks = [(1 << (k + 1)) - 2] * 2
     stage = 0
     for i in range(2 * k):
-        state = {'state' : stage, 'current_player' : turn, 'board' : board, 'blocks' : blocks}
+        state = {'state' : stage, 'current_player' : turn, 'board' : board.copy(), 'blocks' : blocks.copy()}
         p[turn].receiveGameState(state)
         pair = p[turn].placeBlock()
         if (not (blocks[turn] & (1 << pair['weight']))): # turn player doesn't have the block of the weight that he's trying to place
@@ -49,6 +49,8 @@ def run_test(p: list) -> list:
             if verbose:
                 print("Player {} is trying to place a block on top of another block at {}.".format(turn, pair['loc']))
             return [turn ^ 1, stage, 2]
+        if verbose:
+            print("Player {} placed a block of weight {} at {}.".format(turn, pair['weight'], pair['loc']))
         blocks[turn] ^= (1 << pair['weight'])
         board[pair['loc']] = pair['weight']
         if (isGameOver(board)):  # turn player tipped the board
@@ -58,7 +60,7 @@ def run_test(p: list) -> list:
         turn = turn ^ 1
     stage = 1
     for i in range(2 * k + 1):
-        state = {'state' : stage, 'current_player' : turn, 'board' : board, 'blocks' : blocks}
+        state = {'state' : stage, 'current_player' : turn, 'board' : board.copy(), 'blocks' : blocks.copy()}
         p[turn].receiveGameState(state)
         loc = p[turn].removeBlock()
         if (abs(loc) > BOARDLENGTH):
@@ -86,15 +88,15 @@ def main():
     for i in range(n):
         winner, stage, reason = run_test(players)
         wins[winner] += 1
-    print("Player 1 won {} times.", wins[0])
-    print("Player 2 won {} times.", wins[1])
+    print("Player 0 won {} times.", wins[0])
+    print("Player 1 won {} times.", wins[1])
     wins = [0] * 2
     players = [p2, p1]
     for i in range(n):
         winner, stage, reason = run_test(players)
         wins[winner] += 1
-    print("Player 1 won {} times.", wins[1])
-    print("Player 2 won {} times.", wins[0])
+    print("Player 0 won {} times.", wins[1])
+    print("Player 1 won {} times.", wins[0])
 
 if __name__ == '__main__':
     main()
