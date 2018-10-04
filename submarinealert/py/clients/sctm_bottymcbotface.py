@@ -230,10 +230,8 @@ class TernaryManager(TrenchManager):
             return
 
         if self.time == 0:
-            self.leftProbe = (
-                self.scannedLocations[i] - self.scanRange * 2 - 1) % 100
-            self.rightProbe = (
-                self.scannedLocations[i] + self.scanRange * 2 + 1) % 100
+            self.leftProbe = (subLoc - self.scanRange * 2 - 1) % 100
+            self.rightProbe = (subLoc + self.scanRange * 2 + 1) % 100
             self.redAlert = True
             return
 

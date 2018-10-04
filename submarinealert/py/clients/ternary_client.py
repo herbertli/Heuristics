@@ -88,16 +88,16 @@ class TernaryManager(TrenchManager):
                     else:
                         subLoc = self.rightProbe
                     break
-
+        print(i)
         if not self.subFound:
             self.redAlert = False
             return
 
         if self.time == 0:
             self.leftProbe = (
-                self.scannedLocations[i] - self.scanRange * 2 - 1) % 100
+                subLoc - self.scanRange * 2 - 1) % 100
             self.rightProbe = (
-                self.scannedLocations[i] + self.scanRange * 2 + 1) % 100
+                subLoc + self.scanRange * 2 + 1) % 100
             self.redAlert = True
             return
 
