@@ -95,35 +95,26 @@ def run_test(p: list) -> list:
     return [-1, -1, -1]
 
 
-def main():
+def scaffold(players: list) -> None:
     wins = [0] * 2
-    fail_reason = [[0] * 7] * 2
-    p1 = COMAPlayer()
-    p2 = MaxPlayer()
-    players = [p1, p2]
+    fail_reason = [[0] * 7 for i in range(2)]
     for i in range(n):
         winner, reason = run_test(players)
         wins[winner] += 1
         fail_reason[winner ^ 1][reason] += 1
-    print("Player 0 won {} times.".format(wins[0]))
-    print("Player 1 won {} times.".format(wins[1]))
     for i in range(2):
+        print("Player {} won {} times.".format(i, wins[i]))
         print("Player {} failed:".format(i))
         for j in range(7):
             print("\ton stage {}: {} times".format(j, fail_reason[i][j]))
-    wins = [0] * 2
-    fail_reason = [[0] * 7] * 2
-    players = [p2, p1]
-    for i in range(n):
-        winner, reason = run_test(players)
-        wins[winner] += 1
-        fail_reason[winner ^ 1][reason] += 1
-    print("Player 0 won {} times.".format(wins[1]))
-    print("Player 1 won {} times.".format(wins[0]))
-    for i in range(2):
-        print("Player {} failed:".format(i))
-        for j in range(7):
-            print("\ton stage {}: {} times".format(j, fail_reason[i ^ 1][j]))
+
+
+def main():
+    p0 = COMAPlayer()
+    p1 = MaxPlayer()
+    scaffold([p0, p1])
+    print("Switch who is going first.")
+    scaffold([p1, p0])
 
 
 if __name__ == '__main__':
