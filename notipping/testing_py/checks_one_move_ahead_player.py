@@ -67,17 +67,25 @@ class COMAPlayer(Player):
                 temp = board[i]
                 board[i] = 0
                 if(not self.isGameOver(board)):
-                        loc = self.removeable(board, turns_left - 1)
-                        if(loc != 100):
-                            return i
+                    loc = self.removeable(board, turns_left - 1)
+                    if(loc != 100):
+                        board[i] = temp
+                        return i
                 board[i] = temp
-        for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-            if(board[i] > 0):
-                return i
+        return 100
 
     def removeBlock(self) -> int:
         board = self.state['board']
-        return self.removeable(board, 2)
+        i = lookahead
+        while(i >= 0):
+            loc = self.removeable(board, i)
+            if(loc != 100):
+                return loc
+            i -= 1
+        for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
+            if(board[i]):
+                return i
+        return 100
 
     def receiveGameState(self, state: dict) -> None:
         self.state = state
