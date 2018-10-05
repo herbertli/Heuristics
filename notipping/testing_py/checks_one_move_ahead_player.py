@@ -1,8 +1,19 @@
+"""
+This bot looks ahead "lookahead" moves to make sure the game continues that number of turns
+That for the move that the bot is currently playing, both players have a move they can continue to play.
+"""
+
 from abstract_no_tipping_player import Player
 
 # fixed
 BOARDLENGTH = 30 # half the board length
 BOARDWEIGHT = 3
+
+# number of turns to look ahead.
+# 0 means to just find anywhere to place that doesn't tip that current turn.
+# 1 means to make a move that allows the opponent to make a move on their turn.
+# etc.
+lookahead = 6
 
 class COMAPlayer(Player):
 
@@ -10,7 +21,7 @@ class COMAPlayer(Player):
         leftTorque = 0
         rightTorque = 0
         for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-            if board[i]:
+            if board[i] > 0:
                 leftTorque += (i + 3) * board[i]
                 rightTorque += (i + 1) * board[i]
         # add torque for initial blocks
@@ -45,7 +56,7 @@ class COMAPlayer(Player):
         turn = self.state['current_player']
         weights = self.state['blocks'][turn]
         eweights = self.state['blocks'][turn ^ 1]
-        weight, loc =  self.placeable(board, weights, eweights, 2)
+        weight, loc =  self.placeable(board, weights, eweights, lookahead)
         return {'weight': weight , 'loc': loc}
 
     def removeable(self, board: list, turns_left: int) -> int:
