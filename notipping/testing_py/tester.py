@@ -2,6 +2,7 @@ from random import randint
 
 from abstract_no_tipping_player import Player
 from checks_one_move_ahead_player import COMAPlayer
+from dp_player import DPPlayer
 from max_player import MaxPlayer
 
 # fixed
@@ -9,9 +10,9 @@ BOARDLENGTH = 30  # half the board length
 BOARDWEIGHT = 3
 
 # number of tests to run. Both players play as first player n times
-n = randint(1, 1)
+n = 1
 # max weight of the block, from 1 to 25
-k = randint(25, 25)
+K = None
 # print debugging statements
 verbose = False
 
@@ -20,7 +21,7 @@ def isGameOver(board: list) -> bool:
     leftTorque = 0
     rightTorque = 0
     for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-        if board[i]:
+        if board[i] > 0:
             leftTorque += (i + 3) * board[i]
             rightTorque += (i + 1) * board[i]
     # add torque for initial blocks
@@ -32,6 +33,12 @@ def isGameOver(board: list) -> bool:
 
 
 def run_test(p: list) -> list:
+    if K is None:
+        k = randint(10, 25)
+    else:
+        k = K
+    if verbose:
+        print("k is {}".format(k))
     turn = 0
     board = [0] * (2 * BOARDLENGTH + 1)
     board[-4] = 3
@@ -59,8 +66,8 @@ def run_test(p: list) -> list:
                     turn, pair['loc']))
             return [turn ^ 1, 2]
         if verbose:
-            print("Player {} placed a block {} at {}.".format(
-                turn, pair['weight'], pair['loc']))
+            print("{}. Player {} placed a block {} at {}.".format(
+                i, turn, pair['weight'], pair['loc']))
         blocks[turn] ^= (1 << pair['weight'])
         board[pair['loc']] = pair['weight']
         if (isGameOver(board)):  # turn player tipped the board
@@ -84,24 +91,29 @@ def run_test(p: list) -> list:
                     turn, loc))
             return [turn ^ 1, 5]
         if verbose:
-            print("Player {} removed a block of weight {} from {}".format(
-                turn, board[loc], loc))
+            print("{}. Player {} removed a block of weight {} from {}".format(
+                i, turn, board[loc], loc))
         board[loc] = 0
         if (isGameOver(board)):  # turn player tipped the board
             if verbose:
                 print("Player {} tipped the board".format(turn))
             return [turn ^ 1, 6]
         turn = turn ^ 1
-    return [-1, -1, -1]
+    return [-1, -1]
 
 
-def scaffold(players: list) -> None:
+def scaffold(p: list) -> None:
     wins = [0] * 2
     fail_reason = [[0] * 7 for i in range(2)]
     for i in range(n):
+        print(".", end = "")
+        if (i+1) % 10 == 0:
+            print(flush=True)
+        players = [p[0](), p[1]()]
         winner, reason = run_test(players)
         wins[winner] += 1
         fail_reason[winner ^ 1][reason] += 1
+    print(flush=True)
     for i in range(2):
         print("Player {} won {} times.".format(i, wins[i]))
         print("Player {} failed:".format(i))
@@ -110,8 +122,8 @@ def scaffold(players: list) -> None:
 
 
 def main():
-    p0 = COMAPlayer()
-    p1 = MaxPlayer()
+    p0 = DPPlayer
+    p1 = COMAPlayer
     scaffold([p0, p1])
     print("Switch who is going first.")
     scaffold([p1, p0])
