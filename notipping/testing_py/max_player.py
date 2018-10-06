@@ -96,7 +96,6 @@ class MaxPlayer(Player):
 
     def receiveGameState(self, state: dict) -> None:
         self.state = state
-        pass
 
     @staticmethod
     def getTorque(board: list):
@@ -148,7 +147,21 @@ class MaxPlayer(Player):
 
     @staticmethod
     def getClosestCandidate(board: list):
-        pass
+        maxes = MaxPlayer.getMaxCandidate(board)
+        closestInd = False
+        closestBlock = -1e9
+        minDiff = 1e9
+        for i in range(-BOARDLENGTH, BOARDLENGTH + 1):
+            if maxes[i]:
+                board[i] = maxes[i]
+                leftTorque, rightTorque = MaxPlayer.getTorque(board)
+                diff = abs(leftTorque - rightTorque)
+                if diff < minDiff or (diff == minDiff and maxes[i] > closestBlock):
+                    minDiff = diff
+                    closestInd = i
+                    closestBlock = maxes[i]
+                board[i] = 0
+        return closestBlock, closestInd
 
     @staticmethod
     def isGameOver(board: list):
