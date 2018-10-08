@@ -106,9 +106,10 @@ def scaffold(p: list) -> None:
     wins = [0] * 2
     fail_reason = [[0] * 7 for i in range(2)]
     for i in range(n):
-        print(".", end = "")
-        if (i+1) % 10 == 0:
-            print(flush=True)
+        if not verbose:
+            print(".", end = "")
+            if (i+1) % 10 == 0:
+                print(flush=True)
         players = [p[0](), p[1]()]
         winner, reason = run_test(players)
         wins[winner] += 1
