@@ -6,7 +6,7 @@ That for the move that the bot is currently playing, both players have a move th
 from abstract_no_tipping_player import Player
 
 # fixed
-BOARDLENGTH = 30 # half the board length
+BOARDLENGTH = 30  # half the board length
 BOARDWEIGHT = 3
 
 # number of turns to look ahead.
@@ -14,6 +14,7 @@ BOARDWEIGHT = 3
 # 1 means to make a move that allows the opponent to make a move on their turn.
 # etc.
 lookahead = 6
+
 
 class COMAPlayer(Player):
 
@@ -40,24 +41,24 @@ class COMAPlayer(Player):
                     if board[j] == 0:
                         board[j] = i
                         if(not self.isGameOver(board)):
-                                weight, loc = self.placeable(board, eweights, weights, turns_left - 1)
-                                if(weight != 100):
-                                    return (i, j)
+                            weight, loc = self.placeable(
+                                board, eweights, weights, turns_left - 1)
+                            if(weight != 100):
+                                return (i, j)
                         board[j] = 0
                 weights ^= (1 << i)
             i += 1
         for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
             if(board[i] == 0):
                 return (100, i)
-        
 
     def placeBlock(self) -> dict:
         board = self.state['board']
         turn = self.state['current_player']
         weights = self.state['blocks'][turn]
         eweights = self.state['blocks'][turn ^ 1]
-        weight, loc =  self.placeable(board, weights, eweights, lookahead)
-        return {'weight': weight , 'loc': loc}
+        weight, loc = self.placeable(board, weights, eweights, lookahead)
+        return {'weight': weight, 'loc': loc}
 
     def removeable(self, board: list, turns_left: int) -> int:
         if turns_left < 0:
@@ -85,8 +86,7 @@ class COMAPlayer(Player):
         for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
             if(board[i]):
                 return i
-        return 100
+        # return 100
 
     def receiveGameState(self, state: dict) -> None:
         self.state = state
-        pass

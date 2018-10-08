@@ -4,6 +4,7 @@ from abstract_no_tipping_player import Player
 from checks_one_move_ahead_player import COMAPlayer
 from dp_player import DPPlayer
 from max_player import MaxPlayer
+from test_player import TempPlayer
 
 # fixed
 BOARDLENGTH = 30  # half the board length
@@ -24,7 +25,7 @@ def isGameOver(board: list) -> bool:
         if board[i] > 0:
             leftTorque += (i + 3) * board[i]
             rightTorque += (i + 1) * board[i]
-    # add torque for initial blocks
+    # add torque for weight of board (like have a weight at position 0)
     leftTorque += 3 * BOARDWEIGHT
     rightTorque += BOARDWEIGHT
     return leftTorque < 0 or rightTorque > 0
@@ -33,7 +34,7 @@ def isGameOver(board: list) -> bool:
 
 
 def run_test(p: list) -> list:
-    if K is None:
+    if not K:
         k = randint(10, 25)
     else:
         k = K
@@ -125,6 +126,7 @@ def scaffold(p: list) -> None:
 def main():
     p0 = DPPlayer
     p1 = COMAPlayer
+    # p1 = TempPlayer
     scaffold([p0, p1])
     print("Switch who is going first.")
     scaffold([p1, p0])

@@ -14,9 +14,19 @@ BOARDLENGTH = 30  # half the board length
 BOARDWEIGHT = 3
 
 
+class State:
+    def __init__(self, board: list, myblocks: set, theirblocks: set):
+        self.board = board
+        self.myblocks = myblocks
+        self.theirblocks = theirblocks
+
+    def __eq__(self, other):
+        return self.board == other.board and self.myblocks == other.myBlocks and self.theirblocks == other.theirblocks
+
+
 class MaxPlayer(Player):
 
-    def placeHeaviest(self, boardLength: int, boardWeight: int, myBlocks: set, blockPlacedAt: list) -> tuple:
+    def placeHeaviest(self, boardLength: int, boardWeight: int, myBlocks: list, blockPlacedAt: list) -> tuple:
         """Finds the heaviest block the player can place and where to place it (starting from farthest)
 
         Arguments:
@@ -30,8 +40,8 @@ class MaxPlayer(Player):
         """
 
         for block in sorted(myBlocks, reverse=True):
-            for i in range(-1 * boardLength, 1):
-                if blockPlacedAt[i]:
+            for i in range(-boardLength, 1):
+                if blockPlacedAt[i] > 0:
                     continue
                 else:
                     newPlacement = blockPlacedAt[:]
@@ -53,11 +63,11 @@ class MaxPlayer(Player):
         board = self.state['board']
         turn = self.state['current_player']
         tempWeights = self.state['blocks'][turn]
-        weights = set()
+        weights = []
         i = 1
         while ((1 << i) <= tempWeights):
             if ((1 << i) & tempWeights) > 0:
-                weights.add(i)
+                weights.append(i)
             i += 1
         weight, loc = self.placeHeaviest(
             BOARDLENGTH, BOARDWEIGHT, weights, board)
@@ -86,13 +96,13 @@ class MaxPlayer(Player):
 
     def receiveGameState(self, state: dict) -> None:
         self.state = state
-        pass
 
-    def getTorque(self, board: list):
+    @staticmethod
+    def getTorque(board: list):
         leftTorque = 0
         rightTorque = 0
         for i in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-            if board[i]:
+            if board[i] > 0:
                 leftTorque += (i + 3) * board[i]
                 rightTorque += (i + 1) * board[i]
         # add torque for initial blocks
@@ -100,6 +110,68 @@ class MaxPlayer(Player):
         rightTorque += BOARDWEIGHT
         return leftTorque, rightTorque
 
-    def isGameOver(self, board: list):
-        leftTorque, rightTorque = self.getTorque(board)
+    @staticmethod
+    def DFSAdd(board, myBlocks, theirBlocks):
+        visited = set()
+        for myMove in myBlocks:
+            for place in range(-BOARDLENGTH, BOARDLENGTH + 1):
+                theirNewBlocks = theirblocks.copy()
+                myNewBlocks = myBlocks.copy()
+                myNewBlocks.remove(myMove)
+                newBoard = board.copy()
+                newBoard[place] = myMove
+                state = State(newBoard, myNewBlocks, theirNewBlocks)
+                if state not in visited:
+                    if DFS(visited, state, 1, 5):
+                        return myMove, place
+        return None, None
+
+    @staticmethod
+    def DFS(visited: set(), current_state: State, level: int, max_level: int) -> bool:
+        visited.add(current_state)
+
+    @staticmethod
+    def getMaxCandidate(board: list):
+        leftTorque, rightTorque = MaxPlayer.getTorque(board)
+        maxes = [False] * len(board)
+        for i in range(-BOARDLENGTH, BOARDLENGTH + 1):
+            if board[i] == 0:
+                for w in range(51):
+                    board[i] = w
+                    if MaxPlayer.isGameOver(board):
+                        board[i] = 0
+                        break
+                    board[i] = 0
+                maxes[i] = w - 1
+        return maxes
+
+    @staticmethod
+    def getClosestCandidate(board: list):
+        maxes = MaxPlayer.getMaxCandidate(board)
+        closestInd = False
+        closestBlock = -1e9
+        minDiff = 1e9
+        for i in range(-BOARDLENGTH, BOARDLENGTH + 1):
+            if maxes[i]:
+                board[i] = maxes[i]
+                leftTorque, rightTorque = MaxPlayer.getTorque(board)
+                diff = abs(leftTorque - rightTorque)
+                if diff < minDiff or (diff == minDiff and maxes[i] > closestBlock):
+                    minDiff = diff
+                    closestInd = i
+                    closestBlock = maxes[i]
+                board[i] = 0
+        return closestBlock, closestInd
+
+    @staticmethod
+    def isGameOver(board: list):
+        leftTorque, rightTorque = MaxPlayer.getTorque(board)
         return leftTorque < 0 or rightTorque > 0
+
+
+if __name__ == "__main__":
+    board = [0 for _ in range(61)]
+    board[-4] = 3
+    print(MaxPlayer.getTorque(board))
+    print(MaxPlayer.isGameOver(board))
+    print(MaxPlayer.getMaxCandidate(board))
