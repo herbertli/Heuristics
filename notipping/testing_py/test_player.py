@@ -8,86 +8,79 @@ from checks_one_move_ahead_player import COMAPlayer
 # fixed
 BOARDLENGTH = 30  # half the board length
 BOARDWEIGHT = 3
+LOOKAHEAD = 3
 
 
 class TempPlayer(COMAPlayer):
 
     # meaning that the player sees if it can force a win in at most _ moves
     # from the current state
-    lookAhead = 3
 
     def placeBlock(self) -> dict:
         board = self.state['board']
+        occ = [_ for _ in board if _ > 0]
         turn = self.state['current_player']
         weights = self.state['blocks'][turn]
         eweights = self.state['blocks'][turn ^ 1]
 
-        weight, loc = self.forceable(board, weights, eweights)
-        if weight and loc:
-            return {'weight': weight, 'loc': loc}
+        if len(occ) > 30:
+            weight, loc = self.forceable(board, weights, eweights)
+            if weight and loc:
+                print("Found winning move:", weight, loc)
+                return {'weight': weight, 'loc': loc}
 
-        weight, loc = self.placeable(board, weights, eweights, lookahead)
+        weight, loc = self.placeable(board, weights, eweights, 6)
         return {'weight': weight, 'loc': loc}
 
     """
     Keys are tuples: (board, myBlocks, theirBlocks)
-    Values are: -1 definitely a losing state
-                0 not sure
-                1 definitely a winning state
+    Values is a tuple (weight, loc): 
+        weight < 0 -> definitely a losing state, place at loc
+        weight = 0 -> not sure
+        weight > 0 -> definitely a winning state, place at loc
     """
     visited = {}
 
     def forceable(self, board, weights, eweights):
-        self.preprocess(board, weights, eweights)
-        i = 1
-        while ((1 << i) <= weights):
-            if ((1 << i) & weights) > 0:
-                weights ^= (1 << i)
-                for j in range(-1 * BOARDLENGTH, BOARDLENGTH + 1):
-                    if board[j] == 0:
-                        board[j] = i
-                        if self.visited[(','.join([str(_) for _ in board]), eweights, weights)] == -1:
-                            return i, j
-                        board[j] = 0
-                weights ^= (1 << i)
-            i += 1
+        weight, loc = self.dfs(tuple(board), weights, eweights, 0)
+        if weight > 0:
+            return weight, loc
         return None, None
 
-    """
-    Returns true if anywhere you place a block, you are guarenteed to lose
-    """
+    def dfs(self, board, myBlocks, eBlocks, depth):
+        # print(board, myBlocks, eBlocks)
+        if depth == LOOKAHEAD:
+            self.visited[(board, myBlocks, eBlocks)] = (-1, -1)
+            return (0, -1)
+        if (tuple(board), myBlocks, eBlocks) in self.visited:
+            return self.visited[(board, myBlocks, eBlocks)]
 
-    def preprocess(self, board, myBlocks, eBlocks, depth=0):
-        if myBlocks == 0 or eBlocks == 0:
-            return
-        if depth == self.lookAhead:
-            self.visited[(','.join([str(_) for _ in board]),
-                          myBlocks, eBlocks)] = 0
-        if (','.join([str(_) for _ in board]), myBlocks, eBlocks) in self.visited:
-            return self.visited[(','.join([str(_) for _ in board]), myBlocks, eBlocks)]
-        if self.isGameOver(board):
-            self.visited[(','.join([str(_) for _ in board]),
-                          myBlocks, eBlocks)] = -1
-            return self.visited[(','.join([str(_) for _ in board]), myBlocks, eBlocks)]
+        haveMove = False
         for i in range(-BOARDLENGTH, BOARDLENGTH + 1):
             if board[i] == 0:
                 w = 1
                 while ((1 << w) <= myBlocks):
                     if ((1 << w) & myBlocks) > 0:
-                        myBlocks ^= (1 << w)
-                        board[i] = w
-                        res = self.preprocess(
-                            board, eBlocks, myBlocks, depth + 1)
-                        board[i] = 0
-                        if res == 1:
-                            self.visited[(','.join([str(_) for _ in board]),
-                                          myBlocks, eBlocks)] = -1
-                            return -1
-                        myBlocks ^= (1 << w)
+                        copyB = list(board)
+                        copyB[i] = w
+                        if not self.isGameOver(copyB):
+                            emove, eloc = self.dfs(
+                                tuple(copyB), eBlocks, myBlocks ^ (1 << w), depth + 1)
+                            # opponent has a losing state, I should go there
+                            if emove < 0:
+                                self.visited[(board, myBlocks, eBlocks)] = (
+                                    w, i)
+                                return w, i
+                            elif emove == 0:
+                                haveMove = (w, i)
                     w += 1
-        self.visited[(','.join([str(_) for _ in board]),
-                      myBlocks, eBlocks)] = 1
-        return 1
+
+        if not haveMove:
+            self.visited[(board, myBlocks, eBlocks)] = (-1, -1)
+            return (-1, -1)
+        else:
+            self.visited[(board, myBlocks, eBlocks)] = (0, 0)
+            return (0, 0)
 
     def isGameOver(self, board: list) -> bool:
         leftTorque = 0
