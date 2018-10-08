@@ -1,5 +1,5 @@
 from dp_player import DPPlayer
-
+import random
 
 # fixed
 BOARDLENGTH = 30  # half the board length
@@ -15,7 +15,6 @@ class SafePlayer(DPPlayer):
         board = self.state['board']
         turn = self.state['current_player']
         weights = self.state['blocks'][turn]
-        eweights = self.state['blocks'][turn ^ 1]
         weight, loc = self.placeable(board, weights)
         return {'weight': weight, 'loc': loc}
 
@@ -33,4 +32,4 @@ class SafePlayer(DPPlayer):
                             return w, i
                         board[i] = 0
             w += 1
-        return w, random.choice([ind for ind in range(-BOARDLENGTH, BOARDLENGTH) if board[ind] == 0])
+        return smallest, random.choice([ind for ind in range(-BOARDLENGTH, BOARDLENGTH) if board[ind] == 0])
