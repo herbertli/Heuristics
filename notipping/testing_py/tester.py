@@ -5,6 +5,8 @@ from checks_one_move_ahead_player import COMAPlayer
 from dp_player import DPPlayer
 from max_player import MaxPlayer
 from test_player import TempPlayer
+from safe_player import SafePlayer
+from minimax_removal_player import MRPlayer
 
 # fixed
 BOARDLENGTH = 30  # half the board length
@@ -35,7 +37,8 @@ def isGameOver(board: list) -> bool:
 
 def run_test(p: list) -> list:
     if not K:
-        k = randint(10, 25)
+        # k = randint(10, 25)
+        k = 25
     else:
         k = K
     if verbose:
@@ -108,7 +111,7 @@ def scaffold(p: list) -> None:
     fail_reason = [[0] * 7 for i in range(2)]
     for i in range(n):
         if not verbose:
-            print(".", end = "")
+            print(".", end="")
             if (i+1) % 10 == 0:
                 print(flush=True)
         players = [p[0](), p[1]()]
@@ -124,9 +127,9 @@ def scaffold(p: list) -> None:
 
 
 def main():
-    p0 = DPPlayer
-    p1 = COMAPlayer
-    # p1 = TempPlayer
+    p0 = MRPlayer
+    # p1 = COMAPlayer
+    p1 = SafePlayer
     scaffold([p0, p1])
     print("Switch who is going first.")
     scaffold([p1, p0])

@@ -1,63 +1,65 @@
 from dp_player import DPPlayer
 
+infinity = 1.0e400
+BOARDLENGTH = 30
+
+
+def argmin(seq, fn):
+    """Return an element with lowest fn(seq[i]) score; tie goes to first one.
+    >>> argmin(['one', 'to', 'three'], len)
+    'to'
+    """
+    best = seq[0]
+    best_score = fn(best)
+    for x in seq:
+        x_score = fn(x)
+        if x_score < best_score:
+            best, best_score = x, x_score
+    return best
+
+
+def argmax(seq, fn):
+    """Return an element with highest fn(seq[i]) score; tie goes to first one.
+    >>> argmax(['one', 'to', 'three'], len)
+    'three'
+    """
+    return argmin(seq, lambda x: -fn(x))
+
+
 class MRPlayer(DPPlayer):
 
     def removeBlock(self) -> int:
         board = self.state['board']
-        numPlaced = len([_ for i in board if i > 0])
-        if numPlaced => 25: 
-            return alphabeta_search(state, game)
+        numPlaced = len([i for i in board if i > 0])
+        if numPlaced >= 25:
+            block = self.alphabeta_search(board)
+            print("BLOCK:", block)
+            return block
         else:
             return super().removeBlock()
-    
-    def minimax_decision(state, game):
-        """Given a state in a game, calculate the best move by searching
-        forward all the way to the terminal states. [Fig. 6.4]"""
 
-        player = game.to_move(state)
-
-        def max_value(state):
-            if game.terminal_test(state):
-                return game.utility(state, player)
-            v = -infinity
-            for (a, s) in game.successors(state):
-                v = max(v, min_value(s))
-            return v
-
-        def min_value(state):
-            if game.terminal_test(state):
-                return game.utility(state, player)
-            v = infinity
-            for (a, s) in game.successors(state):
-                v = min(v, max_value(s))
-            return v
-
-        # Body of minimax_decision starts here:
-        action, state = argmax(game.successors(state), lambda ((a, s)): min_value(s))
-        return action
-    
-    def alphabeta_search(state, game, d=4, cutoff_test=None, eval_fn=None):
+    def alphabeta_search(self, board, d=4, cutoff_test=None, eval_fn=None):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
 
-        player = game.to_move(state)
+        player = 'MAX'
 
-        def max_value(state, alpha, beta, depth):
-            if cutoff_test(state, depth):
-                return eval_fn(state)
+        def max_value(board, alpha, beta, depth):
+            if cutoff_test(board, depth):
+                return eval_fn(board)
             v = -infinity
-            for (a, s) in game.successors(state):
+            for (a, s) in self.successors(board):
                 v = max(v, min_value(s, alpha, beta, depth+1))
                 if v >= beta:
                     return v
                 alpha = max(alpha, v)
             return v
 
-        def min_value(state, alpha, beta, depth):
-            if cutoff_test(state, depth):
-                return eval_fn(state)
+        def min_value(board, alpha, beta, depth):
+            if cutoff_test(board, depth):
+                return eval_fn(board)
             v = infinity
-            for (a, s) in game.successors(state):
+            for (a, s) in self.successors(board):
                 v = min(v, max_value(s, alpha, beta, depth+1))
                 if v <= alpha:
                     return v
@@ -67,18 +69,26 @@ class MRPlayer(DPPlayer):
         # Body of alphabeta_search starts here:
         # The default test cuts off at depth d or at a terminal state
         cutoff_test = (cutoff_test or
-                    (lambda state,depth: depth>d or game.terminal_test(state)))
-        eval_fn = eval_fn or (lambda state: game.utility(state, player))
-        action, state = argmax(game.successors(state),
-                            lambda ((a, s)): min_value(s, -infinity, infinity, 0))
+                       (lambda board, depth: depth > d or self.terminal_test(board)))
+        eval_fn = eval_fn or (lambda board: self.utility(board, player))
+        action, board = argmax(self.successors(
+            board), lambda t: min_value(t[1], -infinity, infinity, 0))
         return action
-    
-    def successors(self, state):
-        return self.succs.get(state, [])
 
-    def utility(self, state, player):
+    def successors(self, board):
+        succs = []
+        for i in range(-BOARDLENGTH, BOARDLENGTH + 1):
+            if board[i] > 0:
+                copied = board.copy()
+                copied[i] = 0
+                succs.append((i, copied))
+        return succs
+
+    def utility(self, board, player):
         if player == 'MAX':
-            return self.utils[state]
+            return -1 if self.terminal_test(board) else 1
         else:
-            return -self.utils[state]
+            return 1 if self.terminal_test(board) else -1
 
+    def terminal_test(self, board):
+        return self.isGameOver(board)
