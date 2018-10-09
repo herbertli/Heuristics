@@ -18,7 +18,7 @@ NoTippingClient::NoTippingClient(bool isFirst)
     nlohmann::json response = this->sc->receive_json(BUFFER_SIZE);
     this->board_length = response['board_length'];
     this->num_weights = response['num_weights'];
-};
+}
 
 void NoTippingClient::play_game()
 {
@@ -53,14 +53,14 @@ void NoTippingClient::play_game()
             this->sc->send_json(j);
         }
     }
-};
+}
 
 pair<int, int> NoTippingClient::place(vector<int> current_board_state)
 {
     return make_pair(1, 1);
-};
+}
 
 int NoTippingClient::remove(vector<int> current_board_state)
 {
     return 1;
-};
+}
