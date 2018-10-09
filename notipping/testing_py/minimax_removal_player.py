@@ -31,7 +31,7 @@ class MRPlayer(DPPlayer):
     def removeBlock(self) -> int:
         board = self.state['board']
         numPlaced = len([i for i in board if i > 0])
-        if numPlaced >= 25:
+        if numPlaced >= 20:
             block = self.alphabeta_search(board)
             print("BLOCK:", block)
             return block
