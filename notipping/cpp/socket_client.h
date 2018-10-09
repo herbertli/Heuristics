@@ -24,9 +24,7 @@ class SocketClient
     SocketClient(string, int);
     void close_socket();
     void send_data(string);
-    void send_json(nlohmann::json);
-    string receive_data(int);
-    nlohmann::json receive_json(int);
+    string receive_data(int, char end = ' ');
     string receive_large(int, int);
 };
 
@@ -80,11 +78,6 @@ void SocketClient::send_data(string data)
 {
     send(client_sock, data.c_str(), strlen(data.c_str()), 0);
 }
-void SocketClient::send_json(nlohmann::json j)
-{
-    string jsonString = j.dump();
-    return send_data(jsonString);
-}
 
 /*
  *  SocketClient Close Connection
@@ -102,22 +95,33 @@ void SocketClient::close_socket()
  *  Return:
  *      the string of data sent by server
  */
-string SocketClient::receive_data(int buffer_size)
+string SocketClient::receive_data(int buffer_size, char end)
 {
-    char *buffer = (char *)malloc(sizeof(*buffer) * buffer_size);
-    string data;
-    int valread = read(client_sock, buffer, buffer_size);
-    if (valread >= 1)
+    char *data = new char[buffer_size];
+    string dataString = "";
+
+    // end of message is not specified
+    if (end == ' ')
     {
-        data.append(buffer);
+        int bytesReceived = recv(client_sock, data, buffer_size, 0);
+        dataString = string(data, bytesReceived);
+        // end of message is specified
     }
-    free(buffer);
-    return data;
-}
-nlohmann::json SocketClient::receive_json(int buffer_size)
-{
-    string data = receive_data(buffer_size);
-    return nlohmann::json::parse(data);
+    else
+    {
+        while (true)
+        {
+            int bytesReceived = recv(client_sock, data, buffer_size, 0);
+            dataString += string(data, bytesReceived);
+            if (dataString[dataString.size() - 1] == end)
+            {
+                break;
+            }
+        }
+    }
+
+    delete[] data;
+    return dataString;
 }
 
 /*
