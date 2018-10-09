@@ -38,11 +38,9 @@ class MRPlayer(DPPlayer):
         else:
             return super().removeBlock()
 
-    def alphabeta_search(self, board, d=4, cutoff_test=None, eval_fn=None):
+    def alphabeta_search(self, board, d=3, cutoff_test=None, eval_fn=None):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
-
-        player = 'MAX'
 
         def max_value(board, alpha, beta, depth):
             if cutoff_test(board, depth):
@@ -70,7 +68,7 @@ class MRPlayer(DPPlayer):
         # The default test cuts off at depth d or at a terminal state
         cutoff_test = (cutoff_test or
                        (lambda board, depth: depth > d or self.terminal_test(board)))
-        eval_fn = eval_fn or (lambda board: self.utility(board, player))
+        eval_fn = eval_fn or (lambda board: self.utility(board))
         action, board = argmax(self.successors(
             board), lambda t: min_value(t[1], -infinity, infinity, 0))
         return action
@@ -81,14 +79,12 @@ class MRPlayer(DPPlayer):
             if board[i] > 0:
                 copied = board.copy()
                 copied[i] = 0
-                succs.append((i, copied))
+                if not self.isGameOver(copied):
+                    succs.append((i, copied))
         return succs
 
-    def utility(self, board, player):
-        if player == 'MAX':
-            return -1 if self.terminal_test(board) else 1
-        else:
-            return 1 if self.terminal_test(board) else -1
+    def utility(self, board):
+        return -1 if self.isGameOver(board) else 1
 
     def terminal_test(self, board):
         return self.isGameOver(board)
