@@ -4,11 +4,10 @@ import org.json.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class AmbulanceClient {
 
-    static SocketClient socketClient;
+    private static SocketClient socketClient;
 
     public static void main(String[] args) throws IOException {
 
@@ -28,14 +27,14 @@ public class AmbulanceClient {
 
         // receive buffer message
         JSONObject bufferMsg = new JSONObject(socketClient.receive_data().trim());
-        int bufferSize = Integer.parseInt(bufferMsg.getString("buffer_size"));
+        int bufferSize = bufferMsg.getInt("buffer_size");
         System.out.println("Buffer Size: " + bufferSize);
 
         // receive problem message
         JSONObject probObj = new JSONObject(socketClient.receive_data(bufferSize).trim());
 
         // get patients
-        ArrayList<Patient> patientArrayList = new ArrayList();
+        ArrayList<Patient> patientArrayList = new ArrayList<>();
         JSONObject patientObj = probObj.getJSONObject("patients");
         for (String pId : patientObj.keySet()) {
             JSONObject p = patientObj.getJSONObject(pId);
@@ -45,7 +44,7 @@ public class AmbulanceClient {
             patientArrayList.add(new Patient(Integer.parseInt(pId), x, y, d));
         }
 
-        ArrayList<Hospital> hospitalArrayList = new ArrayList();
+        ArrayList<Hospital> hospitalArrayList = new ArrayList<>();
         JSONObject hospitalObj = probObj.getJSONObject("hospitals");
         for (String hId : hospitalObj.keySet()) {
             JSONObject h = hospitalObj.getJSONObject(hId);
@@ -57,22 +56,29 @@ public class AmbulanceClient {
             hospitalArrayList.add(hos);
         }
 
-        ArrayList<Ambulance> ambulanceArrayList = new ArrayList();
+        ArrayList<Ambulance> ambulanceArrayList = new ArrayList<>();
         JSONObject amObj = probObj.getJSONObject("ambulances");
         for (String aId : amObj.keySet()) {
             JSONObject am = amObj.getJSONObject(aId);
             ambulanceArrayList.add(new Ambulance(Integer.parseInt(aId), am.getInt("starting_hospital")));
         }
 
+        System.out.printf("Read %d patients\n", patientArrayList.size());
+        System.out.printf("Read %d hospitals\n", hospitalArrayList.size());
+        System.out.printf("Read %d ambulances\n", ambulanceArrayList.size());
+
         TestLibrary.run(patientArrayList, hospitalArrayList, ambulanceArrayList);
 
         // send buffer size
-//        socketClient.send_json(new BufferMsg(8192));
+        JSONObject solObj = new JSONObject();
+        String solString = solObj.toString();
+        socketClient.send_data(new JSONObject().put("buffer_size", solString.length()).toString());
 
         // send solution
-//        socketClient.send_json(new SolutionMsg());
+        socketClient.send_data(solString);
 
-//        socketClient.close_socket();
+        // close socket
+        socketClient.close_socket();
     }
 
 }
