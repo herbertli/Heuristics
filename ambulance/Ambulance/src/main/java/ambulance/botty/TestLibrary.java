@@ -14,11 +14,16 @@ import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.*;
 import com.graphhopper.jsprit.util.Examples;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
 public class TestLibrary {
+
+    static void run(ArrayList<Patient> patients, ArrayList<Hospital> hospitals, ArrayList<Ambulance> ambulances) {
+        // TODO: something
+    }
 
     public static void main(String[] args) {
         Examples.createOutputFolder();

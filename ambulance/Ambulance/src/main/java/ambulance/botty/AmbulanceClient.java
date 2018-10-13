@@ -57,9 +57,14 @@ public class AmbulanceClient {
             hospitalArrayList.add(hos);
         }
 
+        ArrayList<Ambulance> ambulanceArrayList = new ArrayList();
         JSONObject amObj = probObj.getJSONObject("ambulances");
+        for (String aId : amObj.keySet()) {
+            JSONObject am = amObj.getJSONObject(aId);
+            ambulanceArrayList.add(new Ambulance(Integer.parseInt(aId), am.getInt("starting_hospital")));
+        }
 
-
+        TestLibrary.run(patientArrayList, hospitalArrayList, ambulanceArrayList);
 
         // send buffer size
 //        socketClient.send_json(new BufferMsg(8192));
