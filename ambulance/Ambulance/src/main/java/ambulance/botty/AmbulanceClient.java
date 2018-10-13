@@ -1,30 +1,12 @@
 package ambulance.botty;
 
-import com.google.gson.Gson;
+import org.json.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class AmbulanceClient {
-
-    static class InitialMsg {
-        String name;
-
-        public InitialMsg(String name) {
-            this.name = name;
-        }
-    }
-
-    static class BufferMsg {
-        int buffer_size;
-
-        public BufferMsg(int buffer_size) {
-            this.buffer_size = buffer_size;
-        }
-    }
-
-    static class SolutionMsg {
-
-    }
 
     static SocketClient socketClient;
 
@@ -38,33 +20,54 @@ public class AmbulanceClient {
         int port = Integer.parseInt(args[1]);
         if (socketClient != null) socketClient.close_socket();
 
-        Gson gson = new Gson();
-
         // connect to server
         socketClient = new SocketClient(host, port);
 
         // send initial message
-        socketClient.send_json(new InitialMsg("Botty McBotFace"));
+        socketClient.send_data(new JSONObject().put("name", "Botty McBotFace").toString());
 
         // receive buffer message
-        String s = socketClient.receive_data();
-        System.out.println(s);
+        JSONObject bufferMsg = new JSONObject(socketClient.receive_data().trim());
+        int bufferSize = Integer.parseInt(bufferMsg.getString("buffer_size"));
+        System.out.println("Buffer Size: " + bufferSize);
 
         // receive problem message
-//        String s = socketClient.receive_data(b.buffer_size);
-//        System.out.println(s);
+        JSONObject probObj = new JSONObject(socketClient.receive_data(bufferSize).trim());
 
+        // get patients
+        ArrayList<Patient> patientArrayList = new ArrayList();
+        JSONObject patientObj = probObj.getJSONObject("patients");
+        for (String pId : patientObj.keySet()) {
+            JSONObject p = patientObj.getJSONObject(pId);
+            int x = p.getInt("xloc");
+            int y = p.getInt("yloc");
+            int d = p.getInt("rescuetime");
+            patientArrayList.add(new Patient(Integer.parseInt(pId), x, y, d));
+        }
 
-        // TODO: insert algo here
+        ArrayList<Hospital> hospitalArrayList = new ArrayList();
+        JSONObject hospitalObj = probObj.getJSONObject("hospitals");
+        for (String hId : hospitalObj.keySet()) {
+            JSONObject h = hospitalObj.getJSONObject(hId);
+            Hospital hos = new Hospital(Integer.parseInt(hId));
+            JSONArray ams = h.getJSONArray("ambulances_at_start");
+            for (int i = 0; i < ams.length(); i++) {
+                hos.ambulancesAtStart.add(ams.getInt(i));
+            }
+            hospitalArrayList.add(hos);
+        }
+
+        JSONObject amObj = probObj.getJSONObject("ambulances");
+
 
 
         // send buffer size
-        socketClient.send_json(new BufferMsg(8192));
+//        socketClient.send_json(new BufferMsg(8192));
 
         // send solution
-        socketClient.send_json(new SolutionMsg());
+//        socketClient.send_json(new SolutionMsg());
 
-        socketClient.close_socket();
+//        socketClient.close_socket();
     }
 
 }
