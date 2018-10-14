@@ -1,6 +1,8 @@
 package ambulance.botty;
 
-public class Patient {
+import org.apache.commons.math3.ml.clustering.Clusterable;
+
+public class Patient implements Clusterable {
 
     int id, x, y, deathTime;
 
@@ -9,5 +11,9 @@ public class Patient {
         this.x = x;
         this.y = y;
         this.deathTime = deathTime;
+    }
+
+    public double[] getPoint() {
+        return new double[]{this.x, this.y};
     }
 }
