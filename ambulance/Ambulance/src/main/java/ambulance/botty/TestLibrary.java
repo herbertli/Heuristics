@@ -3,6 +3,8 @@ package ambulance.botty;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
+import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListener;
+import com.graphhopper.jsprit.core.algorithm.termination.TimeTermination;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
@@ -13,27 +15,28 @@ import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
 import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.*;
 import com.graphhopper.jsprit.util.Examples;
-import org.apache.commons.math3.ml.clustering.*;
+import org.apache.commons.math3.ml.clustering.CentroidCluster;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 
 import java.util.*;
-import java.util.ArrayList;
 
 class CompareByNumAmb implements Comparator<Hospital> {
-    public int compare(Hospital a, Hospital b){
+    public int compare(Hospital a, Hospital b) {
         return Integer.compare(a.ambulancesAtStart.size(), b.ambulancesAtStart.size());
     }
 }
 
 
 class CompareByClusterSize implements Comparator<Cluster> {
-    public int compare(Cluster a, Cluster b){
+    public int compare(Cluster a, Cluster b) {
         return Integer.compare(a.getPoints().size(), b.getPoints().size());
     }
 }
 
 public class TestLibrary {
 
-    static void run(ArrayList<Patient> patients, ArrayList<Hospital> hospitals, ArrayList<Ambulance> ambulances) {
+    static Solution run(ArrayList<Patient> patients, ArrayList<Hospital> hospitals, ArrayList<Ambulance> ambulances) {
         List<CentroidCluster<Patient>> clusters = cluster(patients);
         Collections.sort(hospitals, new CompareByNumAmb());
         Collections.sort(clusters, new CompareByClusterSize());
@@ -44,42 +47,38 @@ public class TestLibrary {
         // max time of the problem
         double maxDuration = 10000;
 
-        int nuOfVehicles = 0;
         int capacity = 4;
         // define depots
-        int depotCounter = 1;
-        for(int i = 0; i < hospitals.size(); i++){
-            for(int j = 0; j < hospitals.get(i).ambulancesAtStart.size(); j++){
-                VehicleType vehicleType = VehicleTypeImpl.Builder.newInstance(depotCounter + "_type")
+        for (int i = 0; i < hospitals.size(); i++) {
+            for (int j = 0; j < hospitals.get(i).ambulancesAtStart.size(); j++) {
+                VehicleType vehicleType = VehicleTypeImpl.Builder.newInstance(hospitals.get(i).id + "_type")
                         .addCapacityDimension(0, capacity).setCostPerDistance(1.0).build();
-                String vehicleId = depotCounter + "_" + (hospitals.get(i).ambulancesAtStart.get(j)) + "_vehicle";
+                String vehicleId = hospitals.get(i).id + "_" + (hospitals.get(i).ambulancesAtStart.get(j)) + "_vehicle";
                 VehicleImpl.Builder vehicleBuilder = VehicleImpl.Builder.newInstance(vehicleId);
                 vehicleBuilder.setStartLocation(Location.newInstance(Math.round(clusters.get(i).getCenter().getPoint()[0]), Math.round(clusters.get(i).getCenter().getPoint()[1])));
                 vehicleBuilder.setType(vehicleType);
                 vehicleBuilder.setLatestArrival(maxDuration);
                 VehicleImpl vehicle = vehicleBuilder.build();
                 vrpBuilder.addVehicle(vehicle);
-
             }
         }
         // define problem with finite fleet
         vrpBuilder.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE);
 
-        for(CentroidCluster<Patient> cc : clusters){
-            for(Patient p: cc.getPoints()){
+        for (CentroidCluster<Patient> cc : clusters) {
+            for (Patient p : cc.getPoints()) {
                 Shipment shipment = Shipment.Builder.newInstance("" + p.id)
                         .addPickupTimeWindow(0, p.deathTime)
-                        .addDeliveryTimeWindow(0, p.deathTime)
+                        .addDeliveryTimeWindow(0, p.deathTime - 1)
                         .addSizeDimension(0, 1)
+                        .setPickupServiceTime(1)
+                        .setDeliveryServiceTime(0)
                         .setPickupLocation(Location.newInstance(p.x, p.y))
-                        .setDeliveryLocation(Location.newInstance(Math.round(cc.getCenter().getPoint()[0]), Math.round(cc.getCenter().getPoint()[1]))
-                        )
+                        .setDeliveryLocation(Location.newInstance(Math.round(cc.getCenter().getPoint()[0]), Math.round(cc.getCenter().getPoint()[1])))
                         .build();
                 vrpBuilder.addJob(shipment);
-
             }
         }
-
 
         // Pre-calculate distances
         VehicleRoutingTransportCostsMatrix costMatrix = createMatrix(vrpBuilder);
@@ -88,27 +87,35 @@ public class TestLibrary {
         // build the problem
         VehicleRoutingProblem vrp = vrpBuilder.build();
 
+        // set time constraint
+        TimeTermination prematureTermination = new TimeTermination(110 * 1000);
+
         // solve the problem
         VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp)
                 .setProperty(Jsprit.Parameter.FAST_REGRET, "true")
                 .setProperty(Jsprit.Parameter.THREADS, "5")
                 .buildAlgorithm();
-
-        vra.setMaxIterations(2000);
+        vra.setMaxIterations(10000);
+        vra.setPrematureAlgorithmTermination(prematureTermination);
+        vra.addListener(prematureTermination);
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
         VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
-        SolutionPrinter.print(bestSolution);
+
+        // print
+        SolutionPrinter.print(vrp, bestSolution, SolutionPrinter.Print.VERBOSE);
 
         // plot
         Plotter plotter = new Plotter(vrp, bestSolution);
         plotter.setLabel(Plotter.Label.SIZE);
         plotter.plot("output/solution.png", "solution");
 
+        return new Solution(hospitals, clusters, bestSolution.getRoutes());
+
     }
 
-    static List<CentroidCluster<Patient>> cluster(ArrayList<Patient> patients){
-        KMeansPlusPlusClusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<Patient>(5, 500);
+    static List<CentroidCluster<Patient>> cluster(ArrayList<Patient> patients) {
+        KMeansPlusPlusClusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<>(5, 500);
         //Clusterer<Patient> patientClusterer = new FuzzyKMeansClusterer<Patient>(10, 5);
         //Clusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<Patient>(10, 5);
         //Clusterer<Patient> patientClusterer = new MultiKMeansPlusPlusClusterer<Patient>(10, 5);
@@ -116,6 +123,26 @@ public class TestLibrary {
     }
 
     public static void main(String[] args) {
+        Random rng = new Random();
+        ArrayList<Patient> patients = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            patients.add(new Patient(i, rng.nextInt(1001), rng.nextInt(1001), rng.nextInt(500)));
+        }
+        ArrayList<Hospital> hospitals = new ArrayList<>();
+        int amId = 0;
+        for (int i = 0; i < 5; i++) {
+            ArrayList<Integer> amIds = new ArrayList<>();
+            for (int j = 0; j < rng.nextInt(25) + 1; j++) {
+                amIds.add(amId++);
+            }
+            Hospital h = new Hospital(i);
+            h.ambulancesAtStart = amIds;
+            hospitals.add(h);
+        }
+
+        List<CentroidCluster<Patient>> clusters = cluster(patients);
+        Collections.sort(hospitals, new CompareByNumAmb());
+        Collections.sort(clusters, new CompareByClusterSize());
         Examples.createOutputFolder();
 
         VehicleRoutingProblem.Builder vrpBuilder = VehicleRoutingProblem.Builder.newInstance();
@@ -123,46 +150,37 @@ public class TestLibrary {
         // max time of the problem
         double maxDuration = 10000;
 
-        int nuOfVehicles = 2;
         int capacity = 4;
-        Coordinate firstDepotCoord = Coordinate.newInstance(0, 33);
-        Coordinate second = Coordinate.newInstance(33, -33);
-
         // define depots
-        int depotCounter = 1;
-        for (Coordinate depotCoord : Arrays.asList(firstDepotCoord, second)) {
-            for (int i = 0; i < nuOfVehicles; i++) {
-                VehicleType vehicleType = VehicleTypeImpl.Builder.newInstance(depotCounter + "_type")
+        for (int i = 0; i < hospitals.size(); i++) {
+            for (int j = 0; j < hospitals.get(i).ambulancesAtStart.size(); j++) {
+                VehicleType vehicleType = VehicleTypeImpl.Builder.newInstance(hospitals.get(i).id + "_type")
                         .addCapacityDimension(0, capacity).setCostPerDistance(1.0).build();
-                String vehicleId = depotCounter + "_" + (i + 1) + "_vehicle";
+                String vehicleId = hospitals.get(i).id + "_" + (hospitals.get(i).ambulancesAtStart.get(j)) + "_vehicle";
                 VehicleImpl.Builder vehicleBuilder = VehicleImpl.Builder.newInstance(vehicleId);
-                vehicleBuilder.setStartLocation(Location.newInstance(depotCoord.getX(), depotCoord.getY()));
+                vehicleBuilder.setStartLocation(Location.newInstance(Math.round(clusters.get(i).getCenter().getPoint()[0]), Math.round(clusters.get(i).getCenter().getPoint()[1])));
                 vehicleBuilder.setType(vehicleType);
                 vehicleBuilder.setLatestArrival(maxDuration);
                 VehicleImpl vehicle = vehicleBuilder.build();
                 vrpBuilder.addVehicle(vehicle);
             }
-            depotCounter++;
         }
-
         // define problem with finite fleet
         vrpBuilder.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE);
 
-        // define pickup locations and their time windows
-        Random random = RandomNumberGeneration.newInstance();
-        for (int i = 0; i < 40; i++) {
-            Shipment shipment = Shipment.Builder.newInstance("" + (i + 1))
-                    .addPickupTimeWindow(random.nextInt(50), 1000 + random.nextInt(50))
-                    .addDeliveryTimeWindow(0, 1000)
-                    .addSizeDimension(0, 1)
-                    .addSizeDimension(0, 1)
-                    .setPickupLocation(Location.newInstance(random.nextInt(50), random.nextInt(50)))
-                    .setDeliveryLocation(random.nextInt(2) == 1 ?
-                            Location.newInstance(firstDepotCoord.getX(), firstDepotCoord.getY()) :
-                            Location.newInstance(second.getX(), second.getY())
-                    )
-                    .build();
-            vrpBuilder.addJob(shipment);
+        for (CentroidCluster<Patient> cc : clusters) {
+            for (Patient p : cc.getPoints()) {
+                Shipment shipment = Shipment.Builder.newInstance("" + p.id)
+                        .addPickupTimeWindow(0, p.deathTime)
+                        .addDeliveryTimeWindow(0, p.deathTime - 1)
+                        .addSizeDimension(0, 1)
+                        .setPickupServiceTime(1)
+                        .setDeliveryServiceTime(0)
+                        .setPickupLocation(Location.newInstance(p.x, p.y))
+                        .setDeliveryLocation(Location.newInstance(Math.round(cc.getCenter().getPoint()[0]), Math.round(cc.getCenter().getPoint()[1])))
+                        .build();
+                vrpBuilder.addJob(shipment);
+            }
         }
 
         // Pre-calculate distances
@@ -172,17 +190,23 @@ public class TestLibrary {
         // build the problem
         VehicleRoutingProblem vrp = vrpBuilder.build();
 
+        // set time constraint
+        TimeTermination prematureTermination = new TimeTermination(110 * 1000);
+
         // solve the problem
         VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp)
                 .setProperty(Jsprit.Parameter.FAST_REGRET, "true")
                 .setProperty(Jsprit.Parameter.THREADS, "5")
                 .buildAlgorithm();
-
-        vra.setMaxIterations(2000);
+        vra.setMaxIterations(10000);
+        vra.setPrematureAlgorithmTermination(prematureTermination);
+        vra.addListener(prematureTermination);
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
         VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
-        SolutionPrinter.print(bestSolution);
+
+        // print
+        SolutionPrinter.print(vrp, bestSolution, SolutionPrinter.Print.VERBOSE);
 
         // plot
         Plotter plotter = new Plotter(vrp, bestSolution);

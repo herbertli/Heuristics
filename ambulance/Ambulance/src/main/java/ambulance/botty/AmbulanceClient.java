@@ -1,9 +1,12 @@
 package ambulance.botty;
 
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
 import org.json.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class AmbulanceClient {
 
@@ -67,10 +70,40 @@ public class AmbulanceClient {
         System.out.printf("Read %d hospitals\n", hospitalArrayList.size());
         System.out.printf("Read %d ambulances\n", ambulanceArrayList.size());
 
-        TestLibrary.run(patientArrayList, hospitalArrayList, ambulanceArrayList);
+        JSONObject solObj = new JSONObject();
+        Solution solution = TestLibrary.run(patientArrayList, hospitalArrayList, ambulanceArrayList);
+
+        JSONObject hosObj = new JSONObject();
+        for (int i = 0; i < solution.hospitalArrayList.size(); i++) {
+            int hosId = solution.hospitalArrayList.get(i).id;
+            long xLoc = Math.round(solution.clusters.get(i).getCenter().getPoint()[0]);
+            long yLoc = Math.round(solution.clusters.get(i).getCenter().getPoint()[1]);
+            JSONObject ptObj = new JSONObject();
+            ptObj.put("xloc", xLoc);
+            ptObj.put("yloc", yLoc);
+            hosObj.put("" + hosId, ptObj);
+        }
+        solObj.put("hospital_loc", hosObj);
+
+        JSONObject routeObj = new JSONObject();
+        Collection<VehicleRoute> routes = solution.routes;
+        for (VehicleRoute route: routes) {
+            JSONArray routeArr = new JSONArray();
+            String vId = route.getVehicle().getId().split("_")[1];
+            for (TourActivity j : route.getActivities()) {
+                if (j.getName().equalsIgnoreCase("deliverShipment")){
+                    int hosId = Integer.parseInt(route.getVehicle().getId().split("_")[0]);
+                    routeArr.put(String.format("h%d", hosId));
+                } else if (j.getName().equalsIgnoreCase("pickupShipment")) {
+                    String patId = ((TourActivity.JobActivity) j).getJob().getId();
+                    routeArr.put(String.format("p%s", patId));
+                }
+            }
+            routeObj.put(vId, routeArr);
+        }
+        solObj.put("ambulance_moves", routeObj);
 
         // send buffer size
-        JSONObject solObj = new JSONObject();
         String solString = solObj.toString();
         socketClient.send_data(new JSONObject().put("buffer_size", solString.length()).toString());
 
