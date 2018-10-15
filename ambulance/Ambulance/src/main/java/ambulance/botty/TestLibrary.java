@@ -15,9 +15,7 @@ import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
 import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.*;
 import com.graphhopper.jsprit.util.Examples;
-import org.apache.commons.math3.ml.clustering.CentroidCluster;
-import org.apache.commons.math3.ml.clustering.Cluster;
-import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
+import org.apache.commons.math3.ml.clustering.*;
 
 import java.util.*;
 
@@ -115,10 +113,9 @@ public class TestLibrary {
     }
 
     static List<CentroidCluster<Patient>> cluster(ArrayList<Patient> patients) {
-        KMeansPlusPlusClusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<>(5, 500);
-        //Clusterer<Patient> patientClusterer = new FuzzyKMeansClusterer<Patient>(10, 5);
-        //Clusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<Patient>(10, 5);
-        //Clusterer<Patient> patientClusterer = new MultiKMeansPlusPlusClusterer<Patient>(10, 5);
+        //KMeansPlusPlusClusterer<Patient> patientClusterer = new KMeansPlusPlusClusterer<>(5, 500);
+        //FuzzyKMeansClusterer<Patient> patientClusterer = new FuzzyKMeansClusterer<>(5, 5);
+        MultiKMeansPlusPlusClusterer<Patient> patientClusterer = new MultiKMeansPlusPlusClusterer<Patient>(new KMeansPlusPlusClusterer<>(5, 50), 50);
         return patientClusterer.cluster(patients);
     }
 
@@ -211,6 +208,7 @@ public class TestLibrary {
         // plot
         Plotter plotter = new Plotter(vrp, bestSolution);
         plotter.setLabel(Plotter.Label.SIZE);
+        plotter.plotShipments(false);
         plotter.plot("output/solution.png", "solution");
     }
 
