@@ -1,5 +1,7 @@
 import random
 import operator
+from randomHunter import RandomHunter
+from randomPrey import RandomPrey
 
 WALL = 2
 VERT = (0, 1)
@@ -7,7 +9,7 @@ HORI = (1, 0)
 DIA = (1, 1)
 CDIA = (-1, 1)
 
-GRID_SIZE = 10
+GRID_SIZE = 300
 
 PREY_MOVES = [
     (0, 1),
@@ -21,7 +23,13 @@ PREY_MOVES = [
 ]
 
 MAX_WALLS = 100
+WALL_COOLDOWN = 20
 walls = []
+
+verbose = False
+def log(*args, **kwargs):
+    if verbose:
+        print(*args, **kwargs)
 
 def start():
     grid = [[0] * (GRID_SIZE + 2) for _ in range(GRID_SIZE + 2)]
@@ -41,41 +49,48 @@ def start():
     hunter_dir = (1, 1)
     is_prey_move = False
     placed = 0
-    while True:
-        print("Turn:", turn)
-        print("Hunter Position", hunter_pos)
-        print("Prey Position", prey_pos)
 
-        should_place_wall = False
-        if should_place_wall:
-            wall_start_pos = (0, 0)
-            wall_length = 10
-            wall_dir = random.choice([VERT, HORI, DIA, CDIA])
-            new_grid, valid = place_wall(hunter_pos, prey_pos, wall_start_pos, wall_dir, wall_length, grid)
-            if valid:
-                placed += 1
-                walls.append((wall_start_pos, wall_dir, wall_length))
-                grid = new_grid
-                print(f"Hunter places wall starting at {wall_start_pos} of length {wall_length} in direction {wall_dir}")
-                if placed == MAX_WALLS:
-                    random_wall = random.choice(walls)
-                    grid = remove_wall(random_wall[0], random_wall[1], random_wall[2], grid)
-        
-        print("Hunter moves in direction:", hunter_dir)
+    hunter = RandomHunter(hunter_pos, hunter_dir, prey_pos, MAX_WALLS)
+    prey = RandomPrey(prey_pos, hunter_pos, hunter_dir, grid)
+
+    while True:
+
+        log("Turn:", turn)
+        log("Hunter Position", hunter.position)
+        log("Prey Position", prey.position)
+
+        should_remove_wall = hunter.removeWall()
+        if should_remove_wall:
+            grid = remove_wall(*should_remove_wall, grid)
+
+        if turn > 0 and turn % WALL_COOLDOWN == 0:
+            should_place_wall = hunter.placeWall()
+            if should_place_wall and placed < MAX_WALLS:
+                new_grid, valid = place_wall(*should_place_wall)
+                if valid:
+                    placed += 1
+                    walls.append((wall_start_pos, wall_dir, wall_length))
+                    grid = new_grid
+                    log(f"Hunter places wall starting at {wall_start_pos} of length {wall_length} in direction {wall_dir}")
+            
+        hunter_dir = hunter.direction
+        log("Hunter moves in direction:", hunter_dir)
         hunter_pos, new_hunter_dir = get_new_pos(hunter_pos, hunter_dir, grid)
-        print("Hunter new position:", hunter_pos)
+        log("Hunter new position:", hunter_pos)
         hunter_dir = new_hunter_dir
 
         if is_prey_move:
-            prey_dir = random.choice(PREY_MOVES)
-            print("Prey moves in direction:", prey_dir)
-            prey_pos, prey_dir = get_new_pos(prey_pos, prey_dir, grid)
-            print("Prey new position:", prey_pos)
+            prey_dir = prey.getMove()
+            log("Prey moves in direction:", prey_dir)
+            prey_pos, prey_dir = get_new_pos(prey.position, prey_dir, grid)
+            log("Prey new position:", prey_pos)
 
         if compute_distance(hunter_pos, prey_pos) <= 4:
             break
         
-        print()
+        turn += 1
+        
+        log()
         if is_prey_move:
             is_prey_move = False
         else:
