@@ -6,10 +6,10 @@ class RandomHunter(Hunter):
         super().__init__(start_pos, direction, prey_pos, max_walls)
 
     def placeWall(self):
-        return None
-    
+        return False, None
+
     def removeWall(self):
-        return None
-    
+        return False, None
+
     def receivePreyPosition(self, position):
         self.prey_pos = position
