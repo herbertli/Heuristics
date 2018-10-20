@@ -88,6 +88,8 @@ def start():
         log("Hunter new position:", hunter_pos)
         hunter_dir = new_hunter_dir
         prey.receiveHunterPosition(hunter_pos, hunter_dir)
+        hunter.position = hunter_pos
+        hunter.direction = hunter_dir
 
         if is_prey_move:
             prey_dir = prey.getMove()
@@ -95,6 +97,7 @@ def start():
             prey_pos, prey_dir = get_new_pos(prey.position, prey_dir, grid)
             log("Prey new position:", prey_pos)
             hunter.receivePreyPosition(prey_pos)
+            prey.position = prey_pos
 
         if compute_distance(hunter_pos, prey_pos) <= 4:
             break
