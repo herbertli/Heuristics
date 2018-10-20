@@ -13,5 +13,3 @@ class RandomHunter(Hunter):
     
     def receivePreyPosition(self, position):
         self.prey_pos = position
-        
-        

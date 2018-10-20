@@ -1,5 +1,3 @@
-import random
-import operator
 from randomHunter import RandomHunter
 from randomPrey import RandomPrey
 
@@ -31,8 +29,8 @@ def log(*args, **kwargs):
     if verbose:
         print(*args, **kwargs)
 
-def start():
-    grid = [[0] * (GRID_SIZE + 2) for _ in range(GRID_SIZE + 2)]
+def create_grid(size):
+    grid = [[0] * (size + 2) for _ in range(size + 2)]
     for i in range(0, len(grid[0])):
         grid[0][i] = WALL
     for i in range(0, len(grid[0])):
@@ -41,18 +39,21 @@ def start():
         grid[-1][i] = WALL
     for i in range(0, len(grid[0])):
         grid[i][-1] = WALL
+
+def start():
+    grid = create_grid(GRID_SIZE)
     
     hunter_pos = (1, 1)
-    prey_pos = (231, 201)
-    turn = 0
-
     hunter_dir = (1, 1)
-    is_prey_move = False
-    placed = 0
-
+    walls_placed = 0
     hunter = RandomHunter(hunter_pos, hunter_dir, prey_pos, MAX_WALLS)
-    prey = RandomPrey(prey_pos, hunter_pos, hunter_dir, grid)
 
+    prey_pos = (231, 201)
+    prey = RandomPrey(prey_pos, hunter_pos, hunter_dir, grid)    
+    is_prey_move = False
+    
+    turn = 0
+    cooldown = WALL_COOLDOWN
     while True:
 
         log("Turn:", turn)
@@ -63,15 +64,18 @@ def start():
         if should_remove_wall:
             grid = remove_wall(*should_remove_wall, grid)
 
-        if turn > 0 and turn % WALL_COOLDOWN == 0:
+        if cooldown == 0:
             should_place_wall = hunter.placeWall()
-            if should_place_wall and placed < MAX_WALLS:
+            if should_place_wall and walls_placed < MAX_WALLS:
                 new_grid, valid = place_wall(*should_place_wall)
                 if valid:
-                    placed += 1
+                    walls_placed += 1
                     walls.append((wall_start_pos, wall_dir, wall_length))
                     grid = new_grid
                     log(f"Hunter places wall starting at {wall_start_pos} of length {wall_length} in direction {wall_dir}")
+                    cooldown = WALL_COOLDOWN
+        else:
+            cooldown -= 1
             
         hunter_dir = hunter.direction
         log("Hunter moves in direction:", hunter_dir)
@@ -100,29 +104,108 @@ def start():
 
 
 def get_new_pos(prev, direc, grid):
-    new_pos = tuple(map(operator.add, prev, direc))
+    new_pos = (prev[0] + direc[0], prev[1] + direc[1])
+    # handle bounce
     if grid[new_pos[0]][new_pos[1]] == WALL:
+        # if direction is one of the 4 cardinal directions, new pos is just the previous position
+        # except the the new direction is now the reverse of the previous direction
         if direc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             new_pos = prev
             new_direc = (direc[0] * -1,  direc[1] * -1)
+        # handle hard cases
         else:
-            adj_x = grid[new_pos[0]][new_pos[1] + direc[1] * -1]
-            adj_y = grid[new_pos[0] + direc[0] * -1][new_pos[1]]
+            # TODO: is this right?
+
+            # consider adjacent pixels
+            # +-+-+
+            # |*|A|
+            # +-+-+
+            # |B|↖|
+            # +-+-+
+            adj_x = grid[new_pos[0]][new_pos[1] + direc[1] * -1] # pixel B
+            adj_y = grid[new_pos[0] + direc[0] * -1][new_pos[1]] # pixel A
+            # if both A and B are walls, new position is the previous position
+            # new direction is -1 * (previous direction)
             if adj_x == WALL and adj_y == WALL:
                 return prev, (direc[0] * -1, direc[1] * -1)
+            
+            # +-+-+     +-+-+
+            # |*| |     |*|↗|
+            # +-+-+ ->  +-+-+
+            # |*|↖|     |*| |
+            # +-+-+     +-+-+
+            # x-position remains same, y position changes
+            # x-direction is reversed, y-direction is the same
             elif adj_x == WALL and adj_y != WALL:
-                return (prev[0], new_pos[1]), (direc[0], direc[1] * -1)
+                return (prev[0], new_pos[1]), (direc[0] * -1, direc[1])
+
+            # +-+-+     +-+-+
+            # |*|*|     |*|*|
+            # +-+-+ ->  +-+-+
+            # | |↖|     |↙| |
+            # +-+-+     +-+-+
+            # x-position changes, y position remains same
+            # x-direction is the same, y-direction is reversed
             elif adj_x != WALL and adj_y == WALL:
-                return (new_pos[0], prev[1]), (direc[0] * -1, direc[1])
+                return (new_pos[0], prev[1]), (direc[0], direc[1] * -1)
             else:
-                adj_new_x = grid[new_pos[0]][new_pos[1] + direc[1]]
-                adj_new_y = grid[new_pos[0] + direc[0]][new_pos[1]]
+                # +-+-+
+                # |*| |
+                # +-+-+
+                # | |↖|
+                # +-+-+
+                # need to check additional squares...
+
+                # +-+-+-+  
+                # | |B| | 
+                # +-+-+-+
+                # |A|*| |
+                # +-+-+-+
+                # | | |↖|
+                # +-+-+-+ 
+                adj_new_x = grid[new_pos[0]][new_pos[1] + direc[1]] # B
+                adj_new_y = grid[new_pos[0] + direc[0]][new_pos[1]] # A
+
+                # +-+-+-+       +-+-+-+
+                # | | | |       | |*| | 
+                # +-+-+-+       +-+-+-+
+                # | |*| |   or  |*|*| | 
+                # +-+-+-+       +-+-+-+
+                # | | |↖|       | | |↖|
+                # +-+-+-+       +-+-+-+ 
+                # new position is the same as previous position
+                # new direction is the reverse of the previous direction
                 if (adj_new_x == WALL and adj_new_y == WALL) or (adj_new_x != WALL and adj_new_y != WALL):
                     return prev, (direc[0] * -1, direc[1] * -1)
+
+                # +-+-+-+       +-+-+-+
+                # | |*| |       | |*| | 
+                # +-+-+-+       +-+-+-+
+                # | |*| |   ->  | |*|↗| 
+                # +-+-+-+       +-+-+-+
+                # | | |↖|       | | | |
+                # +-+-+-+       +-+-+-+ 
+                # x-position is the same as previous, y-position changes
+                # x-direction is reversed, y-direction is the same
                 elif adj_new_x == WALL and adj_new_y != WALL:
                     return (prev[0], new_pos[1]), (direc[0] * -1, direc[1])
-                else:
+
+                # +-+-+-+       +-+-+-+
+                # | | | |       | | | | 
+                # +-+-+-+       +-+-+-+
+                # |*|*| |   ->  |*|*| | 
+                # +-+-+-+       +-+-+-+
+                # | | |↖|       | |↙| |
+                # +-+-+-+       +-+-+-+ 
+                # x-position changes, y-position is the same as previous
+                # x-direction is the same, y-direction is reversed
+                elif adj_new_x != WALL and adj_new_y == WALL:
                     return (new_pos[0], prev[1]), (direc[0], direc[1] * -1)
+                
+                # if this gets raised... there's a missing case
+                else:
+                    raise ValueError('Unhandled bounce event.')
+
     else:
         return new_pos, direc
 
@@ -147,20 +230,37 @@ def place_wall(hunter_pos, prey_pos, start, direc, length, grid):
     touches_prey = False
     touches_wall = False
     for i in range(length):
-        if (start[0] + direc[0] * i, start[1] + direc[1] * i) == hunter_pos:
-            touches_hunter = True
-            print("Wall touches hunter!")
-            break
-        elif new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] == WALL:
-            touches_wall = True
-            print("Wall touches another wall!")
-            break
-        elif (start[0] + direc[0] * i, start[1] + direc[1] * i) == prey_pos:
-            print("Wall touches prey!")
-            touches_prey = True
-            break
-        else:
-            new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] = WALL
+        if direc == VERT or direc == HORI:
+            if (start[0] + direc[0] * i, start[1] + direc[1] * i) == hunter_pos:
+                touches_hunter = True
+                print("Wall touches hunter!")
+                break
+            elif new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] == WALL:
+                touches_wall = True
+                print("Wall touches another wall!")
+                break
+            elif (start[0] + direc[0] * i, start[1] + direc[1] * i) == prey_pos:
+                print("Wall touches prey!")
+                touches_prey = True
+                break
+            else:
+                new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] = WALL
+        # TODO: make sure that counter-diagonal and diagonal walls are 2 units thick
+        elif direc == DIA or direc == CDIA:
+            if (start[0] + direc[0] * i, start[1]) == hunter_pos:
+                touches_hunter = True
+                print("Wall touches hunter!")
+                break
+            elif new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] == WALL:
+                touches_wall = True
+                print("Wall touches another wall!")
+                break
+            elif (start[0] + direc[0] * i, start[1] + direc[1] * i) == prey_pos:
+                print("Wall touches prey!")
+                touches_prey = True
+                break
+            else:
+                new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] = WALL
     if touches_hunter or touches_prey or touches_wall:
         return grid, False
     return new_grid, True

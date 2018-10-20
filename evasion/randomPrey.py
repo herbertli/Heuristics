@@ -22,5 +22,3 @@ class RandomPrey(Prey):
 
     def getMove(self):
         return random.choice(self.MOVES)
-
-    
