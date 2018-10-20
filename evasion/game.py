@@ -115,7 +115,7 @@ def get_new_pos(prev, direc, grid):
         # except the the new direction is now the reverse of the previous direction
         if direc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             new_pos = prev
-            new_direc = (direc[0] * -1,  direc[1] * -1)
+            return prev, (direc[0] * -1,  direc[1] * -1)
         # handle hard cases
         else:
             # TODO: is this right?
