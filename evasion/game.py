@@ -62,15 +62,16 @@ def start():
         log("Hunter Position", hunter.position)
         log("Prey Position", prey.position)
 
-        should_remove_wall, wall = hunter.removeWall()
-        if should_remove_wall:
-            wall_start_pos, wall_direc, wall_length = wall
-            grid = remove_wall(wall_start_pos, wall_direc, wall_length, grid)
+        walls_to_remove, new_wall = hunter.placeAndRemoveWall()
+        if len(walls_to_remove) > 0:
+            for wall in walls_to_remove:
+                wall_start_pos, wall_direc, wall_length = wall
+                grid = remove_wall(wall_start_pos, wall_direc, wall_length, grid)
+            walls_placed -= len(walls_to_remove)
 
         if cooldown == 0:
-            should_place_wall, wall = hunter.placeWall()
-            if should_place_wall and walls_placed < MAX_WALLS:
-                wall_start_pos, wall_direc, wall_length = wall
+            if new_wall != () and walls_placed < MAX_WALLS:
+                wall_start_pos, wall_direc, wall_length = new_wall
                 new_grid, valid = place_wall(hunter_pos, prey_pos, wall_start_pos, wall_direc, wall_length, grid)
                 if valid:
                     walls_placed += 1
@@ -78,7 +79,7 @@ def start():
                     grid = new_grid
                     log(f"Hunter places wall starting at {wall_start_pos} of length {wall_length} in direction {wall_direc}")
                     cooldown = WALL_COOLDOWN
-        else:
+        elif cooldown > 0:
             cooldown -= 1
 
         hunter_dir = hunter.direction
@@ -86,12 +87,14 @@ def start():
         hunter_pos, new_hunter_dir = get_new_pos(hunter_pos, hunter_dir, grid)
         log("Hunter new position:", hunter_pos)
         hunter_dir = new_hunter_dir
+        prey.receiveHunterPosition(hunter_pos, hunter_dir)
 
         if is_prey_move:
             prey_dir = prey.getMove()
             log("Prey moves in direction:", prey_dir)
             prey_pos, prey_dir = get_new_pos(prey.position, prey_dir, grid)
             log("Prey new position:", prey_pos)
+            hunter.receivePreyPosition(prey_pos)
 
         if compute_distance(hunter_pos, prey_pos) <= 4:
             break

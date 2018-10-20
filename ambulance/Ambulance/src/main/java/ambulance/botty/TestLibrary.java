@@ -3,7 +3,6 @@ package ambulance.botty;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
-import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListener;
 import com.graphhopper.jsprit.core.algorithm.termination.TimeTermination;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
@@ -26,8 +25,8 @@ class CompareByNumAmb implements Comparator<Hospital> {
 }
 
 
-class CompareByClusterSize implements Comparator<Cluster> {
-    public int compare(Cluster a, Cluster b) {
+class CompareByClusterSize implements Comparator<Cluster<Patient>> {
+    public int compare(Cluster<Patient> a, Cluster<Patient> b) {
         return Integer.compare(a.getPoints().size(), b.getPoints().size());
     }
 }

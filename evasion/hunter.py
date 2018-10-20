@@ -10,13 +10,9 @@ class Hunter(abc.ABC):
         self.max_walls = max_walls
 
     @abc.abstractmethod
-    def removeWall():
-        pass
-    
-    @abc.abstractmethod
-    def receivePreyPosition(self, position):
+    def placeAndRemoveWall(self):
         pass
 
     @abc.abstractmethod
-    def placeWall(self):
+    def receivePreyPosition(self, position):
         pass

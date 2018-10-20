@@ -2,3 +2,7 @@ output/
 .idea/
 *.iml
 target/
+.settings/
+.classpath
+.factorypath
+.project
