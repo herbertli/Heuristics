@@ -10,8 +10,12 @@ class Prey(abc.ABC):
 
     @abc.abstractmethod
     def getMove(self):
-        pass
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def receiveHunterPosition(self, position, direction):
-        pass
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def updatePosition(self, position):
+        raise NotImplementedError()

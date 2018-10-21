@@ -1,5 +1,11 @@
-from randomHunter import RandomHunter
+# from randomHunter import RandomHunter
+from halfHunter import HalfHunter
 from randomPrey import RandomPrey
+from util import create_grid, place_wall, compute_distance, remove_wall
+
+"""
+Main game logic
+"""
 
 WALL = 2
 VERT = (0, 1)
@@ -29,18 +35,6 @@ def log(*args, **kwargs):
     if verbose:
         print(*args, **kwargs)
 
-def create_grid(size):
-    grid = [[0] * (size + 2) for _ in range(size + 2)]
-    for i in range(0, len(grid[0])):
-        grid[0][i] = WALL
-    for i in range(0, len(grid[0])):
-        grid[i][0] = WALL
-    for i in range(0, len(grid[-1])):
-        grid[-1][i] = WALL
-    for i in range(0, len(grid[0])):
-        grid[i][-1] = WALL
-    return grid
-
 def start():
     grid = create_grid(GRID_SIZE)
 
@@ -52,7 +46,8 @@ def start():
     is_prey_move = False
 
     walls_placed = 0
-    hunter = RandomHunter(hunter_pos, hunter_dir, prey_pos, MAX_WALLS)
+    hunter = HalfHunter(hunter_pos, hunter_dir, prey_pos, MAX_WALLS)
+    hunter.set_grid(grid)
 
     turn = 0
     cooldown = WALL_COOLDOWN
@@ -88,8 +83,7 @@ def start():
         log("Hunter new position:", hunter_pos)
         hunter_dir = new_hunter_dir
         prey.receiveHunterPosition(hunter_pos, hunter_dir)
-        hunter.position = hunter_pos
-        hunter.direction = hunter_dir
+        hunter.updatePosition(hunter_pos, hunter_dir)
 
         if is_prey_move:
             prey_dir = prey.getMove()
@@ -97,7 +91,7 @@ def start():
             prey_pos, prey_dir = get_new_pos(prey.position, prey_dir, grid)
             log("Prey new position:", prey_pos)
             hunter.receivePreyPosition(prey_pos)
-            prey.position = prey_pos
+            prey.updatePosition(prey_pos)
 
         if compute_distance(hunter_pos, prey_pos) <= 4:
             break
@@ -212,80 +206,13 @@ def get_new_pos(prev, direc, grid):
                 elif adj_new_x != WALL and adj_new_y == WALL:
                     return (new_pos[0], prev[1]), (direc[0], direc[1] * -1)
 
-                # if this gets raised... there's a missing case
+                # if this gets raised, there's a missing case
+                # ... and there shouldn't be a missing case
                 else:
-                    raise ValueError('Unhandled bounce event.')
+                    raise RuntimeError('Unhandled bounce event.')
 
     else:
         return new_pos, direc
-
-def compute_distance(p1, p2):
-    return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** .5
-
-def remove_wall(start, direc, length, grid):
-    new_grid = [[0] * (GRID_SIZE + 2) for _ in range(GRID_SIZE + 2)]
-    for i in range(len(new_grid)):
-        for j in range(len(new_grid[i])):
-            new_grid[i][j] = grid[i][j]
-    for i in range(length):
-        new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] = 0
-    return new_grid
-
-def place_wall(hunter_pos, prey_pos, start, direc, length, grid):
-    new_grid = [[0] * (GRID_SIZE + 2) for _ in range(GRID_SIZE + 2)]
-    for i in range(len(new_grid)):
-        for j in range(len(new_grid[i])):
-            new_grid[i][j] = grid[i][j]
-    touches_hunter = False
-    touches_prey = False
-    touches_wall = False
-    placed = []
-    for i in range(length):
-        if (start[0] + direc[0] * i, start[1] + direc[1] * i) == hunter_pos:
-            touches_hunter = True
-            print("Wall touches hunter!")
-            break
-        elif new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] == WALL:
-            touches_wall = True
-            print("Wall touches another wall!")
-            break
-        elif (start[0] + direc[0] * i, start[1] + direc[1] * i) == prey_pos:
-            print("Wall touches prey!")
-            touches_prey = True
-            break
-        else:
-            new_grid[start[0] + direc[0] * i][start[1] + direc[1] * i] = WALL
-            placed.append((start[0] + direc[0] * i, start[1] + direc[1] * i))
-
-    # if a diagonal wall, add walls above the first length - 1 walls
-    # +-+-+-+       +-+-+-+
-    # |*| | |       |*|*| |
-    # +-+-+-+       +-+-+-+
-    # | |*| |   ->  | |*|*|
-    # +-+-+-+       +-+-+-+
-    # | | |*|       | | |*|
-    # +-+-+-+       +-+-+-+
-    if direc == CDIA or direc == DIA:
-        for i in range(len(placed) - 1):
-            place_above = new_grid[placed[i][0]][placed[i][1] + 1]
-            if place_above == WALL:
-                touches_wall = True
-                print("Wall touches another wall!")
-                break
-            elif place_above == hunter_pos:
-                touches_hunter = True
-                print("Wall touches hunter!")
-                break
-            elif place_above == prey_pos:
-                print("Wall touches prey!")
-                touches_prey = True
-                break
-            else:
-                new_grid[placed[i][0]][placed[i][1] + 1] = WALL
-
-    if touches_hunter or touches_prey or touches_wall:
-        return grid, False
-    return new_grid, True
 
 if __name__ == "__main__":
     start()

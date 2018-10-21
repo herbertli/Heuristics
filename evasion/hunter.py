@@ -11,8 +11,12 @@ class Hunter(abc.ABC):
 
     @abc.abstractmethod
     def placeAndRemoveWall(self):
-        pass
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def receivePreyPosition(self, position):
-        pass
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def updatePosition(self, position, direction):
+        raise NotImplementedError()
