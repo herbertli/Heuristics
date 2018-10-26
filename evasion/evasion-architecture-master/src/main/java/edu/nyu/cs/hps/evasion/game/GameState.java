@@ -14,6 +14,9 @@ public class GameState {
   public PositionAndVelocity hunterPosAndVel;
   public Point preyPos;
   public List<Wall> walls;
+  public int gameNum;
+  public long hunterTime;
+  public long preyTime;
 
   public GameState(int maxWalls, int wallPlacementDelay){
     this.walls = new ArrayList<>();

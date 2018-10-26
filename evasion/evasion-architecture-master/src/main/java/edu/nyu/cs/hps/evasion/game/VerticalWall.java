@@ -8,7 +8,7 @@ public class VerticalWall implements Wall {
   private int y1;
   private int y2;
 
-  VerticalWall(int x, int y1, int y2){
+  public VerticalWall(int x, int y1, int y2){
     this.x = x;
     this.y1 = y1;
     this.y2 = y2;

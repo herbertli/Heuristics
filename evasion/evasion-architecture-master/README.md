@@ -19,16 +19,61 @@ mvn clean package
 
 # Run server: process 1
 java -jar ./target/evasion-1.0-SNAPSHOT.jar 9000 9001 100 10 127.0.0.1 8999
-# GUI: process 2
-node web.js 8999 8998
+```
 
+
+To set up a tunnel to view the gui locally,
+
+Assuming crunchy1.cims.nyu.edu is reachable to your local directly. If not add this to your .ssh/config.
+
+```
+Host crunchy1.cims.nyu.edu
+  ProxyCommand ssh -q username@access.cims.nyu.edu -W %h:%p
+``` 
+
+Set up a Tunnel (If you want to run the program on crunchy and still want to view the GUI)
+
+Step 1:
+
+```
+# Set tunnel
+ssh -D 8080 -C -N username@crunchy1.cims.nyu.edu
+```
+Step 2:
+
+1. Open Google Chrome
+2. Select the wrench icon on the top right
+3. Select ‘Settings’
+4. Select ‘Show advanced settings…’
+5. Select ‘Change proxy settings…’
+6. Select ‘SOCKS Proxy’
+7. Enter ’127.0.0.1′
+8. Enter port ’8080′
+9. Save changes by selecting ‘OK’
+
+```
+# GUI: process 2
+# uncomment for crunchy
+# module load node-9.4.0
+node web.js 8999 8998
+```
+
+```
 # randomClient.py is a sample client
 # Player 1: process 3
 python players/randomClient.py --name alice --port 9000
+```
+
+```
 # Player 2: process 4
 python players/randomClient.py --name bob --port 9001
 
 ```
+
+To disable the tunnel:
+
+1. Disable the SOCKS proxy within your browser.
+2. quit the tunnel established in step 1.
 
 ### Sample client
 Client has gamestate as a dictionary visible to both hunter and the prey. 
