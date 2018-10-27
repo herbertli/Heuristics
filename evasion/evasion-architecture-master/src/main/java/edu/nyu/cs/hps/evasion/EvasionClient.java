@@ -124,7 +124,7 @@ public abstract class EvasionClient {
 
     static class HunterMove {
         int wallType;
-        List<Integer> wallsToDel;
+        List<Integer> wallsToDel = new ArrayList<>();
 
         public HunterMove(int wallType, List<Integer> wallsToDel) {
             this.wallType = wallType;

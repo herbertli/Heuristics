@@ -1,6 +1,5 @@
 package edu.nyu.cs.hps.evasion;
 
-import edu.nyu.cs.hps.evasion.game.Wall;
 import org.locationtech.jts.geom.*;
 
 import java.io.IOException;
@@ -10,14 +9,13 @@ import java.util.Random;
 
 public class HalfClient extends EvasionClient {
 
-    Point hunterLoc;
-    Point preyLoc;
-    Polygon currentPoly;
-    double currentArea;
-    GeometryFactory factory;
-    ArrayDeque<AugmentedWall> wallsPlaced;
+    private Point hunterLoc;
+    private Polygon currentPoly;
+    private double currentArea;
+    private GeometryFactory factory;
+    private ArrayDeque<AugmentedWall> wallsPlaced;
 
-    HalfClient(String name, int port) throws IOException {
+    private HalfClient(String name, int port) throws IOException {
         super(name, port);
         Coordinate[] initialPoints = {
                 new Coordinate(0, 0),
@@ -37,111 +35,129 @@ public class HalfClient extends EvasionClient {
             throw new Exception("This Hunter needs at least 2 walls to work...");
         }
 
-        preyLoc = factory.createPoint(new Coordinate(this.gameState.preyPos.x, this.gameState.preyPos.y));
+        // current prey location
+        Point preyLoc = factory.createPoint(new Coordinate(this.gameState.preyPos.x, this.gameState.preyPos.y));
+
+        // current hunter location
+        // this.hunterLoc stores previous hunter location
         Point currentLoc = factory.createPoint(new Coordinate(
                 this.gameState.hunterPosAndVel.pos.x,
                 this.gameState.hunterPosAndVel.pos.y));
         HunterMove move = new HunterMove();
 
+        // we can place a wall at this tick
         if (gameState.wallTimer == 0 && this.hunterLoc != null) {
+            // if the last wall we placed is a trapping wall, wait for bounce back
+            if (wallsPlaced.size() > 0 && wallsPlaced.peekLast().isTrappingWall) {
+                System.out.printf("Distance to trapping wall: %.2f\n", currentLoc.distance(wallsPlaced.peekLast().trappingPoly));
 
-            // TODO: if the last wall we placed is a trapping wall, wait for bounce back
-            // and then remove and re-place the same exact wall on the same tick!
-//            if (wallsPlaced.size() > 0 && wallsPlaced.peek().isTrappingWall) {
-//                if (currentLoc.distance(wallsPlaced.peek().lineString) <= 1) {
-//                    move.wallsToDel.add(wallsPlaced.size() - 1);
-//                    move.wallType = wallsPlaced.peek().wallType;
-//                    return move;
-//                }
-//            }
+                // check to see if we are bouncing back... if we are, then
+                // remove trapping wall and re-place the same exact type of wall on the same tick!
+                if (currentLoc.distance(wallsPlaced.peekLast().trappingPoly) < hunterLoc.distance(wallsPlaced.peekLast().trappingPoly) &&
+                        currentLoc.isWithinDistance(wallsPlaced.peekLast().trappingPoly, 2.1)) {
+                    System.out.println("!!!!!!!!!!!!!!!!!!! Replacing a trapping wall !!!!!!!!!!!!!!!!!!!");
+                    Coordinate[] coordinates;
+                    if (move.wallType == 1) coordinates = polyCreatedByHorizontal();
+                    else coordinates = polyCreatedByVertical();
+                    Polygon other = factory.createPolygon(factory.createLinearRing(coordinates));
+                    Polygon diff = (Polygon) currentPoly.difference(other);
+                    move.wallsToDel.add(wallsPlaced.size() - 1);
+                    move.wallType = wallsPlaced.peekLast().wallType;
+                    wallsPlaced.removeLast();
+                    wallsPlaced.add(new AugmentedWall(false, move.wallType, null));
+                    currentPoly = diff;
+                    currentArea = diff.getArea();
+                    hunterLoc = currentLoc;
+                    return move;
+                } else {
+                    System.out.println("Waiting to replace a trapping wall...");
+                    move.wallType = 0;
+                    move.wallsToDel = new ArrayList<>();
+                    hunterLoc = currentLoc;
+                    return move;
+                }
+            }
 
-            // horizontal
             for (int i = 1; i <= 2; i++) {
                 if (wallsPlaced.size() > 0) {
                     if (i == wallsPlaced.peekLast().wallType) continue;
                 }
-                Coordinate[] coords = new Coordinate[5];
-                LineString lineString;
-                if (i == 1) {
-                    // horizontal wall
-                    coords[0] = new Coordinate(0, this.hunterLoc.getY());
-                    coords[1] = new Coordinate(300, this.hunterLoc.getY());
-                    lineString = factory.createLineString(new Coordinate[]{coords[0], coords[1]});
-                    if (this.gameState.hunterPosAndVel.vel.y < 0) {
-                        coords[2] = new Coordinate(300, 300);
-                        coords[3] = new Coordinate(0, 300);
-                    } else {
-                        coords[2] = new Coordinate(300, 0);
-                        coords[3] = new Coordinate(0, 0);
-                    }
-                } else {
-                    // vertical wall
-                    coords[0] = new Coordinate(this.hunterLoc.getX(), 0);
-                    coords[1] = new Coordinate(this.hunterLoc.getX(), 300);
-                    lineString = factory.createLineString(new Coordinate[]{coords[0], coords[1]});
-                    if (this.gameState.hunterPosAndVel.vel.x < 0) {
-                        coords[2] = new Coordinate(300, 300);
-                        coords[3] = new Coordinate(300, 0);
-                    } else {
-                        coords[2] = new Coordinate(0, 300);
-                        coords[3] = new Coordinate(0, 0);
-                    }
-                }
-                coords[4] = coords[0];
-                Polygon other = factory.createPolygon(factory.createLinearRing(coords));
+                Coordinate[] coordinates;
+                if (i == 1) coordinates = polyCreatedByHorizontal();
+                else coordinates = polyCreatedByVertical();
+
+                Polygon other = factory.createPolygon(factory.createLinearRing(coordinates));
                 Polygon diff = (Polygon) currentPoly.difference(other);
+                Polygon inter = (Polygon) currentPoly.intersection(other);
 
                 // TODO: place wall even if hunter and prey will be separated
-//                Polygon preyPoly;
-//                if (diff.contains(preyLoc)) {
-//                    preyPoly = diff;
-//
-//                } else {
-//                    preyPoly = other;
-//                }
-//                double newArea = preyPoly.getArea();
-//                boolean sameRegion = preyPoly.contains(currentLoc);
-//                boolean didPlaceWall = false;
-//                if (!sameRegion && newArea < .2 * currentArea) {
-//                    wallsPlaced.add(new AugmentedWall(true, i, lineString));
-//                    didPlaceWall = true;
-//                } else if (sameRegion && newArea < .5 * currentArea) {
-//                    wallsPlaced.add(new AugmentedWall(false, i, lineString));
-//                    didPlaceWall = true;
-//                }
-//                if (didPlaceWall) {
-//                    if (gameState.walls.size() == this.gameState.maxWalls) {
-//                        move.wallsToDel = new ArrayList<>();
-//                        move.wallsToDel.add(0);
-//                        wallsPlaced.removeFirst();
-//                    }
-//                    currentArea = newArea;
-//                    currentPoly = diff;
-//                    break;
-//                }
-
-                double newArea = diff.getArea();
-                boolean sameRegion = diff.contains(preyLoc) && diff.contains(currentLoc);
-                if (newArea <= currentArea * .5 && sameRegion) {
-                    move.wallType = i;
+                Polygon preyPoly;
+                if (diff.contains(preyLoc)) {
+                    preyPoly = diff;
+                } else {
+                    preyPoly = inter;
+                }
+                double newArea = preyPoly.getArea();
+                boolean sameRegion = preyPoly.contains(currentLoc);
+                boolean didPlaceWall = false;
+                if (sameRegion && newArea <= .5 * currentArea) {
+                    System.out.println("Placed a regular wall!");
+                    wallsPlaced.add(new AugmentedWall(false, i, null));
+                    didPlaceWall = true;
+                    currentArea = newArea;
+                    currentPoly = diff;
+                } else if (!sameRegion && newArea <= .5 * currentArea) {
+                    System.out.println("Placed a trapping wall!");
+                    wallsPlaced.add(new AugmentedWall(true, i, preyPoly));
+                    didPlaceWall = true;
+                }
+                if (didPlaceWall) {
                     if (gameState.walls.size() == this.gameState.maxWalls) {
                         move.wallsToDel = new ArrayList<>();
                         move.wallsToDel.add(0);
                         wallsPlaced.removeFirst();
                     }
-                    wallsPlaced.add(new AugmentedWall(false, i, lineString));
-                    currentArea = newArea;
-                    currentPoly = diff;
-                    break;
+                    move.wallType = i;
+                    hunterLoc = currentLoc;
+                    return move;
                 }
 
             }
-        } else {
-            move.wallType = 0;
-            move.wallsToDel = new ArrayList<>();
         }
+        move.wallType = 0;
+        move.wallsToDel = new ArrayList<>();
         hunterLoc = currentLoc;
         return move;
+    }
+
+    private Coordinate[] polyCreatedByHorizontal() {
+        Coordinate[] coordinates = new Coordinate[5];
+        coordinates[0] = new Coordinate(0, this.hunterLoc.getY());
+        coordinates[1] = new Coordinate(300, this.hunterLoc.getY());
+        if (this.gameState.hunterPosAndVel.vel.y < 0) {
+            coordinates[2] = new Coordinate(300, 300);
+            coordinates[3] = new Coordinate(0, 300);
+        } else {
+            coordinates[2] = new Coordinate(300, 0);
+            coordinates[3] = new Coordinate(0, 0);
+        }
+        coordinates[4] = coordinates[0];
+        return coordinates;
+    }
+
+    private Coordinate[] polyCreatedByVertical() {
+        Coordinate[] coordinates = new Coordinate[5];
+        coordinates[0] = new Coordinate(this.hunterLoc.getX(), 0);
+        coordinates[1] = new Coordinate(this.hunterLoc.getX(), 300);
+        if (this.gameState.hunterPosAndVel.vel.x < 0) {
+            coordinates[2] = new Coordinate(300, 300);
+            coordinates[3] = new Coordinate(300, 0);
+        } else {
+            coordinates[2] = new Coordinate(0, 300);
+            coordinates[3] = new Coordinate(0, 0);
+        }
+        coordinates[4] = coordinates[0];
+        return coordinates;
     }
 
     public PreyMove playPrey() {
@@ -163,12 +179,12 @@ public class HalfClient extends EvasionClient {
     static class AugmentedWall {
         boolean isTrappingWall;
         int wallType;
-        LineString lineString;
+        Polygon trappingPoly;
 
-        public AugmentedWall(boolean isTrappingWall, int wallType, LineString lineString) {
+        AugmentedWall(boolean isTrappingWall, int wallType, Polygon trappingPoly) {
             this.isTrappingWall = isTrappingWall;
             this.wallType = wallType;
-            this.lineString = lineString;
+            this.trappingPoly = trappingPoly;
         }
     }
 
