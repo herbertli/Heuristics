@@ -209,6 +209,7 @@ public class CentroidPrey extends EvasionClient {
             MoveTriple cur = queue.poll();
             if(visited[cur.x][cur.y][cur.t]) continue;
             visited[cur.x][cur.y][cur.t] = true;
+            if(cur.t > 0 && squaredDistance(cur, hunterMoves.get(cur.t-1)) <= 20) continue;
             if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 20) continue;
             if(squaredDistance(cur, hunterMoves.get(cur.t+1)) <= 20) continue;
             if(cur.t >= numTurns){
