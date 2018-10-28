@@ -11,7 +11,10 @@
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/game/DiagonalWall.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/RandomClient.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/game/CounterDiagonalWall.java
+/Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/EvasionPoint.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/HalfClient.java
+/Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/SimpleHunter.java
+/Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/CentroidPrey.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/SimpleClient.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/game/IO.java
 /Users/herbert/Desktop/Heuristics/HPS/evasion/evasion-architecture-master/src/main/java/edu/nyu/cs/hps/evasion/game/HorizontalWall.java
