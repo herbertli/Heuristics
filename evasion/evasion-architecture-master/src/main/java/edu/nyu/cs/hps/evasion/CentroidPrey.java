@@ -5,11 +5,17 @@ import java.util.*;
 import edu.nyu.cs.hps.evasion.game.GameState;
 import edu.nyu.cs.hps.evasion.game.PositionAndVelocity;
 import edu.nyu.cs.hps.evasion.game.Wall;
-import edu.nyu.cs.hps.evasion.EvasionPoint;
-import org.locationtech.jts.geom.*;
 
 import java.awt.Point;
 import java.io.IOException;
+
+class EvasionPoint extends Point {
+
+    EvasionPoint(int x, int y) {
+        super(x, y);
+    }
+
+}
 
 public class CentroidPrey extends EvasionClient {
 
@@ -213,7 +219,7 @@ public class CentroidPrey extends EvasionClient {
             if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 20) continue;
             if(squaredDistance(cur, hunterMoves.get(cur.t+1)) <= 20) continue;
             if(cur.t >= numTurns){
-                while(cur.prev != null){
+                while(cur.prev != null){ //Note that you don't add the t = 0 move (because you're already there).
                     moves.addFirst(cur);
                     cur = cur.prev;
                 }
