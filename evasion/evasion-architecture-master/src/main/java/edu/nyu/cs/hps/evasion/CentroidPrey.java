@@ -114,6 +114,7 @@ public class CentroidPrey extends EvasionClient {
 
     static class MoveTriple {
         int x, y, t;
+        MoveTriple prev;
 
         public MoveTriple(int x, int y, int t) {
             this.x = x;
@@ -131,7 +132,8 @@ public class CentroidPrey extends EvasionClient {
         fakeGameState.hunterPosAndVel = new PositionAndVelocity(hunterPos, hunterVel);
         fakeGameState.hunterPosAndVel = gameState.hunterPosAndVel;
         fakeGameState.walls = gameState.walls;
-        for (int i = 0; i < numTurns; i++) {
+        hunterMoves.add(new MoveTriple(gameState.hunterPosAndVel.pos.x, gameState.hunterPosAndVel.pos.y, 0));
+        for (int i = 0; i < numTurns + 1; i++) {
             // current hunter location
             // this.hunterLoc stores previous hunter location
             //EvasionPoint currentLoc = new EvasionPoint(hunter.pos.x, hunter.pos.y);
@@ -140,16 +142,6 @@ public class CentroidPrey extends EvasionClient {
         }
         return hunterMoves;
     }
-
-    /**
-    public ArrayList<MoveTriple> bfs(ArrayList<MoveTriple> hunterMoves, int numTurns) {
-        int[] dir = new int[]{-1, -1, -1, 0, -1, 1, 0, -1, 0, 0, 0, 1, 1, -1, 1, 0, 1, 1};
-        Queue<MoveTriple> queue = new LinkedList<>();
-        MoveTriple prey = new MoveTriple(gameState.preyPos.x, gameState.preyPos.y, 0);
-        queue.add(prey);
-
-    }
-    */
 
     public EvasionPoint bfsCentroid(){
         fakeGameState = new GameState(gameState.maxWalls, gameState.wallPlacementDelay);
@@ -181,19 +173,98 @@ public class CentroidPrey extends EvasionClient {
         return new EvasionPoint((int)Math.round(xsum/pointCount), (int)Math.round(ysum/pointCount));
     }
 
+    int dangerCheck() {
+        int xd = Math.abs(gameState.hunterPosAndVel.pos.x - gameState.preyPos.x);
+        int yd = Math.abs(gameState.hunterPosAndVel.pos.y - gameState.preyPos.y);
+        return Math.max(xd, yd);
+    }
+
+    double squaredDistance(EvasionPoint a, EvasionPoint b) {
+        return (a.getX()-b.getX())*(a.getX()-b.getX())+(a.getY()-b.getY())*(a.getY()-b.getY());
+    }
+
+    double squaredDistance(MoveTriple a, MoveTriple b) {
+        return (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y);
+    }
+
+    class MoveTowardsCentroidComparator implements Comparator<MoveTriple> {
+        EvasionPoint centroid;
+        public MoveTowardsCentroidComparator(EvasionPoint centroid){
+            this.centroid = centroid;
+        }
+        public int compare(MoveTriple a, MoveTriple b){
+            if(a.t == b.t) return Double.compare(squaredDistance(new EvasionPoint(a.x, a.y), centroid),
+                squaredDistance(new EvasionPoint(b.x, b.y), centroid));
+            return a.t - b.t;
+        }
+    }
+
+    LinkedList<MoveTriple> findPath(ArrayList<MoveTriple> hunterMoves, int numTurns) {
+        LinkedList<MoveTriple> moves = new LinkedList<>();
+        PriorityQueue<MoveTriple> queue = new PriorityQueue<>(new MoveTowardsCentroidComparator(centroid));
+        queue.add(new MoveTriple(gameState.preyPos.x, gameState.preyPos.y, 0));
+        boolean [][][] visited = new boolean[305][305][numTurns+1];
+        int[] dir = new int[]{-1, -1, -1, 0, -1, 1, 0, -1, 0, 0, 0, 1, 1, -1, 1, 0, 1, 1};
+        while(!queue.isEmpty()){
+            MoveTriple cur = queue.poll();
+            if(visited[cur.x][cur.y][cur.t]) continue;
+            visited[cur.x][cur.y][cur.t] = true;
+            if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 20) continue;
+            if(cur.t >= numTurns){
+                while(cur.prev != null){
+                    moves.addFirst(cur);
+                    cur = cur.prev;
+                }
+                break;
+            }
+            for(int i = 0; i < dir.length; i+=2){
+                MoveTriple next = new MoveTriple(cur.x+dir[i], cur.y+dir[i+1], cur.t+2);
+                next.prev = cur;
+                queue.add(next);
+            }
+        }
+        return moves;
+    }
+
     // calculate centroid
     // calculate safe path towards centroid using a*
     // move towards closest safepoint near centroid
     EvasionPoint centroid;
+    Queue<MoveTriple> futureMoves = new LinkedList<>();
     public PreyMove playPrey() {
-        //ArrayList<MoveTriple> hunterMoves = simulateTick(20);
-        //bfs
+        // if new wall has been placed
+        //     see if we're in danger (dist from prey to hunter < 20)
+        //          if so, calculate a path for next 10 moves that avoids danger.
+        //          if not, then calculate and move towards centroid
+        //  otherwise, if we already have moves planned, do them
+        //  otherwise move towards centroid
+        boolean inDanger = dangerCheck() <= 20;
         if(centroid == null || gameState.wallPlacementDelay - gameState.wallTimer < 2){
+            System.out.println("a");
+            if(inDanger) {
+                ArrayList<MoveTriple> hunterMoves = simulateTick(20);
+                futureMoves = findPath(hunterMoves, 20);
+                if(futureMoves.size() == 0) System.out.println("No future moves. :(");
+            }
             centroid = bfsCentroid();
         }
-        PreyMove pm = new PreyMove(centroid.x - gameState.preyPos.x, centroid.y - gameState.preyPos.y);
-        if(pm.x != 0) pm.x/=Math.abs(pm.x);
-        if(pm.y != 0) pm.y/=Math.abs(pm.y);
+        if(futureMoves.size() == 0 && inDanger){
+            System.out.println("b");
+            ArrayList<MoveTriple> hunterMoves = simulateTick(20);
+            futureMoves = findPath(hunterMoves, 20);
+            if(futureMoves.size() == 0) System.out.println("No future moves. :(");
+        }
+        PreyMove pm = null;
+        if(futureMoves.size() > 0) {
+            MoveTriple next = futureMoves.poll();
+            System.out.println("Playing from future moves");
+            pm = new PreyMove(next.x - gameState.preyPos.x, next.y - gameState.preyPos.y);
+        } else {
+            System.out.println("Playing towards centroid at " + centroid.x + " " + centroid.y);
+            pm = new PreyMove(centroid.x - gameState.preyPos.x, centroid.y - gameState.preyPos.y);
+            if(pm.x != 0) pm.x/=Math.abs(pm.x);
+            if(pm.y != 0) pm.y/=Math.abs(pm.y);
+        }
         return pm;
         /**
         Random random = new Random();
