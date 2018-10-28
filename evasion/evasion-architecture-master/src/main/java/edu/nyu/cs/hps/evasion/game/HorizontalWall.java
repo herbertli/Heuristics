@@ -4,9 +4,9 @@ import java.awt.*;
 
 public class HorizontalWall implements Wall {
 
-  private int y;
-  private int x1;
-  private int x2;
+  public int y;
+  public int x1;
+  public int x2;
 
   public HorizontalWall(int y, int x1, int x2){
     this.y = y;

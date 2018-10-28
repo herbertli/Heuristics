@@ -4,9 +4,9 @@ import java.awt.*;
 
 public class VerticalWall implements Wall {
 
-  private int x;
-  private int y1;
-  private int y2;
+  public int x;
+  public int y1;
+  public int y2;
 
   public VerticalWall(int x, int y1, int y2){
     this.x = x;

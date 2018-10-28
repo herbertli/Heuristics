@@ -4,10 +4,10 @@ import java.awt.*;
 
 public class DiagonalWall implements Wall {
 
-    private int x1;
-    private int x2;
-    private int y1;
-    private int y2;
+    public int x1;
+    public int x2;
+    public int y1;
+    public int y2;
     private int builddirection;
 
     public DiagonalWall(int x1, int x2, int y1, int y2, int builddirection) {
