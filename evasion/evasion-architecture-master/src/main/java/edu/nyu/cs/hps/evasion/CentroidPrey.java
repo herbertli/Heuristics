@@ -210,6 +210,7 @@ public class CentroidPrey extends EvasionClient {
             if(visited[cur.x][cur.y][cur.t]) continue;
             visited[cur.x][cur.y][cur.t] = true;
             if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 20) continue;
+            if(squaredDistance(cur, hunterMoves.get(cur.t+1)) <= 20) continue;
             if(cur.t >= numTurns){
                 while(cur.prev != null){
                     moves.addFirst(cur);
