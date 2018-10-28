@@ -59,7 +59,7 @@ public class HalfClient extends EvasionClient {
                     Coordinate[] coordinates;
                     if (move.wallType == 1) coordinates = polyCreatedByHorizontal();
                     else coordinates = polyCreatedByVertical();
-                    Polygon other = factory.createPolygon(factory.createLinearRing(coordinates));
+                    Polygon other = factory.createPolygon(coordinates);
                     Polygon diff = (Polygon) currentPoly.difference(other);
                     move.wallsToDel.add(wallsPlaced.size() - 1);
                     move.wallType = wallsPlaced.peekLast().wallType;
@@ -86,9 +86,25 @@ public class HalfClient extends EvasionClient {
                 if (i == 1) coordinates = polyCreatedByHorizontal();
                 else coordinates = polyCreatedByVertical();
 
-                Polygon other = factory.createPolygon(factory.createLinearRing(coordinates));
-                Polygon diff = (Polygon) currentPoly.difference(other);
-                Polygon inter = (Polygon) currentPoly.intersection(other);
+                Polygon other = factory.createPolygon(coordinates);
+
+                Geometry temp = currentPoly.difference(other);
+                if (!(temp instanceof Polygon)) {
+                    move.wallType = 0;
+                    move.wallsToDel = new ArrayList<>();
+                    hunterLoc = currentLoc;
+                    return move;
+                }
+                Polygon diff = (Polygon) temp;
+
+                temp = currentPoly.intersection(other);
+                if (!(temp instanceof Polygon)) {
+                    move.wallType = 0;
+                    move.wallsToDel = new ArrayList<>();
+                    hunterLoc = currentLoc;
+                    return move;
+                }
+                Polygon inter = (Polygon) temp;
 
                 // TODO: place wall even if hunter and prey will be separated
                 Polygon preyPoly;
@@ -100,13 +116,13 @@ public class HalfClient extends EvasionClient {
                 double newArea = preyPoly.getArea();
                 boolean sameRegion = preyPoly.contains(currentLoc);
                 boolean didPlaceWall = false;
-                if (sameRegion && newArea <= .5 * currentArea) {
+                if (sameRegion && newArea <= .6 * currentArea) {
                     System.out.println("Placed a regular wall!");
                     wallsPlaced.add(new AugmentedWall(false, i, null));
                     didPlaceWall = true;
                     currentArea = newArea;
                     currentPoly = diff;
-                } else if (!sameRegion && newArea <= .5 * currentArea) {
+                } else if (!sameRegion && newArea <= .3 * currentArea) {
                     System.out.println("Placed a trapping wall!");
                     wallsPlaced.add(new AugmentedWall(true, i, preyPoly));
                     didPlaceWall = true;
