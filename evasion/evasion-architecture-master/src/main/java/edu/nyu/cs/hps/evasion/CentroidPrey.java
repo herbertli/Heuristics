@@ -7,7 +7,6 @@ import edu.nyu.cs.hps.evasion.game.PositionAndVelocity;
 import edu.nyu.cs.hps.evasion.game.Wall;
 
 import java.awt.Point;
-import java.io.IOException;
 
 class EvasionPoint extends Point {
 
@@ -17,41 +16,15 @@ class EvasionPoint extends Point {
 
 }
 
-public class CentroidPrey extends EvasionClient {
+public class CentroidPrey implements Prey {
 
-    private CentroidPrey(String name, int port) throws IOException {
-        super(name, port);
-    }
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java HalfClient <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new CentroidPrey(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
-    }
-
-
-    public HunterMove playHunter() throws Exception {
-        List<Integer> wallsToDel = new ArrayList<>();
-        Random random = new Random();
-        for (int i = 0; i < this.gameState.walls.size(); i++) {
-            int toDel = random.nextInt(31);
-            if (toDel == 0) {
-                wallsToDel.add(i);
-            }
-        }
-
-        int wallType = random.nextInt(5);
-        if (this.gameState.maxWalls <= this.gameState.walls.size() - wallsToDel.size()) {
-            wallType = 0;
-        }
-        return new HunterMove(wallType, wallsToDel);
-    }
-
+    GameState gameState;
     GameState fakeGameState;
+
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
 
     private boolean isOccupied(EvasionPoint p) {
         if (p.x < 0 || p.x >= fakeGameState.boardSize.x || p.y < 0 || p.y >= fakeGameState.boardSize.y) {
@@ -274,12 +247,6 @@ public class CentroidPrey extends EvasionClient {
             if(pm.y != 0) pm.y/=Math.abs(pm.y);
         }
         return pm;
-        /**
-        Random random = new Random();
-        return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-        */
     }
-
-
 
 }
