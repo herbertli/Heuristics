@@ -9,13 +9,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class EvasionClient {
+public class EvasionClient {
 
     SocketClient socket;
     int port;
-    String name;
-    boolean isHunter;
+    private String name;
+    private boolean isHunter;
     GameState gameState;
+    private Hunter hunter = null;
+    private Prey prey = null;
 
     EvasionClient(String name, int port) throws IOException {
         this.name = name;
@@ -24,10 +26,7 @@ public abstract class EvasionClient {
         this.socket = new SocketClient(host, port);
     }
 
-    public abstract HunterMove playHunter() throws Exception;
-    public abstract PreyMove playPrey() throws Exception;
-
-    public GameState stringToGame(String msg) {
+    private GameState stringToGame(String msg) {
         List<Integer> temp = Arrays.stream(msg.split(" "))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
@@ -49,7 +48,7 @@ public abstract class EvasionClient {
         return game;
     }
 
-    public List<Wall> parseWalls(Integer[] partMsg) {
+    private List<Wall> parseWalls(Integer[] partMsg) {
         List<Wall> walls = new ArrayList<>();
         int i = 0;
         while (i < partMsg.length) {
@@ -72,7 +71,7 @@ public abstract class EvasionClient {
         return walls;
     }
 
-    public String parseHunterMove(GameState gameState, HunterMove move) {
+    private String parseHunterMove(GameState gameState, HunterMove move) {
         int wallType = move.wallType;
         if (move.wallsToDel == null || move.wallsToDel.size() == 0) {
             return "" + gameState.gameNum + " " + gameState.ticknum + " " + wallType;
@@ -84,11 +83,11 @@ public abstract class EvasionClient {
         return "" + gameState.gameNum + " " + gameState.ticknum + " " + wallType + " " + wallsToDel;
     }
 
-    public String parsePreyMove(GameState gameState, PreyMove move) {
+    private String parsePreyMove(GameState gameState, PreyMove move) {
         return "" + gameState.gameNum + " " + gameState.ticknum + " " + move.x + " " + move.y;
     }
 
-    public void playGame() throws Exception {
+    void playGame() throws Exception {
         outer: while (true) {
             String line = this.socket.receive_data().trim();
             String toSend = "";
@@ -107,10 +106,32 @@ public abstract class EvasionClient {
                 default:
                     this.gameState = this.stringToGame(line);
                     if (this.isHunter) {
-                        HunterMove move = this.playHunter();
+                        // TODO: Initialize hunter according to game variables
+                        if (hunter == null) {
+                            if (this.gameState.maxWalls < 2) {
+                                throw new Exception("... We didn't account for this possibility");
+                            } else if (this.gameState.maxWalls == 2) {
+                                hunter = new BottomRightHunter();
+                            } else if (this.gameState.maxWalls <= 4) {
+                                hunter = new RectangularHunter();
+                            } else {
+                                hunter = new HalfHunter();
+                            }
+                        }
+                        hunter.receiveGameState(this.gameState);
+                        HunterMove move = hunter.playHunter();
                         toSend = this.parseHunterMove(this.gameState, move);
                     } else {
-                        PreyMove move = this.playPrey();
+                        // TODO: Initialize prey according to game variables
+                        if (prey == null) {
+                            if (this.gameState.maxWalls < 10) {
+                                prey = new SimplePrey();
+                            } else {
+                                prey = new CentroidPrey();
+                            }
+                        }
+                        prey.receiveGameState(this.gameState);
+                        PreyMove move = prey.playPrey();
                         toSend = this.parsePreyMove(this.gameState, move);
                     }
                     break;
@@ -122,31 +143,15 @@ public abstract class EvasionClient {
         }
     }
 
-    static class HunterMove {
-        int wallType;
-        List<Integer> wallsToDel = new ArrayList<>();
-
-        public HunterMove(int wallType, List<Integer> wallsToDel) {
-            this.wallType = wallType;
-            this.wallsToDel = wallsToDel;
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.out.println("Usage: java EvasionClient <port> <name>");
         }
-
-        public HunterMove() {
-
-        }
-    }
-
-    static class PreyMove {
-        int x, y;
-
-        public PreyMove(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public PreyMove() {
-
-        }
+        int port = Integer.parseInt(args[0]);
+        String name = args[1];
+        EvasionClient evasionClient = new EvasionClient(name, port);
+        evasionClient.playGame();
+        evasionClient.socket.close_socket();
     }
 
 }

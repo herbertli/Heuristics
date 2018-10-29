@@ -1,19 +1,21 @@
 package edu.nyu.cs.hps.evasion;
 
-import edu.nyu.cs.hps.evasion.EvasionClient;
+import edu.nyu.cs.hps.evasion.game.GameState;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RandomClient extends EvasionClient {
+public class RandomHunterPrey implements Hunter, Prey {
 
-    RandomClient(String name, int port) throws IOException {
-        super(name, port);
+    GameState gameState;
+
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
-    public HunterMove playHunter() throws Exception {
+    public HunterMove playHunter() {
         List<Integer> wallsToDel = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < this.gameState.walls.size(); i++) {
@@ -33,17 +35,6 @@ public class RandomClient extends EvasionClient {
     public PreyMove playPrey() {
         Random random = new Random();
         return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-    }
-
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java RandomClient <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new RandomClient(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
     }
 
 }

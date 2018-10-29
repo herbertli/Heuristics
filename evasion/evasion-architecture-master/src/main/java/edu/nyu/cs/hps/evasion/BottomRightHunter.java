@@ -1,10 +1,9 @@
 package edu.nyu.cs.hps.evasion;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.Scanner;
+//import java.util.Scanner;
 
+import edu.nyu.cs.hps.evasion.game.GameState;
 import edu.nyu.cs.hps.evasion.game.HorizontalWall;
 import edu.nyu.cs.hps.evasion.game.VerticalWall;
 
@@ -18,17 +17,18 @@ import edu.nyu.cs.hps.evasion.game.VerticalWall;
  * Then delete the previous wall.
  */
 
-public class BottomRightHunter extends EvasionClient {
+public class BottomRightHunter implements Hunter {
 
     // below/left are with respect to the prey.
-    int belowCoor = -1;
-    int leftCoor = -1;
+    private int belowCoor = -1;
+    private int leftCoor = -1;
     // for pausing tests
-    Scanner sc;
+//    Scanner sc = new Scanner(System.in);
+    GameState gameState;
 
-    private BottomRightHunter(String name, int port) throws IOException {
-        super(name, port);
-        sc = new Scanner(System.in);
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     HunterMove emptyMove() {
@@ -107,18 +107,4 @@ public class BottomRightHunter extends EvasionClient {
         return emptyMove();
     }
 
-    public PreyMove playPrey() {
-        Random random = new Random();
-        return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-    }
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java BottomRightHunter <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new BottomRightHunter(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
-    }
 }

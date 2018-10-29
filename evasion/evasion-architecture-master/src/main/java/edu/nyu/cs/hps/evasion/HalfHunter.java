@@ -1,22 +1,21 @@
 package edu.nyu.cs.hps.evasion;
 
+import edu.nyu.cs.hps.evasion.game.GameState;
 import org.locationtech.jts.geom.*;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Random;
 
-public class HalfClient extends EvasionClient {
+public class HalfHunter implements Hunter {
 
     private Point hunterLoc;
     private Polygon currentPoly;
     private double currentArea;
     private GeometryFactory factory;
     private ArrayDeque<AugmentedWall> wallsPlaced;
+    private GameState gameState;
 
-    private HalfClient(String name, int port) throws IOException {
-        super(name, port);
+    HalfHunter() {
         Coordinate[] initialPoints = {
                 new Coordinate(0, 0),
                 new Coordinate(0, 300),
@@ -28,6 +27,11 @@ public class HalfClient extends EvasionClient {
         factory = new GeometryFactory();
         currentPoly = factory.createPolygon(initialPoints);
         currentArea = currentPoly.getArea();
+    }
+
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     public HunterMove playHunter() throws Exception {
@@ -174,22 +178,6 @@ public class HalfClient extends EvasionClient {
         }
         coordinates[4] = coordinates[0];
         return coordinates;
-    }
-
-    public PreyMove playPrey() {
-        Random random = new Random();
-        return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-    }
-
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java HalfClient <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new HalfClient(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
     }
 
     static class AugmentedWall {
