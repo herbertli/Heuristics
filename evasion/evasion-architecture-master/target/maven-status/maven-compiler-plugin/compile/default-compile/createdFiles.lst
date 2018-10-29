@@ -2,7 +2,6 @@ edu/nyu/cs/hps/evasion/SimpleHunter$2.class
 edu/nyu/cs/hps/evasion/game/Game$WallCreationType.class
 edu/nyu/cs/hps/evasion/game/Game.class
 edu/nyu/cs/hps/evasion/CentroidPrey.class
-edu/nyu/cs/hps/evasion/HalfHunter$AugmentedWall.class
 edu/nyu/cs/hps/evasion/Application.class
 edu/nyu/cs/hps/evasion/SimpleHunter$AugmentedWall.class
 edu/nyu/cs/hps/evasion/SimpleHunter.class
@@ -28,6 +27,7 @@ edu/nyu/cs/hps/evasion/SocketClient.class
 edu/nyu/cs/hps/evasion/Hunter.class
 edu/nyu/cs/hps/evasion/CentroidPrey$MoveTriple.class
 edu/nyu/cs/hps/evasion/StuckWithHunter.class
+edu/nyu/cs/hps/evasion/AboveBelowHunter.class
 edu/nyu/cs/hps/evasion/Prey.class
 edu/nyu/cs/hps/evasion/game/DiagonalWall.class
 edu/nyu/cs/hps/evasion/HunterMove.class

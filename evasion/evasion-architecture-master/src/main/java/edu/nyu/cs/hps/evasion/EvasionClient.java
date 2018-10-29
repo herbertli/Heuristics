@@ -11,15 +11,15 @@ import java.util.stream.Collectors;
 
 public class EvasionClient {
 
-    SocketClient socket;
-    int port;
+    private SocketClient socket;
+    private int port;
     private String name;
     private boolean isHunter;
     GameState gameState;
     private Hunter hunter = null;
     private Prey prey = null;
 
-    EvasionClient(String name, int port) throws IOException {
+    private EvasionClient(String name, int port) throws IOException {
         this.name = name;
         this.port = port;
         String host = "127.0.0.1";
@@ -87,7 +87,7 @@ public class EvasionClient {
         return "" + gameState.gameNum + " " + gameState.ticknum + " " + move.x + " " + move.y;
     }
 
-    void playGame() throws Exception {
+    private void playGame() throws Exception {
         outer: while (true) {
             String line = this.socket.receive_data().trim();
             String toSend = "";
@@ -110,12 +110,14 @@ public class EvasionClient {
                         if (hunter == null) {
                             if (this.gameState.maxWalls < 2) {
                                 throw new Exception("... We didn't account for this possibility");
-                            } else if (this.gameState.maxWalls == 2) {
-                                hunter = new BottomRightHunter();
-                            } else if (this.gameState.maxWalls <= 4) {
-                                hunter = new RectangularHunter();
+                            } else if (this.gameState.maxWalls < 4) {
+                                hunter = new AboveBelowHunter();
+//                            } else if (this.gameState.maxWalls <= 4) {
+//                                hunter = new RectangularHunter();
+//                                hunter = new StuckWithHunter();
                             } else {
                                 hunter = new HalfHunter();
+
                             }
                         }
                         hunter.receiveGameState(this.gameState);
