@@ -110,14 +110,14 @@ public class EvasionClient {
                         if (hunter == null) {
                             if (this.gameState.maxWalls < 2) {
                                 throw new Exception("... We didn't account for this possibility");
-                            } else if (this.gameState.maxWalls < 4) {
+                            } else if (this.gameState.maxWalls == 2) {
                                 hunter = new AboveBelowHunter();
 //                            } else if (this.gameState.maxWalls <= 4) {
 //                                hunter = new RectangularHunter();
-//                                hunter = new StuckWithHunter();
+                            } else if (this.gameState.maxWalls == 3) {
+                                hunter = new StuckWithHunter();
                             } else {
                                 hunter = new HalfHunter();
-
                             }
                         }
                         hunter.receiveGameState(this.gameState);

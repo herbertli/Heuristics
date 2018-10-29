@@ -1,7 +1,7 @@
 package edu.nyu.cs.hps.evasion;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import edu.nyu.cs.hps.evasion.game.GameState;
 import edu.nyu.cs.hps.evasion.game.HorizontalWall;
@@ -13,10 +13,13 @@ public class HalfHunter implements Hunter {
     private int belowCoord = -1;
     private int leftCoord = -1;
     private int rightCoord = 301;
+    private ArrayDeque<Integer> leftWalls = new ArrayDeque<>();
+    private ArrayDeque<Integer> rightWalls = new ArrayDeque<>();
+    private ArrayDeque<Integer> aboveWalls = new ArrayDeque<>();
+    private ArrayDeque<Integer> belowWalls = new ArrayDeque<>();
     private boolean isTrappingH = false;
     private boolean isTrappingV = false;
     private GameState gameState;
-    private Scanner sc = new Scanner(System.in);
 
     @Override
     public void receiveGameState(GameState gameState) {
@@ -24,6 +27,7 @@ public class HalfHunter implements Hunter {
     }
 
     public HunterMove playHunter() {
+
         int hunterLocX = gameState.hunterPosAndVel.pos.x;
         int hunterLocY = gameState.hunterPosAndVel.pos.y;
         int velX = gameState.hunterPosAndVel.vel.x;
@@ -44,10 +48,9 @@ public class HalfHunter implements Hunter {
                     if (gameState.walls.size() == gameState.maxWalls) {
                         move.wallsToDel.add(del(false, leftCoord));
                     }
-                    System.out.println("Placing a trapping vertical wall (left)");
-                    sc.nextLine();
                     leftCoord = hunterLocX;
                     move.wallType = 2;
+                    leftWalls.add(leftCoord);
                     foundMove = true;
                 } else if (newArea <= currentArea * .6 && velX > 0) {
                     if (gameState.walls.size() == gameState.maxWalls) {
@@ -55,6 +58,7 @@ public class HalfHunter implements Hunter {
                     }
                     leftCoord = hunterLocX;
                     move.wallType = 2;
+                    leftWalls.add(leftCoord);
                     foundMove = true;
                 }
             }
@@ -65,10 +69,9 @@ public class HalfHunter implements Hunter {
                     if (gameState.walls.size() == gameState.maxWalls) {
                         move.wallsToDel.add(del(false, rightCoord));
                     }
-                    System.out.println("Placing a trapping vertical wall (right)");
-                    sc.nextLine();
                     rightCoord = hunterLocX;
                     move.wallType = 2;
+                    rightWalls.add(rightCoord);
                     foundMove = true;
                 } else if (newArea <= currentArea *.6 && velX < 0) {
                     if (gameState.walls.size() == gameState.maxWalls) {
@@ -76,6 +79,7 @@ public class HalfHunter implements Hunter {
                     }
                     rightCoord = hunterLocX;
                     move.wallType = 2;
+                    rightWalls.add(rightCoord);
                     foundMove = true;
                 }
             }
@@ -83,13 +87,12 @@ public class HalfHunter implements Hunter {
                 double newArea = (aboveCoord - hunterLocY) * (rightCoord - leftCoord);
                 if (velY < 0 && newArea <= currentArea * .4) {
                     isTrappingH = true;
-                    System.out.println("Placing a trapping horizontal wall (below)");
-                    sc.nextLine();
                     if (gameState.walls.size() == gameState.maxWalls) {
                         move.wallsToDel.add(del(true, belowCoord));
                     }
                     belowCoord = hunterLocY;
                     move.wallType = 1;
+                    belowWalls.add(belowCoord);
                     foundMove = true;
                 } else if (newArea <= currentArea * .6 && velY > 0) {
                     if (gameState.walls.size() == gameState.maxWalls) {
@@ -97,6 +100,7 @@ public class HalfHunter implements Hunter {
                     }
                     belowCoord = hunterLocY;
                     move.wallType = 1;
+                    belowWalls.add(belowCoord);
                     foundMove = true;
                 }
             }
@@ -104,13 +108,12 @@ public class HalfHunter implements Hunter {
                 double newArea = (hunterLocY - belowCoord) * (rightCoord - leftCoord);
                 if (velY > 0 && newArea <= currentArea * .4) {
                     isTrappingH = true;
-                    System.out.println("Placing a trapping horizontal wall (above)");
-                    sc.nextLine();
                     if (gameState.walls.size() == gameState.maxWalls) {
                         move.wallsToDel.add(del(true, aboveCoord));
                     }
                     aboveCoord = hunterLocY;
                     move.wallType = 1;
+                    aboveWalls.add(aboveCoord);
                     foundMove = true;
                 } else if (newArea <= currentArea * .6 && velY < 0) {
                     if (gameState.walls.size() == gameState.maxWalls) {
@@ -118,6 +121,7 @@ public class HalfHunter implements Hunter {
                     }
                     aboveCoord = hunterLocY;
                     move.wallType = 1;
+                    aboveWalls.add(aboveCoord);
                     foundMove = true;
                 }
             }
@@ -139,20 +143,24 @@ public class HalfHunter implements Hunter {
             move.wallType = 1;
             if (hunterLocY > preyLocY) {
                 if (hunterLocY + velY == aboveCoord) {
-                    int ind = del(true, aboveCoord);
+                    int farthestAbove = aboveWalls.pollLast();
+                    int ind = del(true, farthestAbove);
                     move.wallsToDel.add(ind);
                     isTrappingH = false;
                     aboveCoord = hunterLocY;
+                    aboveWalls.add(aboveCoord);
                     return move;
                 } else {
                     return emptyMove();
                 }
             } else {
                 if (hunterLocY + velY == belowCoord) {
-                    int ind = del(true, belowCoord);
+                    int farthestBelow = belowWalls.pollLast();
+                    int ind = del(true, farthestBelow);
                     move.wallsToDel.add(ind);
                     isTrappingH = false;
                     belowCoord = hunterLocY;
+                    belowWalls.add(belowCoord);
                     return move;
                 } else {
                     return emptyMove();
@@ -162,9 +170,11 @@ public class HalfHunter implements Hunter {
             move.wallType = 2;
             if (hunterLocX > preyLocX) {
                 if (hunterLocX + velX == rightCoord) {
-                    int ind = del(false, rightCoord);
+                    int farthestRight = rightWalls.pollLast();
+                    int ind = del(false, farthestRight);
                     move.wallsToDel.add(ind);
                     rightCoord = hunterLocX;
+                    rightWalls.add(rightCoord);
                     isTrappingV = false;
                     return move;
                 } else {
@@ -172,9 +182,11 @@ public class HalfHunter implements Hunter {
                 }
             } else {
                 if (hunterLocX + velX == leftCoord) {
-                    int ind = del(false, leftCoord);
+                    int farthestLeft = leftWalls.pollLast();
+                    int ind = del(false, farthestLeft);
                     move.wallsToDel.add(ind);
                     leftCoord = hunterLocX;
+                    leftWalls.add(leftCoord);
                     isTrappingV = false;
                     return move;
                 } else {
