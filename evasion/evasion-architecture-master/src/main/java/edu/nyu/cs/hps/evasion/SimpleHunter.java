@@ -1,15 +1,16 @@
 package edu.nyu.cs.hps.evasion;
 
+import edu.nyu.cs.hps.evasion.game.GameState;
 import org.locationtech.jts.geom.*;
 
-import java.io.IOException;
 import java.util.*;
 
-public class SimpleHunter extends EvasionClient {
+public class SimpleHunter implements Hunter {
 
     private Point hunterLoc;
     private GeometryFactory factory;
     private List<AugmentedWall> walls;
+    private GameState gameState;
 
     // this should be the box the prey is contained in
     private double minX = 0;
@@ -17,10 +18,14 @@ public class SimpleHunter extends EvasionClient {
     private double minY = 0;
     private double maxY = 300;
 
-    private SimpleHunter(String name, int port) throws IOException {
-        super(name, port);
+    private SimpleHunter() {
         factory = new GeometryFactory();
         walls = new ArrayList<>();
+    }
+
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     public HunterMove playHunter() throws Exception {
@@ -191,7 +196,7 @@ public class SimpleHunter extends EvasionClient {
         }
     }
 
-    HunterMove emptyMove() {
+    private HunterMove emptyMove() {
         HunterMove move = new HunterMove();
         move.wallType = 0;
         move.wallsToDel = new ArrayList<>();
@@ -210,22 +215,6 @@ public class SimpleHunter extends EvasionClient {
         coordinates[0] = new Coordinate(this.hunterLoc.getX(), 0);
         coordinates[1] = new Coordinate(this.hunterLoc.getX(), 300);
         return factory.createLineString(coordinates);
-    }
-
-    public PreyMove playPrey() {
-        Random random = new Random();
-        return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-    }
-
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java SimpleHunter <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new SimpleHunter(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
     }
 
     static class AugmentedWall {

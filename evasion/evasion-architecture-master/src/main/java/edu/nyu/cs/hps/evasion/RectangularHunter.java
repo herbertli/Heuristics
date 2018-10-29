@@ -1,10 +1,9 @@
 package edu.nyu.cs.hps.evasion;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.Scanner;
 
+import edu.nyu.cs.hps.evasion.game.GameState;
 import edu.nyu.cs.hps.evasion.game.HorizontalWall;
 import edu.nyu.cs.hps.evasion.game.VerticalWall;
 
@@ -18,7 +17,7 @@ import edu.nyu.cs.hps.evasion.game.VerticalWall;
  * Then delete the previous wall.
  */
 
-public class RectangularHunter extends EvasionClient {
+public class RectangularHunter implements Hunter {
 
     // above/right/below/left are with respect to the prey.
     int aboveCoor = 300;
@@ -30,15 +29,17 @@ public class RectangularHunter extends EvasionClient {
     // number of wallIndices that doesn't equal -1.
     int wallsInPlay = 0;
     // number of walls built so far. (also index of next wall).
-    int wallsBuilt = 0;
-    // Build a horizontal (0) or vertical (1) wall next turn.
+    int wallsBuilt = 0;// Build a horizontal (0) or vertical (1) wall next turn.
     int rebuild = 0;
+    // index of the wall separating hunter from prey. If -1 then doesn't exist.
+    int trappingWall = -1;
 
-    Scanner sc;
+    Scanner sc = new Scanner(System.in);;
+    GameState gameState;
 
-    private RectangularHunter(String name, int port) throws IOException {
-        super(name, port);
-        sc = new Scanner(System.in);
+    @Override
+    public void receiveGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     HunterMove emptyMove() {
@@ -156,18 +157,4 @@ public class RectangularHunter extends EvasionClient {
         return emptyMove();
     }
 
-    public PreyMove playPrey() {
-        Random random = new Random();
-        return new PreyMove(random.nextInt(3) - 1, random.nextInt(3) - 1);
-    }
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: java RectangularHunter <port> <name>");
-        }
-        int port = Integer.parseInt(args[0]);
-        String name = args[1];
-        EvasionClient evasionClient = new RectangularHunter(name, port);
-        evasionClient.playGame();
-        evasionClient.socket.close_socket();
-    }
 }
