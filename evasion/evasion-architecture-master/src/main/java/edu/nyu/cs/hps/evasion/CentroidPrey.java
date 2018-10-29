@@ -188,9 +188,9 @@ public class CentroidPrey implements Prey {
             MoveTriple cur = queue.poll();
             if(visited[cur.x][cur.y][cur.t]) continue;
             visited[cur.x][cur.y][cur.t] = true;
-            if(cur.t > 0 && squaredDistance(cur, hunterMoves.get(cur.t-1)) <= 20) continue;
-            if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 20) continue;
-            if(squaredDistance(cur, hunterMoves.get(cur.t+1)) <= 20) continue;
+            if(cur.t > 0 && squaredDistance(cur, hunterMoves.get(cur.t-1)) <= 18) continue;
+            if(squaredDistance(cur, hunterMoves.get(cur.t)) <= 18) continue;
+            if(squaredDistance(cur, hunterMoves.get(cur.t+1)) <= 18) continue;
             if(cur.t >= numTurns){
                 while(cur.prev != null){ //Note that you don't add the t = 0 move (because you're already there).
                     moves.addFirst(cur);
@@ -207,44 +207,43 @@ public class CentroidPrey implements Prey {
         return moves;
     }
 
-    // calculate centroid
-    // calculate safe path towards centroid using a*
-    // move towards closest safepoint near centroid
-    EvasionPoint centroid;
+    EvasionPoint centroid = null;
     Queue<MoveTriple> futureMoves = new LinkedList<>();
+
     public PreyMove playPrey() {
-        // if new wall has been placed
-        //     see if we're in danger (dist from prey to hunter < 20)
-        //          if so, calculate a path for next 10 moves that avoids danger.
-        //          if not, then calculate and move towards centroid
-        //  otherwise, if we already have moves planned, do them
-        //  otherwise move towards centroid
-        boolean inDanger = dangerCheck() <= 20;
-        if(centroid == null || gameState.wallPlacementDelay - gameState.wallTimer < 2){
-            System.out.println("a");
-            if(inDanger) {
-                ArrayList<MoveTriple> hunterMoves = simulateTick(20);
-                futureMoves = findPath(hunterMoves, 20);
-                if(futureMoves.size() == 0) System.out.println("No future moves. :(");
-            }
+        boolean inDanger = dangerCheck() <= 25;
+        if (centroid == null) {
             centroid = bfsCentroid();
         }
-        if(futureMoves.size() == 0 && inDanger){
+        if (gameState.wallPlacementDelay - gameState.wallTimer < 2) {
+            centroid = bfsCentroid();
+            ArrayList<MoveTriple> hunterMoves = simulateTick(50);
+            futureMoves = findPath(hunterMoves, 50);
+        }
+        if(futureMoves.size() < 10){
             System.out.println("b");
-            ArrayList<MoveTriple> hunterMoves = simulateTick(20);
-            futureMoves = findPath(hunterMoves, 20);
+            ArrayList<MoveTriple> hunterMoves = simulateTick(50);
+            futureMoves = findPath(hunterMoves, 50);
             if(futureMoves.size() == 0) System.out.println("No future moves. :(");
         }
-        PreyMove pm = null;
-        if(futureMoves.size() > 0) {
-            MoveTriple next = futureMoves.poll();
-            System.out.println("Playing from future moves");
-            pm = new PreyMove(next.x - gameState.preyPos.x, next.y - gameState.preyPos.y);
+        PreyMove pm;
+        if (inDanger) {
+            System.out.println("In Danger!");
+            if (futureMoves.size() > 0) {
+                MoveTriple next = futureMoves.poll();
+                System.out.println("Playing from future moves");
+                pm = new PreyMove(next.x - gameState.preyPos.x, next.y - gameState.preyPos.y);
+            } else {
+                System.out.println("Playing towards centroid at " + centroid.x + " " + centroid.y);
+                pm = new PreyMove(centroid.x - gameState.preyPos.x, centroid.y - gameState.preyPos.y);
+                if (pm.x != 0) pm.x /= Math.abs(pm.x);
+                if (pm.y != 0) pm.y /= Math.abs(pm.y);
+            }
         } else {
             System.out.println("Playing towards centroid at " + centroid.x + " " + centroid.y);
             pm = new PreyMove(centroid.x - gameState.preyPos.x, centroid.y - gameState.preyPos.y);
-            if(pm.x != 0) pm.x/=Math.abs(pm.x);
-            if(pm.y != 0) pm.y/=Math.abs(pm.y);
+            if (pm.x != 0) pm.x /= Math.abs(pm.x);
+            if (pm.y != 0) pm.y /= Math.abs(pm.y);
         }
         return pm;
     }
