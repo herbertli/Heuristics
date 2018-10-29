@@ -21,18 +21,18 @@ import edu.nyu.cs.hps.evasion.game.VerticalWall;
 public class RectangularHunter extends EvasionClient {
 
     // above/right/below/left are with respect to the prey.
-    int aboveCoor = -1;
-    int rightCoor = -1;
-    int belowCoor = -1;
-    int leftCoor = -1;
+    int aboveCoor = 300;
+    int rightCoor = 300;
+    int belowCoor = 0;
+    int leftCoor = 0;
     // indices of the walls in play. (-1 means there isn't one there right now).
     int[] wallIndices = {-1, -1, -1, -1};
     // number of wallIndices that doesn't equal -1.
     int wallsInPlay = 0;
     // number of walls built so far. (also index of next wall).
     int wallsBuilt = 0;
-    // index of the wall seperating hunter from prey. If -1 then doesn't exist.
-    int trappingWall = -1;
+    // Build a horizontal (0) or vertical (1) wall next turn.
+    int rebuild = 0;
 
     Scanner sc;
 
@@ -66,137 +66,89 @@ public class RectangularHunter extends EvasionClient {
     }
 
     public HunterMove playHunter() {
-        boolean canPlaceWall = (gameState.wallTimer == 0);
-        if(canPlaceWall) {
-            int hposx = gameState.hunterPosAndVel.pos.x;
-            int hposy = gameState.hunterPosAndVel.pos.y;
-            int hvelx = gameState.hunterPosAndVel.vel.x;
-            int hvely = gameState.hunterPosAndVel.vel.y;
-            int verticalWallCoor = hposx;
-            int horizontalWallCoor = hposy;
-            int px = gameState.preyPos.x;
-            int py = gameState.preyPos.y;
-            HunterMove hm = new HunterMove();
-            ArrayList<Integer> deleteWalls = new ArrayList<>();
-            hm.wallsToDel = deleteWalls;
-            // Check the case where there's a wall between hunter and prey.
-            // What is code reuse?
-            if(trappingWall == 0 && (hposy + hvely == aboveCoor)) {
-                hm.wallType = 1;
+        int hposx = gameState.hunterPosAndVel.pos.x;
+        int hposy = gameState.hunterPosAndVel.pos.y;
+        int hvelx = gameState.hunterPosAndVel.vel.x;
+        int hvely = gameState.hunterPosAndVel.vel.y;
+        int verticalWallCoor = hposx;
+        int horizontalWallCoor = hposy;
+        int px = gameState.preyPos.x;
+        int py = gameState.preyPos.y;
+        // Check the case where there's a wall between hunter and prey.
+        // What is code reuse?
+        HunterMove hm = new HunterMove();
+        ArrayList<Integer> deleteWalls = new ArrayList<>();
+        hm.wallsToDel = deleteWalls;
+        if(rebuild > 0) {
+            hm.wallType = rebuild;
+            rebuild = 0;
+            wallIndices[0] = wallsBuilt;
+            wallsBuilt++;
+            aboveCoor = horizontalWallCoor;
+            return hm;
+        }
+        if(gameState.wallTimer < 2) {
+            if(hposy + hvely == aboveCoor && hposy > aboveCoor && py < aboveCoor - 1) {
+                rebuild = 1;
                 hm.wallsToDel.add(del(true, aboveCoor));
-                wallIndices[0] = wallsBuilt;
-                wallsBuilt++;
-                aboveCoor = horizontalWallCoor;
-                trappingWall = -1;
                 return hm;
-            } else if(trappingWall == 1 && (hposx + hvelx == rightCoor)) {
-                hm.wallType = 2;
+            } else if(hposx + hvelx == rightCoor && hposx > rightCoor && px < rightCoor - 1) {
+                rebuild = 2;
                 hm.wallsToDel.add(del(false, rightCoor));
-                wallIndices[1] = wallsBuilt;
-                wallsBuilt++;
-                rightCoor = verticalWallCoor;
-                trappingWall = -1;
                 return hm;
-            } else if(trappingWall == 2 && (hposy + hvely == belowCoor)) {
-                hm.wallType = 1;
+            }else if(hposy + hvely == belowCoor && hposy < belowCoor && py > belowCoor + 1) {
+                rebuild = 1;
                 hm.wallsToDel.add(del(true, belowCoor));
-                wallIndices[2] = wallsBuilt;
-                wallsBuilt++;
-                belowCoor = horizontalWallCoor;
-                trappingWall = -1;
                 return hm;
-            } else if(trappingWall == 3 && (hposx + hvelx == leftCoor)) {
-                hm.wallType = 2;
+            }else if(hposx + hvelx == leftCoor && hposx < leftCoor && px > leftCoor + 1) {
+                rebuild = 2;
                 hm.wallsToDel.add(del(false, leftCoor));
-                wallIndices[3] = wallsBuilt;
-                wallsBuilt++;
-                leftCoor = verticalWallCoor;
-                trappingWall = -1;
                 return hm;
             }
-            if(trappingWall == -1) {
-                if(py < horizontalWallCoor) {
-                    if(aboveCoor == -1) {
-                        hm.wallType = 1;
-                        wallIndices[0] = wallsBuilt;
-                        wallsBuilt++;
-                        wallsInPlay++;
-                        if(horizontalWallCoor < hposy + hvely) trappingWall = 0;
-                        aboveCoor = horizontalWallCoor;
-                        return hm;
-                    } else if(horizontalWallCoor < aboveCoor) {
-                        //System.out.println("py: " + py + " coor: " + horizontalWallCoor + " aboveCoor: " + aboveCoor);
-                        //sc.next();
-                        hm.wallType = 1;
-                        hm.wallsToDel.add(del(true, aboveCoor));
-                        wallIndices[0] = wallsBuilt;
-                        wallsBuilt++;
-                        if(horizontalWallCoor < hposy + hvely) trappingWall = 0;
-                        aboveCoor = horizontalWallCoor;
-                        return hm;
-                    }
-                } else if(px < verticalWallCoor) {
-                    //System.out.println("px: " + px + " coor: " + verticalWallCoor + " rightCoor: " + rightCoor + " trap: " + trappingWall);
+        }
+        if(gameState.wallTimer == 0 && !(hposx < leftCoor || hposy < belowCoor || hposx > rightCoor || hposy > aboveCoor)) {
+            if(py < horizontalWallCoor && horizontalWallCoor < aboveCoor) {
+                if(hposy + hvely < horizontalWallCoor || horizontalWallCoor - belowCoor > 8) {
+                    //System.out.println("py: " + py + " coor: " + horizontalWallCoor + " aboveCoor: " + aboveCoor);
                     //sc.next();
-                    if(rightCoor == -1) {
-                        hm.wallType = 2;
-                        wallIndices[1] = wallsBuilt;
-                        wallsBuilt++;
-                        wallsInPlay++;
-                        if(verticalWallCoor < hposx + hvelx) trappingWall = 1;
-                        rightCoor = verticalWallCoor;
-                        return hm;
-                    } else if(verticalWallCoor < rightCoor) {
-                        hm.wallType = 2;
-                        hm.wallsToDel.add(del(false, rightCoor));
-                        wallIndices[1] = wallsBuilt;
-                        wallsBuilt++;
-                        if(verticalWallCoor < hposx + hvelx) trappingWall = 1;
-                        rightCoor = verticalWallCoor;
-                        return hm;
-                    }
-                } else if(py > horizontalWallCoor) {
-                    //System.out.println("py: " + py + " coor: " + horizontalWallCoor + " belowCoor: " + belowCoor);
-                    //sc.next();
-                    if(belowCoor == -1) {
-                        //System.out.println("there");
-                        hm.wallType = 1;
-                        wallIndices[2] = wallsBuilt;
-                        wallsBuilt++;
-                        wallsInPlay++;
-                        if(horizontalWallCoor > hposy + hvely) trappingWall = 2;
-                        belowCoor = horizontalWallCoor;
-                        return hm;
-                    } else if(horizontalWallCoor > belowCoor) {
-                        //System.out.println("here");
-                        hm.wallType = 1;
-                        hm.wallsToDel.add(del(true, belowCoor));
-                        wallIndices[2] = wallsBuilt;
-                        wallsBuilt++;
-                        if(horizontalWallCoor > hposy + hvely) trappingWall = 2;
-                        belowCoor = horizontalWallCoor;
-                        return hm;
-                    }
-                } else if(px > verticalWallCoor) {
-                    //System.out.println("py: " + py + " coor: " + verticalWallCoor + " leftCoor: " + leftCoor);
-                    //sc.next();
-                    if(leftCoor == -1) {
-                        hm.wallType = 2;
-                        wallIndices[3] = wallsBuilt;
-                        wallsBuilt++;
-                        wallsInPlay++;
-                        if(verticalWallCoor > hposx + hvelx) trappingWall = 3;
-                        leftCoor = verticalWallCoor;
-                        return hm;
-                    } else if(verticalWallCoor > leftCoor) {
-                        hm.wallType = 2;
-                        hm.wallsToDel.add(del(false, leftCoor));
-                        wallIndices[3] = wallsBuilt;
-                        wallsBuilt++;
-                        if(verticalWallCoor > hposx + hvelx) trappingWall = 3;
-                        leftCoor = verticalWallCoor;
-                        return hm;
-                    }
+                    hm.wallType = 1;
+                    hm.wallsToDel.add(del(true, aboveCoor));
+                    wallIndices[0] = wallsBuilt;
+                    wallsBuilt++;
+                    aboveCoor = horizontalWallCoor;
+                    return hm;
+
+                }
+            }
+            if(px < verticalWallCoor && verticalWallCoor < rightCoor) {
+                if(hposx + hvelx < verticalWallCoor || verticalWallCoor - leftCoor > 8) {
+                    hm.wallType = 2;
+                    hm.wallsToDel.add(del(false, rightCoor));
+                    wallIndices[1] = wallsBuilt;
+                    wallsBuilt++;
+                    rightCoor = verticalWallCoor;
+                    return hm;
+                }
+            }
+            if(py > horizontalWallCoor && horizontalWallCoor > belowCoor) {
+                if(hposy + hvely > horizontalWallCoor || aboveCoor - horizontalWallCoor > 8) {
+                    //System.out.println("here");
+                    hm.wallType = 1;
+                    hm.wallsToDel.add(del(true, belowCoor));
+                    wallIndices[2] = wallsBuilt;
+                    wallsBuilt++;
+                    belowCoor = horizontalWallCoor;
+                    return hm;
+                }
+            }
+            if(px > verticalWallCoor && verticalWallCoor > leftCoor) {
+                if(hposx + hvelx > verticalWallCoor || rightCoor - verticalWallCoor > 8) {
+                    hm.wallType = 2;
+                    hm.wallsToDel.add(del(false, leftCoor));
+                    wallIndices[3] = wallsBuilt;
+                    wallsBuilt++;
+                    leftCoor = verticalWallCoor;
+                    return hm;
                 }
             }
         }
