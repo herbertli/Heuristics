@@ -34,6 +34,7 @@ public class DancingClient {
             dancingClient.socketClient.send_data(dancingClient.name + "&");
             dancingClient.choreographer.receiveInput(dancingClient.socketClient.receive_data('&'));
             dancingClient.choreographer.receiveGameInfo(dancingClient.socketClient.receive_data('&'));
+            dancingClient.choreographer.receiveStars(dancingClient.socketClient.receive_data('&'));
             dancingClient.socketClient.send_data(dancingClient.choreographer.getMoveString() + "&");
             dancingClient.socketClient.send_data("DONE&");
             dancingClient.socketClient.send_data(dancingClient.choreographer.getLineString() + "&");

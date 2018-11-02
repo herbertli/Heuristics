@@ -2,6 +2,7 @@ package nyu.hps.botty.dancing;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public abstract class Player {
 
@@ -9,6 +10,17 @@ public abstract class Player {
     int numOfColor;
     int k;
     HashMap<Integer, ArrayList<Point>> dancers;
+    List<Point> stars;
+
+    void receiveStars(String starString) {
+        stars = new ArrayList<>();
+        String[] temp = starString.split(" ");
+        for (int i = 0; i < temp.length; i += 2) {
+            int x = Integer.parseInt(temp[i]);
+            int y = Integer.parseInt(temp[i + 1]);
+            stars.add(new Point(x, y));
+        }
+    }
 
     void receiveInput(String danceData) {
         dancers = new HashMap<Integer, ArrayList<Point>>();
