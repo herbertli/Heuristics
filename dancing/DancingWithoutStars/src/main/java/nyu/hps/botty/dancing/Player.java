@@ -13,7 +13,7 @@ public abstract class Player {
     void receiveInput(String danceData) {
         dancers = new HashMap<Integer, ArrayList<Point>>();
         int currentColor = -1;
-        for (String line: danceData.replace("&", "").trim().split("\n")) {
+        for (String line: danceData.split("\n")) {
             String[] byWord = line.split(" ");
             if (byWord.length > 2) {
                 currentColor = Integer.parseInt(byWord[byWord.length - 1]);
