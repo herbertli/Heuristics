@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class Player {
+abstract class Player {
 
     int boardSize;
     int numOfColor;
@@ -13,6 +13,7 @@ public abstract class Player {
     List<Point> stars;
 
     void receiveStars(String starString) {
+        starString = starString.replace("&", "");
         stars = new ArrayList<>();
         String[] temp = starString.split(" ");
         for (int i = 0; i < temp.length; i += 2) {
@@ -23,7 +24,8 @@ public abstract class Player {
     }
 
     void receiveInput(String danceData) {
-        dancers = new HashMap<Integer, ArrayList<Point>>();
+        danceData = danceData.replace("&", "");
+        dancers = new HashMap<>();
         int currentColor = -1;
         for (String line: danceData.split("\n")) {
             String[] byWord = line.split(" ");
@@ -31,7 +33,7 @@ public abstract class Player {
                 currentColor = Integer.parseInt(byWord[byWord.length - 1]);
             } else {
                 if (!dancers.containsKey(currentColor)) {
-                    dancers.put(currentColor, new ArrayList<Point>());
+                    dancers.put(currentColor, new ArrayList<>());
                 }
                 int x = Integer.parseInt(byWord[0]);
                 int y = Integer.parseInt(byWord[1]);
