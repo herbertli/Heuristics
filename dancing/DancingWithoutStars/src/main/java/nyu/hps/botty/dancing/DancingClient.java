@@ -31,13 +31,14 @@ public class DancingClient {
             dancingClient.spoiler.receiveGameInfo(dancingClient.socketClient.receive_data('&'));
             dancingClient.socketClient.send_data(dancingClient.spoiler.getMoveString() + "&");
         } else {
+            Choreographer c = dancingClient.choreographer;
             dancingClient.socketClient.send_data(dancingClient.name + "&");
-            dancingClient.choreographer.receiveInput(dancingClient.socketClient.receive_data('&'));
-            dancingClient.choreographer.receiveGameInfo(dancingClient.socketClient.receive_data('&'));
-            dancingClient.choreographer.receiveStars(dancingClient.socketClient.receive_data('&'));
-            dancingClient.socketClient.send_data(dancingClient.choreographer.getMoveString() + "&");
+            c.receiveInput(dancingClient.socketClient.receive_data('&'));
+            c.receiveGameInfo(dancingClient.socketClient.receive_data('&'));
+            c.receiveStars(dancingClient.socketClient.receive_data('&'));
+            dancingClient.socketClient.send_data(c.getMoveString(c.getPaths()));
             dancingClient.socketClient.send_data("DONE&");
-            dancingClient.socketClient.send_data(dancingClient.choreographer.getLineString() + "&");
+            dancingClient.socketClient.send_data(c.getLineString(c.getLines()));
         }
         dancingClient.socketClient.close_socket();
     }

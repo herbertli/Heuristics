@@ -39,24 +39,23 @@ public class HerbertChoreo extends Choreographer {
         h.solve();
     }
 
-    private List<Point>[] pathSolution = null;
-    private Point[][] lineSolution = null;
-
+    private Point[][] lineSolution;
+    private List<Point>[] pathSolution;
     void solve() {
         // generate cluster centers
         Map<Point, ArrayList<Point>> centerAndPoints = cluster(numIter, k);
         if (DEBUG) printCenters(centerAndPoints);
 
         // create grid
-        char[][] grid = createGrid(centerAndPoints);
-        if (DEBUG) printGrid(grid);
+        String[][] grid = createGrid(centerAndPoints);
+        if (DEBUG) Utils.printGrid(grid);
 
         // create lines and generate pairs from each dancer to their final position
         Point[][] startAndEndPairs = assignLines(centerAndPoints);
         if (DEBUG) printPairs(startAndEndPairs);
 
         // print out the lines
-        String lineString = getLineString();
+        String lineString = getLineString(lineSolution);
         if (DEBUG) System.out.println(lineString);
 
         // generate paths from each dancer to their assigned line
@@ -64,9 +63,19 @@ public class HerbertChoreo extends Choreographer {
         if (DEBUG) Utils.printMoves(pathSolution);
 
         // finally, get the move string
-        String moveString = getMoveString();
+        String moveString = getMoveString(pathSolution);
         if (DEBUG) System.out.println(moveString);
 
+    }
+
+    @Override
+    List<Point>[] getPaths() {
+        return pathSolution;
+    }
+
+    @Override
+    Point[][] getLines() {
+        return lineSolution;
     }
 
     private HashMap<Point, ArrayList<Point>> cluster(int iter, int numClusters) {
@@ -151,54 +160,6 @@ public class HerbertChoreo extends Choreographer {
         }
     }
 
-    String getMoveString() {
-        StringBuilder sb = new StringBuilder();
-        Point[] currentLocs = new Point[pathSolution.length];
-        int maxTime = -1;
-        for (int i = 0; i < pathSolution.length; i++) {
-            currentLocs[i] = pathSolution[i].get(0);
-            maxTime = Math.max(maxTime, pathSolution[i].size());
-        }
-
-        for (int t = 1; t < maxTime; t++) {
-            StringBuilder move = new StringBuilder();
-            int numMoves = 0;
-            for (int i = 0; i < pathSolution.length; i++) {
-                if (t >= pathSolution[i].size()) continue;
-
-                Point currP = currentLocs[i];
-                Point nextLoc = pathSolution[i].get(t);
-                if (currP.equals(nextLoc)) continue;
-
-                numMoves++;
-                move.append(currP.x).append(" ").append(currP.y).append(" ");
-                move.append(nextLoc.x).append(" ").append(nextLoc.y).append(" ");
-                currentLocs[i] = nextLoc;
-            }
-            if (numMoves == 0) {
-                sb.append("0");
-            } else {
-                if (move.charAt(move.length() - 1) == ' ') move.deleteCharAt(move.length() - 1);
-                sb.append(numMoves).append(" ").append(move.toString());
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
-    }
-
-    String getLineString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < lineSolution.length; i++) {
-            Point startP = lineSolution[i][0];
-            Point endP = lineSolution[i][1];
-            sb.append(startP.x).append(" ").append(startP.y).append(" ");
-            sb.append(endP.x).append(" ").append(endP.y);
-            if (i != lineSolution.length - 1) {
-                sb.append(" ");
-            }
-        }
-        return sb.toString();
-    }
 
     // for now, all the lines will be horizontal, or all the lines will be vertical
     private Point[][] assignLines(Map<Point, ArrayList<Point>> centerAndPoints) {
@@ -391,32 +352,27 @@ public class HerbertChoreo extends Choreographer {
         g.end = end;
     }
 
-    private char[][] createGrid(Map<Point, ArrayList<Point>> centerAndPoints) {
-        char[][] grid = new char[boardSize][boardSize];
-        for (char[] c : grid) Arrays.fill(c, ' ');
+    private String[][] createGrid(Map<Point, ArrayList<Point>> centerAndPoints) {
+        String[][] grid = new String[boardSize][boardSize];
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                grid[i][j] = " ";
+            }
+        }
         if (stars != null && stars.size() > 0) {
             for (Point s : stars) {
-                grid[s.x][s.y] = '#';
+                grid[s.x][s.y] = "#";
             }
         }
         for (Map.Entry<Integer, ArrayList<Point>> e : dancers.entrySet()) {
             for (Point p : e.getValue()) {
-                grid[p.x][p.y] = (e.getKey() + "").charAt(0);
+                grid[p.x][p.y] = e.getKey() + "";
             }
         }
         for (Point p : centerAndPoints.keySet()) {
-            grid[p.x][p.y] = 'X';
+            grid[p.x][p.y] = "X";
         }
         return grid;
-    }
-
-    private void printGrid(char[][] grid) {
-        for (char[] c : grid) {
-            for (char j : c) {
-                System.out.print(j);
-            }
-            System.out.println();
-        }
     }
 
     private void printCenters(Map<Point, ArrayList<Point>> centerAndPoints) {
@@ -451,6 +407,9 @@ public class HerbertChoreo extends Choreographer {
 
     }
 
+    // taken from:
+    // https://github.com/KevinStern/software-and-algorithms/blob/master/src/main/java/blogspot/software_and_algorithms/stern_library/optimization/HungarianAlgorithm.java
+    // but I'm pretty sure he took it from somewhere else... (similar implementations are floating around)
     static class HungarianAlgorithm {
 
         private final double[][] costMatrix;

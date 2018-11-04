@@ -10,7 +10,7 @@ class Utils {
      * @param grid - the dance-floor, filled in with #s
      * @return List of paths each dancer should take
      */
-    static List<Point>[] generatePaths(Point[][] startEndP, char[][] grid) {
+    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
         int boardSize = grid.length;
         List<Point>[] res = new List[startEndP.length];
         for (int i = 0; i < res.length; i++) {
@@ -60,12 +60,12 @@ class Utils {
             if (stillRunning == 0) break;
 
             // generate initial grid, will be used to mark occupied squares
-            char[][] gridAtT = new char[boardSize][boardSize];
+            String[][] gridAtT = new String[boardSize][boardSize];
             for (int i = 0; i < gridAtT.length; i++) {
                 for (int j = 0; j < gridAtT.length; j++) {
                     // mark placed starts
-                    if (grid[i][j] == '#') {
-                        gridAtT[i][j] = '#';
+                    if (grid[i][j].equals("#")) {
+                        gridAtT[i][j] = "#";
                     }
                 }
             }
@@ -101,7 +101,7 @@ class Utils {
                         int newY = currentY + dir[1];
                         int newDist = currentDist + 1;
                         if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
-                        if (grid[newX][newY] == '#') continue;
+                        if (grid[newX][newY].equals("#")) continue;
                         if (dist[newX][newY] > newDist) {
                             Edge newEdge = new Edge(newX, newY, newDist);
                             dist[newX][newY] = newDist;
@@ -138,7 +138,7 @@ class Utils {
                 }
                 nextMove.time = t;
                 res[ind].add(nextMove);
-                gridAtT[nextMove.x][nextMove.y] = '#';
+                gridAtT[nextMove.x][nextMove.y] = "#";
                 currentLocs[ind] = nextMove;
             }
 
@@ -157,6 +157,15 @@ class Utils {
         }
 
         return res;
+    }
+
+    static void printGrid(String[][] grid) {
+        for (String[] c : grid) {
+            for (String j : c) {
+                System.out.print(j);
+            }
+            System.out.println();
+        }
     }
 
     static void printMoves(List<Point>[] paths) {
