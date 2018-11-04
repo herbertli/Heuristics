@@ -324,7 +324,7 @@ class LineSegment {
 		this.start = start;
 		this.horizontal = horizontal;
 		this.length = length;
-		this.end = new Point(start.x + (horizontal ? length : 0), start.y + (horizontal ? 0 : length));
+		this.end = new Point(start.x + (horizontal ? length-1 : 0), start.y + (horizontal ? 0 : length-1));
 	}
 }
 
