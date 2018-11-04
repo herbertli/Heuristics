@@ -10,7 +10,7 @@ class Utils {
      * @param grid - the dance-floor, filled in with #s
      * @return List of paths each dancer should take
      */
-    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePaths1(Point[][] startEndP, String[][] grid) {
         int boardSize = grid.length;
         List<Point>[] res = new List[startEndP.length];
         for (int i = 0; i < res.length; i++) {
@@ -154,6 +154,158 @@ class Utils {
                 p.time = currT;
                 currT++;
             }
+        }
+
+        return res;
+    }
+
+    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
+        Scanner sc = new Scanner(System.in);
+        int boardSize = grid.length;
+        List<Point>[] res = new List[startEndP.length];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = new ArrayList<>();
+        }
+
+        // keep track of the current location of every point at current t
+        // initially every dancer is at their end location
+        Point[] currentLocs = new Point[startEndP.length];
+        for (int i = 0; i < currentLocs.length; i++) {
+            Point startP = startEndP[i][0];
+            currentLocs[i] = new Point(startP.x, startP.y);
+            currentLocs[i].time = 0;
+            res[i].add(currentLocs[i]);
+        }
+
+        // sort (start, end) pairs by decreasing distance
+        // this way, we'll look at longer paths before shorter ones
+        Comparator<Integer> comp = (o1, o2) -> {
+            Point startP = currentLocs[o1];
+            Point endP = startEndP[o1][1];
+            int o1Dist = Math.abs(startP.x - endP.x) + Math.abs(startP.y - endP.y);
+            startP = currentLocs[o2];
+            endP = startEndP[o2][1];
+            int o2Dist = Math.abs(startP.x - endP.x) + Math.abs(startP.y - endP.y);
+            return Integer.compare(o2Dist, o1Dist);
+        };
+        ArrayList<Integer> byL = new ArrayList<>();
+        for (int i = 0; i < startEndP.length; i++) {
+            byL.add(i);
+        }
+        byL.sort(comp);
+
+        // current time
+        int t = 1;
+
+        while (true) {
+            System.out.println("Generating positions for time: " + t);
+
+            // count how many dancers aren't at their start locations (since we're going backwards)
+            int stillRunning = 0;
+            for (int i = 0; i < currentLocs.length; i++) {
+                if (!currentLocs[i].equals(startEndP[i][1])) {
+                    stillRunning++;
+                }
+            }
+            System.out.println("# dancers still running: " + stillRunning);
+            if (stillRunning == 0) break;
+
+            // generate initial grid, will be used to mark occupied squares
+            // fill in stars and current locations of dancers
+            String[][] gridAtT = new String[boardSize][boardSize];
+            for (int i = 0; i < gridAtT.length; i++) {
+                for (int j = 0; j < gridAtT.length; j++) {
+                    if (grid[i][j].equals("#")) gridAtT[i][j] = "#";
+                    else gridAtT[i][j] = " ";
+                }
+            }
+            for (Point p : currentLocs) {
+                gridAtT[p.x][p.y] = "$";
+            }
+
+            Utils.printGrid(gridAtT);
+
+            // keep track of who moved this turn
+            boolean[] movedThisT = new boolean[startEndP.length];
+
+            while (true) {
+                int moved = 0;
+                for (int ind : byL) {
+
+                    if (movedThisT[ind]) continue;
+
+                    // Run Dijkstra's
+                    int[][] dist = new int[boardSize][boardSize];
+                    for (int[] i : dist) Arrays.fill(i, Integer.MAX_VALUE);
+
+                    Point[][] pred = new Point[boardSize][boardSize];
+                    PriorityQueue<Edge> dq = new PriorityQueue<>(Comparator.comparingInt(Edge::getDist));
+
+                    Point start = currentLocs[ind];
+                    dq.add(new Edge(start.x, start.y, 0));
+                    dist[start.x][start.y] = 0;
+
+                    int[][] moves = {
+                            {0, 1},
+                            {0, -1},
+                            {1, 0},
+                            {-1, 0}
+                    };
+                    while (!dq.isEmpty()) {
+                        Edge e = dq.poll();
+                        if (e == null) continue;
+                        int currentX = e.x;
+                        int currentY = e.y;
+                        int currentDist = e.dist;
+                        for (int[] dir : moves) {
+                            int newX = currentX + dir[0];
+                            int newY = currentY + dir[1];
+                            int newDist = currentDist + 1;
+                            if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
+                            if (grid[newX][newY].equals("#") || grid[newX][newY].equals("$")) continue;
+                            if (dist[newX][newY] > newDist) {
+                                Edge newEdge = new Edge(newX, newY, newDist);
+                                dist[newX][newY] = newDist;
+                                pred[newX][newY] = new Point(currentX, currentY);
+                                dq.add(newEdge);
+                            }
+                        }
+                    }
+
+                    Point endP = startEndP[ind][1];
+                    Point nextMove;
+
+                    // path found by Dijkstra's, then we should try to move
+                    if (dist[endP.x][endP.y] != Integer.MAX_VALUE) {
+                        ArrayList<Point> path = new ArrayList<>();
+                        path.add(new Point(endP.x, endP.y));
+                        Point currentP = pred[endP.x][endP.y];
+                        while (currentP != null) {
+                            path.add(new Point(currentP.x, currentP.y));
+                            currentP = pred[currentP.x][currentP.y];
+                        }
+                        Collections.reverse(path);
+                        if (path.size() == 1) {
+                            nextMove = path.get(0);
+                        } else {
+                            nextMove = path.get(1);
+                        }
+                        nextMove.time = t;
+                        res[ind].add(nextMove);
+                        gridAtT[nextMove.x][nextMove.y] = "$";
+                        gridAtT[currentLocs[ind].x][currentLocs[ind].y] = " ";
+                        currentLocs[ind] = nextMove;
+                        movedThisT[ind] = true;
+                        moved++;
+                    }
+                }
+                if (moved == 0) break;
+            }
+
+            // resort
+            byL.sort(comp);
+            t++;
+            sc.next();
         }
 
         return res;
