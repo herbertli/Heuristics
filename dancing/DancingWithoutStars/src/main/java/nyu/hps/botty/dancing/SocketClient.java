@@ -37,13 +37,13 @@ public class SocketClient {
     }
 
     public String receive_data() throws IOException {
-        return receive_data(4096);
+        return receive_data(8192);
     }
 
     public String receive_data(char term) throws IOException {
         StringBuilder s = new StringBuilder();
         while (true) {
-            s.append(bufferedReader.read());
+            s.append((char) bufferedReader.read());
             if (s.charAt(s.length() - 1) == term) {
                 break;
             }
