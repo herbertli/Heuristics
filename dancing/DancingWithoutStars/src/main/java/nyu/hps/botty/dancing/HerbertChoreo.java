@@ -70,6 +70,7 @@ public class HerbertChoreo extends Choreographer {
 
     @Override
     List<Point>[] getPaths() {
+        solve();
         return pathSolution;
     }
 

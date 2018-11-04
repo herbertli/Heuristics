@@ -21,7 +21,6 @@ public class HerbertSpoiler extends Spoiler {
         r.receiveInput(sb.toString());
         r.receiveGameInfo("30 4 40");
         r.solve();
-        System.out.println(r.getMoveString());
     }
 
     private void solve() {
@@ -67,13 +66,9 @@ public class HerbertSpoiler extends Spoiler {
     }
 
     @Override
-    String getMoveString() {
-        StringBuilder sb = new StringBuilder();
-        for (Point p : stars) {
-            sb.append(p.x).append(" ").append(p.y).append(" ");
-        }
-        if (stars.size() != 0) sb.deleteCharAt(sb.length() - 1);
-        return sb.toString();
+    List<Point> getStars() {
+        solve();
+        return stars;
     }
 
     // place stars in the most densely populated areas...
