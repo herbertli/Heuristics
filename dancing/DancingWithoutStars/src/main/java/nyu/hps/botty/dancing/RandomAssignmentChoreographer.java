@@ -12,7 +12,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
 	Instant globalEnd;
 	static final int SECONDS_PER_SEGMENT = 2;
-	static final int SECONDS_TO_SOLVE = 100;
+	static final int SECONDS_TO_SOLVE = 5;
 	Instance best;
 	Point[][] startEndPairs;
 	List<Point>[] paths;
@@ -179,28 +179,32 @@ public class RandomAssignmentChoreographer extends Choreographer {
 				}
 			}
 		}
-		paths = Utils.generatePaths(startEndPairs, new String[this.boardSize][this.boardSize]);
+		String[][] grid = new String[this.boardSize][this.boardSize];
+		for(int i = 0; i < this.boardSize; i++) {
+			for(int j = 0; j < this.boardSize; j++) {
+				grid[i][j] = "";
+			}
+		}
+		for(Point star: this.stars) {
+			grid[star.x][star.y] = "#";
+		}
+		this.paths = Utils.generatePaths(startEndPairs, grid);
 		Utils.printMoves(paths);
 	}
 	@Override
 	Point[][] getLines() {
 		Point[][] startEndPoints = new Point[this.k][2];
 		for(int i = 0; i < k; i++) {
-			startEndPoints[i][0] = best.lineSegs.get(0).start;
-			startEndPoints[i][1] = best.lineSegs.get(0).end;
+			startEndPoints[i][0] = best.lineSegs.get(i).start;
+			startEndPoints[i][1] = best.lineSegs.get(i).end;
 		}
 		return startEndPoints;
 	}
 	@Override
 	List<Point>[] getPaths() {
+		solve();
 		return paths;
 	}
-    public String getMoveString() {
-        return " ";
-    }
-    public String getLineString() {
-        return " ";
-    }
     public Instance generateInstance(List<Dancer> dancers, List<LineSegment> lines, Dinic dinic, int cost) {
 		Map<Dancer, Integer> m = new HashMap<>();
 		int countAssigned = 0;
