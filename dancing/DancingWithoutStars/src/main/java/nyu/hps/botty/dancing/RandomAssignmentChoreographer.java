@@ -1,5 +1,6 @@
 package nyu.hps.botty.dancing;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.*;
 
@@ -11,10 +12,34 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
 	Instant globalEnd;
 	static final int SECONDS_PER_SEGMENT = 2;
+	static final int SECONDS_TO_SOLVE = 100;
 	Instance best;
-
+	Point[][] startEndPairs;
+	List<Point>[] paths;
+    public static void main(String[] args) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        if (args.length > 0) {
+            for (String s : args) {
+                if (sb.length() == 0) {
+                    Scanner sc = new Scanner(new File(args[0]));
+                    while (sc.hasNextLine()) {
+                        sb.append(sc.nextLine()).append("\n");
+                    }
+                    sc.close();
+                }
+            }
+        } else {
+            System.out.println("Please specify an input file!");
+            System.exit(0);
+		}
+		RandomAssignmentChoreographer rac = new RandomAssignmentChoreographer();
+        rac.receiveInput(sb.toString());
+        rac.receiveGameInfo("30 4 40");
+        rac.solve();
+	}
+	
 	public void solve() {
-		globalEnd = Instant.now().plusSeconds(100);
+		globalEnd = Instant.now().plusSeconds(SECONDS_TO_SOLVE);
 		ArrayList<Dancer> dancers = new ArrayList<>();
 		for(int color : this.dancers.keySet()) {
 			ArrayList<Point> dancerCoors = this.dancers.get(color);
@@ -69,16 +94,106 @@ public class RandomAssignmentChoreographer extends Choreographer {
 						dinic.addEdge(i, v, 1);
 					}
 				}
+				dinic.buildGraph();
 				if(dinic.maxflow(s, t) == this.numOfColor*this.k) {
 					hi = mid;
 					workingAssignmentDinic = dinic;
 				}
 				else lo = mid;
 			}
-			if(hi < best.cost) {
+			if(best == null || hi < best.cost) {
 				best = generateInstance(dancers, lines, workingAssignmentDinic, hi);
+				System.out.println(best.cost);
 			}
-        }
+		}
+		startEndPairs = new Point[this.numOfColor * this.k][2];
+		// run max flow on line segments.
+		for(int ii = 0; ii < this.k; ii++) {
+			Point[] pointsInLine = new Point[this.numOfColor];
+			int x = best.lineSegs.get(ii).start.x;
+			int y = best.lineSegs.get(ii).start.y;
+			boolean dir = best.lineSegs.get(ii).horizontal;
+			int curx = x;
+			int cury = y;
+			for(int j = 0; j < this.numOfColor; j++) {
+				pointsInLine[j] = new Point(curx, cury);
+				curx += (dir ? 1 : 0);
+				cury += (dir ? 0 : 1);
+			}
+			Point[] dancerCoors = new Point[this.numOfColor];
+			int last = 0;
+			for(Dancer d : best.assignment.keySet()) {
+				if(best.assignment.get(d) == ii) {
+					dancerCoors[last++] = new Point(d.loc.x, d.loc.y);
+				}
+			}
+			// binary search min cost + assingment
+            int lo = 0;
+			int hi = 100;
+			Dinic workingAssignmentDinic = null; // I want to access outside the binary search
+			while(hi - lo > 1) {
+				int mid = lo + (hi - lo)/2;
+				// 1 edge from s to each dancer with capacity 1.
+				// 1 edge from each lineSegment*color to t with capacity 1.
+				int s = 2*(this.numOfColor);
+				int t = s + 1;
+				int numEdges = s;
+				ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+				for(int i = 0; i < s; i++) {
+					g.add(new ArrayList<>());
+				}
+				for(int i = 0; i < this.numOfColor; i++) {
+					for(int j = 0; j < this.numOfColor; j++) {
+						if(Math.abs(dancerCoors[i].x - pointsInLine[j].x) + Math.abs(dancerCoors[i].y - pointsInLine[j].y) <= mid) {
+							g.get(i).add(this.numOfColor+j);
+							numEdges++;
+
+						}
+					}
+				}
+				Dinic dinic = new Dinic();
+				dinic.init(t+1, numEdges);
+				for(int i = 0; i < this.numOfColor; i++) {
+					dinic.addEdge(s, i, 1);
+					dinic.addEdge(this.numOfColor+i, t, 1);
+					for(int v : g.get(i)) {
+						dinic.addEdge(i, v, 1);
+					}
+				}
+				dinic.buildGraph();
+				if(dinic.maxflow(s, t) == this.numOfColor) {
+					hi = mid;
+					workingAssignmentDinic = dinic;
+				}
+				else lo = mid;
+			}
+			for(int i = 0; i < this.numOfColor; i++) {
+				for(int j = 0; j < workingAssignmentDinic.graph[i].length; j++) {
+					// if saturated edge
+					Dinic.Edge e = workingAssignmentDinic.graph[i][j];
+					if(e.v == 2*this.numOfColor) continue;
+					if(e.cap == 0) {
+						startEndPairs[ii*this.numOfColor+i][0] = dancerCoors[i];
+						startEndPairs[ii*this.numOfColor+i][1] = pointsInLine[e.v-this.numOfColor];
+					}
+				}
+			}
+		}
+		paths = Utils.generatePaths(startEndPairs, new String[this.boardSize][this.boardSize]);
+		Utils.printMoves(paths);
+	}
+	@Override
+	Point[][] getLines() {
+		Point[][] startEndPoints = new Point[this.k][2];
+		for(int i = 0; i < k; i++) {
+			startEndPoints[i][0] = best.lineSegs.get(0).start;
+			startEndPoints[i][1] = best.lineSegs.get(0).end;
+		}
+		return startEndPoints;
+	}
+	@Override
+	List<Point>[] getPaths() {
+		return paths;
 	}
     public String getMoveString() {
         return " ";
@@ -88,15 +203,19 @@ public class RandomAssignmentChoreographer extends Choreographer {
     }
     public Instance generateInstance(List<Dancer> dancers, List<LineSegment> lines, Dinic dinic, int cost) {
 		Map<Dancer, Integer> m = new HashMap<>();
+		int countAssigned = 0;
 		for(int i = 0; i < this.numOfColor * this.k; i++) {
 			for(int j = 0; j < dinic.graph[i].length; j++) {
 				// if saturated edge
 				Dinic.Edge e = dinic.graph[i][j];
+				if(e.v == 2*(this.numOfColor * this.k)) continue;
 				if(e.cap == 0) {
 					m.put(dancers.get(i), (e.v-(this.numOfColor * this.k))/this.numOfColor);
+					countAssigned++;
 				}
 			}
 		}
+		if(countAssigned != dancers.size()) System.out.println("Not valid Instance");
 		Instance instance = new Instance(lines, m, cost);
 		return instance;
     }
@@ -105,23 +224,24 @@ public class RandomAssignmentChoreographer extends Choreographer {
     // Line segments won't intersect or cross stars.
     public ArrayList<LineSegment> generateRandomNonIntersectingLines(int secondsPerSegment) {
         ArrayList<LineSegment> lineSegments = new ArrayList<>();
-        boolean[][] occupied = new boolean[50][50];
-        for(Point p: stars) {
-            occupied[p.x][p.y] = true;
-		}
+        boolean[][] occupied = new boolean[this.boardSize][this.boardSize];
+		if(stars != null)
+			for(Point p: stars) {
+				occupied[p.x][p.y] = true;
+			}
 		Instant end = Instant.now().plusSeconds((lineSegments.size() + 1) * secondsPerSegment);
 		while(true) {
 			// place one more line
 			while(Instant.now().isBefore(globalEnd) && Instant.now().isBefore(end) && lineSegments.size() < k) {
 				Random rand = new Random();
-				int x = rand.nextInt(50);
-				int y = rand.nextInt(50);
+				int x = rand.nextInt(this.boardSize);
+				int y = rand.nextInt(this.boardSize);
 				boolean dir = rand.nextBoolean();
 				boolean placable = true;
 				int curx = x;
 				int cury = y;
 				// bounds check
-				if(x + (dir ? this.numOfColor : 0) >= 50 || x + (dir ? 0 : this.numOfColor) >= 50) continue;
+				if(x + (dir ? this.numOfColor : 0) >= this.boardSize || y + (dir ? 0 : this.numOfColor) >= this.boardSize) continue;
 				for(int i = 0; placable && i < this.numOfColor; i++) {
 					if(!occupied[curx][cury]) {
 						curx += (dir ? 1 : 0);
@@ -131,15 +251,31 @@ public class RandomAssignmentChoreographer extends Choreographer {
 					}
 				}
 				if(placable) {
+					curx = x;
+					cury = y;
 					for(int i = 0; i < this.numOfColor; i++) {
 						occupied[curx][cury] = true;
+						curx += (dir ? 1 : 0);
+						cury += (dir ? 0 : 1);
 					}
 					lineSegments.add(new LineSegment(new Point(x, y), dir, this.numOfColor));
 					end = Instant.now().plusSeconds((lineSegments.size() + 1) * secondsPerSegment);
 				}
 			}
 			// we found enough line segments.
-			if(lineSegments.size() == this.k) break;
+			if(lineSegments.size() == this.k) {
+				/*
+				System.out.println("This is an instance.");
+				for(int i = 0; i < this.boardSize; i++) {
+					for(int j = 0; j < this.boardSize; j++) {
+						if(occupied[i][j]) System.out.print(" ");
+						else System.out.print("#");
+					}
+					System.out.println();
+				}
+				*/
+				break;
+			}
 			// we are out of time.
 			if(Instant.now().isAfter(globalEnd)) return null;
 			// can't find a placement, remove last.
@@ -147,8 +283,11 @@ public class RandomAssignmentChoreographer extends Choreographer {
 				LineSegment last = lineSegments.get(lineSegments.size()-1);
 				int curx = last.start.x;
 				int cury = last.start.y;
+				boolean dir = last.horizontal;
 				for(int i = 0; i < this.numOfColor; i++) {
 					occupied[curx][cury] = false;
+					curx += (dir ? 1 : 0);
+					cury += (dir ? 0 : 1);
 				}
 				lineSegments.remove(lineSegments.size()-1);
 				end = Instant.now().plusSeconds((lineSegments.size() + 1) * secondsPerSegment);
