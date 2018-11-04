@@ -168,7 +168,6 @@ class Utils {
         }
 
         // keep track of the current location of every point at current t
-        // initially every dancer is at their end location
         Point[] currentLocs = new Point[startEndP.length];
         for (int i = 0; i < currentLocs.length; i++) {
             Point startP = startEndP[i][0];
@@ -262,7 +261,7 @@ class Utils {
                             int newY = currentY + dir[1];
                             int newDist = currentDist + 1;
                             if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
-                            if (grid[newX][newY].equals("#") || grid[newX][newY].equals("$")) continue;
+                            if (gridAtT[newX][newY].equals("#") || gridAtT[newX][newY].equals("$")) continue;
                             if (dist[newX][newY] > newDist) {
                                 Edge newEdge = new Edge(newX, newY, newDist);
                                 dist[newX][newY] = newDist;
@@ -302,8 +301,39 @@ class Utils {
                 if (moved == 0) break;
             }
 
+            for (int i = 0; i < movedThisT.length; i++) {
+                if (!movedThisT[i]) {
+                    Point move = new Point(currentLocs[i].x, currentLocs[i].y);
+                    move.time = t;
+                    res[i].add(move);
+                    currentLocs[i] = move;
+                }
+            }
+
             // resort
             byL.sort(comp);
+
+            // sanity check
+            for (List<Point> l: res) {
+                if (l.size() != t + 1) {
+                    System.out.println("Mismatch size!");
+                    System.exit(0);
+                }
+            }
+            for (int ti = 0; ti <= t; ti++) {
+                for (int i = 0; i < res.length; i++) {
+                    for (int j = 0; j < res.length; j++) {
+                        if (i == j) continue;
+                        Point a = res[i].get(ti);
+                        Point b = res[j].get(ti);
+                        if (a.x == b.x && a.y == b.y) {
+                            System.out.println("Same location!");
+                            System.exit(0);
+                        }
+                    }
+                }
+            }
+
             t++;
             sc.next();
         }

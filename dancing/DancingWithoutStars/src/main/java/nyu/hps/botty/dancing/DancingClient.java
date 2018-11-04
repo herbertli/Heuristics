@@ -7,7 +7,7 @@ public class DancingClient {
     private String name;
     private boolean isSpoiler;
     private Spoiler spoiler = new HerbertSpoiler();
-    private Choreographer choreographer = new HerbertChoreo();
+    private Choreographer choreographer = new RandomAssignmentChoreographer();
     private SocketClient socketClient;
 
     private DancingClient(String name, String host, int port, boolean isSpoiler) throws IOException {
@@ -71,6 +71,7 @@ public class DancingClient {
             System.out.println("Sent lines.");
 
         }
+
         dancingClient.socketClient.close_socket();
     }
 }

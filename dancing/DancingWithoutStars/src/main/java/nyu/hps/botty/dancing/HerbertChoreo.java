@@ -41,14 +41,15 @@ public class HerbertChoreo extends Choreographer {
 
     private Point[][] lineSolution;
     private List<Point>[] pathSolution;
+    private String[][] grid;
     void solve() {
         // generate cluster centers
         Map<Point, ArrayList<Point>> centerAndPoints = cluster(numIter, k);
         if (DEBUG) printCenters(centerAndPoints);
 
         // create grid
-        String[][] grid = createGrid(centerAndPoints);
-        if (DEBUG) Utils.printGrid(grid);
+        grid = createGrid(centerAndPoints);
+//        if (DEBUG) Utils.printGrid(grid);
 
         // create lines and generate pairs from each dancer to their final position
         Point[][] startAndEndPairs = assignLines(centerAndPoints);
@@ -63,8 +64,8 @@ public class HerbertChoreo extends Choreographer {
         if (DEBUG) Utils.printMoves(pathSolution);
 
         // finally, get the move string
-        String moveString = getMoveString(pathSolution);
-        if (DEBUG) System.out.println(moveString);
+//        String moveString = getMoveString(pathSolution);
+//        if (DEBUG) System.out.println(moveString);
 
     }
 
@@ -240,33 +241,38 @@ public class HerbertChoreo extends Choreographer {
                     worseGroup = g1;
                     worseInd = inter1;
                 }
-                Cluster newCluster = new Cluster();
-                Point newCenter;
-                if (allHori) {
-                    if (worseGroup.center.y < boardSize - 1) {
-                        newCenter = new Point(worseGroup.center.x, worseGroup.center.y + 1);
+                int shift = 1;
+                while (true) {
+                    Cluster newCluster = new Cluster();
+                    Point newCenter;
+                    if (allHori) {
+                        if (worseGroup.center.y + shift <= boardSize - 1) {
+                            newCenter = new Point(worseGroup.center.x, worseGroup.center.y + shift);
+                        } else {
+                            newCenter = new Point(worseGroup.center.x, worseGroup.center.y - shift);
+                        }
                     } else {
-                        newCenter = new Point(worseGroup.center.x, worseGroup.center.y - 1);
+                        if (worseGroup.center.x + shift <= boardSize - 1) {
+                            newCenter = new Point(worseGroup.center.x + shift, worseGroup.center.y);
+                        } else {
+                            newCenter = new Point(worseGroup.center.x - shift, worseGroup.center.y);
+                        }
                     }
-                } else {
-                    if (worseGroup.center.x < boardSize - 1) {
-                        newCenter = new Point(worseGroup.center.x + 1, worseGroup.center.y);
+                    boolean valid = calculateCluster(newCenter, newCluster, worseGroup.points, allHori);
+                    lines[worseInd] = newCluster;
+                    if (allHori) {
+                        if (DEBUG) {
+                            System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
+                                    worseGroup.end, worseGroup.center.y, newCluster.start, newCluster.end, newCenter.y);
+                        }
                     } else {
-                        newCenter = new Point(worseGroup.center.x - 1, worseGroup.center.y);
+                        if (DEBUG) {
+                            System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
+                                    worseGroup.end, worseGroup.center.x, newCluster.start, newCluster.end, newCenter.x);
+                        }
                     }
-                }
-                calculateCluster(newCenter, newCluster, worseGroup.points, allHori);
-                lines[worseInd] = newCluster;
-                if (allHori) {
-                    if (DEBUG) {
-                        System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
-                                worseGroup.end, worseGroup.center.y, newCluster.start, newCluster.end, newCenter.y);
-                    }
-                } else {
-                    if (DEBUG) {
-                        System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
-                                worseGroup.end, worseGroup.center.x, newCluster.start, newCluster.end, newCenter.x);
-                    }
+                    if (valid) break;
+                    shift++;
                 }
             }
         }
@@ -326,7 +332,7 @@ public class HerbertChoreo extends Choreographer {
         return startAndEnd;
     }
 
-    private void calculateCluster(Point c, Cluster g, ArrayList<Point> points, boolean allHori) {
+    private boolean calculateCluster(Point c, Cluster g, ArrayList<Point> points, boolean allHori) {
         double dist = 0;
         for (Point p : points) {
             if (allHori) dist += Math.abs(c.y - p.y);
@@ -338,19 +344,32 @@ public class HerbertChoreo extends Choreographer {
         int start = allHori ? c.x : c.y;
         int end = allHori ? c.x : c.y;
         int length = 0;
-        while (length != numOfColor) {
-            if (end < this.boardSize - 1) {
+        Point startP = new Point(c.x, c.y);
+        Point endP = new Point(c.x, c.y);
+        for (int i = 0; i < numOfColor; i++) {
+            Point newEnd;
+            if (allHori) newEnd = new Point(endP.x + 1, endP.y);
+            else newEnd = new Point(endP.x, endP.y + 1);
+            if (end < this.boardSize - 1 && !grid[newEnd.x][newEnd.y].equals("#")) {
                 end++;
+                endP = newEnd;
                 length++;
+                i++;
             }
-            if (length == numOfColor) break;
-            if (start > 0) {
+
+            Point newStart;
+            if (allHori) newStart = new Point(startP.x - 1, startP.y);
+            else newStart = new Point(startP.x, startP.y - 1);
+            if (start > 0 && !grid[newStart.x][newStart.y].equals("#")) {
                 start--;
+                startP = newStart;
                 length++;
             }
+
         }
         g.start = start;
         g.end = end;
+        return length == numOfColor;
     }
 
     private String[][] createGrid(Map<Point, ArrayList<Point>> centerAndPoints) {
