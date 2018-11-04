@@ -16,6 +16,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
 	Instance best;
 	Point[][] startEndPairs;
 	List<Point>[] paths;
+	Random rand = new Random();
+
     public static void main(String[] args) throws Exception {
         StringBuilder sb = new StringBuilder();
         if (args.length > 0) {
@@ -39,6 +41,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 	}
 	
 	public void solve() {
+    	rand.setSeed(1234);
 		globalEnd = Instant.now().plusSeconds(SECONDS_TO_SOLVE);
 		ArrayList<Dancer> dancers = new ArrayList<>();
 		for(int color : this.dancers.keySet()) {
@@ -237,7 +240,6 @@ public class RandomAssignmentChoreographer extends Choreographer {
 		while(true) {
 			// place one more line
 			while(Instant.now().isBefore(globalEnd) && Instant.now().isBefore(end) && lineSegments.size() < k) {
-				Random rand = new Random();
 				int x = rand.nextInt(this.boardSize);
 				int y = rand.nextInt(this.boardSize);
 				boolean dir = rand.nextBoolean();
