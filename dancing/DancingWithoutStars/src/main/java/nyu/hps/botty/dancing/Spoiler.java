@@ -15,6 +15,5 @@ abstract class Spoiler extends Player {
     }
 
     abstract List<Point> getStars();
-    abstract void placeStars();
 
 }
