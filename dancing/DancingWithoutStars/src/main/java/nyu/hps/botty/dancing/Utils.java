@@ -246,7 +246,7 @@ class Utils {
                 dancerToIndex[currentLocs[i].x][currentLocs[i].y] = i;
             }
 
-            Utils.printGrid(gridAtT);
+//            Utils.printGrid(gridAtT);
             ArrayList<Integer> byDist = new ArrayList<>();
             //int globalMaxDistThisT = 0;
             for (int i = 0; i < numDancers; i++) {

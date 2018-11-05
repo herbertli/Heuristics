@@ -5,6 +5,8 @@ import java.util.*;
 
 public class ClusterSpoiler extends Spoiler {
 
+    String[][] cGrid;
+
     // testing
     public static void main(String[] args) throws Exception {
         StringBuilder sb = new StringBuilder();
@@ -35,7 +37,19 @@ public class ClusterSpoiler extends Spoiler {
     }
 
     private void solve() {
+        cGrid = new String[boardSize][boardSize];
+        cGrid = createGrid();
         placeInCluster();
+        String[][] grid = createGrid();
+        for (Point p: stars) {
+            grid[p.x][p.y] = "#";
+        }
+        for (String[] s: grid) {
+            for (String t: s) {
+                System.out.print(t);
+            }
+            System.out.println();
+        }
     }
 
     private void placeInCluster() {
@@ -48,16 +62,25 @@ public class ClusterSpoiler extends Spoiler {
             }
         }
         Map<Point, ArrayList<Point>> centerAndPoints = ClusteringChoreo.cluster(dancers, 300, k, numOfColor, boardSize);
-        stars = new ArrayList<>(centerAndPoints.keySet());
+        stars = new ArrayList<>();
+        for (Point p: centerAndPoints.keySet()) {
+            Point cand = getClosestUnoccupied(p);
+            if (validateStars(stars, cand)) {
+                stars.add(cand);
+            }
+        }
+        System.out.printf("Picked %d cluster centers.\n", stars.size());
 
         // now try to greedily pick stars from center outwards
-        List<Point> cands = fillOutFromCenter();
+        List<Point> cands = fillOutFromCenter(stars);
+        System.out.printf("Found %d candidate points (from center).\n", cands.size());
         if (cands.size() + stars.size() == k) {
             stars.addAll(cands);
             return;
         }
         // if not possible, try to greedily pick stars from corner
-        cands = fillOutFromCorner();
+        cands = fillOutFromCorner(stars);
+        System.out.printf("Found %d candidate points (from corner).\n", cands.size());
         if (cands.size() + stars.size() == k) {
             stars.addAll(cands);
             return;
@@ -100,7 +123,7 @@ public class ClusterSpoiler extends Spoiler {
         }
     }
 
-    private List<Point> fillOutFromCenter() {
+    private List<Point> fillOutFromCenter(List<Point> existingStars) {
         int[][] moves = {
                 {0, 1},
                 {0, -1},
@@ -112,8 +135,8 @@ public class ClusterSpoiler extends Spoiler {
                 {-11, 1}
         };
         List<Point> cands = new ArrayList<>();
-        List<Point> allStars = new ArrayList<>(stars);
-        Point current = new Point(boardSize / 2, boardSize / 2);
+        List<Point> allStars = new ArrayList<>(existingStars);
+        Point current = getClosestUnoccupied(new Point(boardSize / 2, boardSize / 2));
         ArrayDeque<Point> q = new ArrayDeque<>();
         boolean[][] visited = new boolean[boardSize][boardSize];
         visited[current.x][current.y] = true;
@@ -124,12 +147,14 @@ public class ClusterSpoiler extends Spoiler {
             if (validateStars(allStars, p)) {
                 cands.add(p);
                 allStars.add(p);
+                if (allStars.size() == k) return cands;
             }
             for (int[] d: moves) {
                 int newX = p.x + d[0];
                 int newY = p.y + d[1];
                 if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
                 if (visited[newX][newY]) continue;
+                if (!cGrid[newX][newY].equals(" ")) continue;
                 visited[newX][newY] = true;
                 q.add(new Point(newX, newY));
             }
@@ -137,15 +162,16 @@ public class ClusterSpoiler extends Spoiler {
         return cands;
     }
 
-    private List<Point> fillOutFromCorner() {
+    private List<Point> fillOutFromCorner(List<Point> existingStars) {
         List<Point> cands = new ArrayList<>();
-        List<Point> allStars = new ArrayList<>(stars);
+        List<Point> allStars = new ArrayList<>(existingStars);
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                Point cand = new Point(i, j);
+                Point cand = getClosestUnoccupied(new Point(i, j));
                 if (validateStars(allStars, cand)) {
                     cands.add(cand);
                     allStars.add(cand);
+                    if (allStars.size() == k) return cands;
                 }
             }
         }
@@ -183,6 +209,39 @@ public class ClusterSpoiler extends Spoiler {
         return count;
     }
 
+    private Point getClosestUnoccupied(Point target) {
+        if (cGrid[target.x][target.y].equals(" ")) return new Point(target.x, target.y);
+        int[][] moves = {
+                {0, 1},
+                {0, -1},
+                {1, 0},
+                {-1, 0},
+                {1, -1},
+                {-1, -1},
+                {1, 1},
+                {-11, 1}
+        };
+        Point current = new Point(target.x, target.y);
+        ArrayDeque<Point> q = new ArrayDeque<>();
+        boolean[][] visited = new boolean[boardSize][boardSize];
+        visited[current.x][current.y] = true;
+        q.add(current);
+        while (!q.isEmpty()) {
+            Point p = q.pollFirst();
+            if (p == null) continue;
+            if (cGrid[p.x][p.y].equals(" ")) return p;
+            for (int[] d: moves) {
+                int newX = p.x + d[0];
+                int newY = p.y + d[1];
+                if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
+                if (visited[newX][newY]) continue;
+                visited[newX][newY] = true;
+                q.add(new Point(newX, newY));
+            }
+        }
+        return null;
+    }
+
     private String[][] createGrid() {
         String[][] cGrid = new String[boardSize][boardSize];
         for (int i = 0; i < boardSize; i++) {
@@ -210,18 +269,21 @@ public class ClusterSpoiler extends Spoiler {
         ArrayList<Point> centers = CirclePack.m.get(key);
         for (Point p: centers) {
             Point scaled = new Point(p.x * boardSize / 1000, p.y * boardSize / 1000);
-            stars.add(scaled);
+            Point cand = getClosestUnoccupied(scaled);
+            if (validateStars(stars, cand)) {
+                stars.add(cand);
+            }
         }
         if (stars.size() == k) return;
 
         // now try to greedily pick stars from center outwards
-        List<Point> cands = fillOutFromCenter();
+        List<Point> cands = fillOutFromCenter(stars);
         if (cands.size() + stars.size() == k) {
             stars.addAll(cands);
             return;
         }
         // if not possible, try to greedily pick stars from corner
-        cands = fillOutFromCorner();
+        cands = fillOutFromCorner(stars);
         if (cands.size() + stars.size() == k) {
             stars.addAll(cands);
             return;
@@ -276,6 +338,7 @@ public class ClusterSpoiler extends Spoiler {
 
     private boolean validateStars(List<Point> stars, Point newS) {
         for (Point p: stars) {
+            if (!cGrid[p.x][p.y].equals(" ")) return false;
             int dist = Math.abs(p.x - newS.x) + Math.abs(p.y - newS.y);
             if (dist < numOfColor + 1) return false;
         }
@@ -288,6 +351,8 @@ public class ClusterSpoiler extends Spoiler {
                 if (i == j) continue;
                 Point p = stars.get(i);
                 Point q = stars.get(j);
+                if (!cGrid[p.x][p.y].equals(" ")) return false;
+                if (!cGrid[q.x][q.y].equals(" ")) return false;
                 int dist = Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
                 if (dist < numOfColor + 1) return false;
             }
