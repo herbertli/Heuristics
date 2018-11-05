@@ -1,5 +1,6 @@
 package nyu.hps.botty.dancing;
 
+import java.time.Instant;
 import java.util.*;
 
 class Utils {
@@ -11,7 +12,144 @@ class Utils {
             {-1, 0}
     };
 
+<<<<<<< HEAD
     static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred, boolean ignoreObs) {
+=======
+    static int pointToInt(Point p, int boardSize) {
+        return p.x / boardSize + p.y;
+    }
+
+    static Point intToPoint(int i, int boardSize) {
+        return new Point(i / boardSize, i % boardSize);
+    }
+
+
+    /**
+     * Process Dancers in order from greatest to least by dijkstra distance.
+     * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
+     */
+    static List<Point>[] generatePathsWithFloydWarshall(Point[][] startEndP, int[][] fwDist, int[][] fwNext, int minTurns) {
+        int boardSize = (int)(Math.sqrt((double)fwDist.length));
+        Instant startTime = Instant.now();
+        int numDancers = startEndP.length;
+        List<Point>[] res = new List[startEndP.length];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = new ArrayList<>();
+        }
+
+        // keep track of the current location of every point at current t
+        Point[] currentLocs = new Point[startEndP.length];
+        for (int i = 0; i < currentLocs.length; i++) {
+            Point startP = startEndP[i][0];
+            currentLocs[i] = new Point(startP.x, startP.y);
+            currentLocs[i].time = 0;
+            res[i].add(currentLocs[i]);
+        }
+
+
+        int t = 1; // current time
+        while(true) { // while there are dancers who haven't reached their goals.
+            if(t >= minTurns) {
+                System.out.println("Time to fail to find paths with fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+                return null; // early termination
+            }
+            // System.out.println("Generating positions for time: " + t);
+
+            // count how many dancers aren't at their end locations
+            int stillRunning = 0;
+            for (int i = 0; i < currentLocs.length; i++) {
+                if (!currentLocs[i].equals(startEndP[i][1])) {
+                    stillRunning++;
+                }
+            }
+            // System.out.println("# dancers still running: " + stillRunning);
+            if (stillRunning == 0) break; // They all reached their goals.
+
+            boolean[][] assignAtNextT = new boolean[boardSize][boardSize];
+            int[][] dancerToIndex = new int[boardSize][boardSize];
+            int globalMaxDist = 0;
+            for (int i = 0; i < numDancers; i++) {
+                dancerToIndex[currentLocs[i].x][currentLocs[i].y] = i;
+                globalMaxDist = Math.max(globalMaxDist, fwDist[pointToInt(currentLocs[i], boardSize)][pointToInt(startEndP[i][1], boardSize)]);
+            }
+
+
+            // Utils.printGrid(gridAtT);
+            ArrayList<Integer> byDist = new ArrayList<>();
+            // sort (start, end) pairs by their bfs distance
+            // this way, we'll look at longer paths before shorter ones
+            Comparator<Integer> comp = (o1, o2) -> {
+                int is1 = pointToInt(currentLocs[o1], boardSize);
+                int is2 = pointToInt(currentLocs[o2], boardSize);
+                int ie1 = pointToInt(startEndP[o1][1], boardSize);
+                int ie2 = pointToInt(startEndP[o2][1], boardSize);
+                int o1Dist = fwDist[is1][ie1];
+                int o2Dist = fwDist[is2][ie2];
+                return Integer.compare(o2Dist, o1Dist);
+            };
+            byDist.sort(comp);
+
+            boolean[] movedThisT = new boolean[numDancers];
+            while (true) {
+                int moved = 0;
+                for(int dancer : byDist) {
+                    if(movedThisT[dancer]) continue;
+
+                    Point endP = startEndP[dancer][1];
+
+                    int x = currentLocs[dancer].x;
+                    int y = currentLocs[dancer].y;
+
+                    for(int i = 0; i < moves.length; i++) {
+                        int nx = x + moves[i][0];
+                        int ny = y + moves[i][1];
+                    }
+                    Point nextMove;
+
+                }
+                // resort
+                byDist.sort(comp);
+                if (moved == 0) break;
+            }
+
+            for (int i = 0; i < movedThisT.length; i++) {
+                if (!movedThisT[i]) {
+                    Point move = new Point(currentLocs[i].x, currentLocs[i].y);
+                    move.time = t;
+                    res[i].add(move);
+                    currentLocs[i] = move;
+                }
+            }
+
+            // sanity check
+            for (List<Point> l: res) {
+                if (l.size() != t + 1) {
+                    System.out.println("Mismatch size!");
+                    return null;
+                }
+            }
+            for (int ti = 0; ti <= t; ti++) {
+                for (int i = 0; i < res.length; i++) {
+                    for (int j = 0; j < res.length; j++) {
+                        if (i == j) continue;
+                        Point a = res[i].get(ti);
+                        Point b = res[j].get(ti);
+                        if (a.x == b.x && a.y == b.y) {
+                            System.out.println("Same location!");
+                            return null;
+                        }
+                    }
+                }
+            }
+
+            t++;
+        }
+        System.out.println("Time to paths with fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        return res;
+    }
+
+    static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred) {
+>>>>>>> FW WIP
         int boardSize = grid.length;
         Queue<Point> q = new LinkedList<>();
         for(int i = 0; i < dist.length; i++) {
@@ -50,6 +188,7 @@ class Utils {
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
     static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid, int minTurns) {
+        Instant startTime = Instant.now();
         int boardSize = grid.length;
         int numDancers = startEndP.length;
         List<Point>[] res = new List[startEndP.length];
@@ -72,7 +211,10 @@ class Utils {
         int t = 1; // current time
 
         while(true) { // while there are dancers who haven't reached their goals.
-            if(t >= minTurns) return null; // early termination
+            if(t >= minTurns) {
+                System.out.println("Time to fail to find paths with swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+                return null; // early termination
+            }
             // System.out.println("Generating positions for time: " + t);
             // count how many dancers aren't at their end locations
             int stillRunning = 0;
@@ -278,6 +420,7 @@ class Utils {
 
             t++;
         }
+        System.out.println("Time to paths with swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return res;
     }
 
@@ -306,6 +449,7 @@ class Utils {
     }
 
     static List<Point>[] generatePathsWithoutSwaps(Point[][] startEndP, String[][] grid, int minTurns) {
+        Instant startTime = Instant.now();
         int boardSize = grid.length;
         List<Point>[] res = new List[startEndP.length];
         for (int i = 0; i < res.length; i++) {
@@ -342,7 +486,10 @@ class Utils {
         int t = 1;
 
         while (true) {
-            if(t >= minTurns) return null;
+            if(t >= minTurns) {
+                System.out.println("Time to fail to find paths without swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+                return null;
+            }
             //System.out.println("Generating positions for time: " + t);
 
             // count how many dancers aren't at their start locations (since we're going backwards)
@@ -470,6 +617,7 @@ class Utils {
             t++;
         }
 
+        System.out.println("Time to paths without swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return res;
     }
 
