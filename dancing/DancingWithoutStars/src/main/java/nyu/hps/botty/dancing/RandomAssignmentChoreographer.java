@@ -75,7 +75,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 			if(lines == null) continue;
             Instance assignment = assignDancersToLines(dancers, lines);
             if (assignment == null) continue;
-			if(assignment.cost - this.numOfColor >= minTurns) continue; // Impossible to be better than the current best paths we have.
+			if(assignment.cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
             int cost = generateStartEndPairs(assignment);
 			if(cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
 			allPossibleLineSegments.add(lines); //TODO: maybe instead of saving line segments, we can save assignments
@@ -162,6 +162,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
     // Returns 2*k line segments represented by the end points.
     // Line segments won't intersect or cross stars.
     ArrayList<LineSegment> generateRandomNonIntersectingLines() {
+		Instant startTime = Instant.now();
         ArrayList<LineSegment> lineSegments = new ArrayList<>();
         boolean[][] occupied = new boolean[this.boardSize][this.boardSize];
         if (stars != null) for (Point p : stars) occupied[p.x][p.y] = true;
@@ -210,7 +211,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
 					}
 					System.out.println();
 				}
-				*/
+                */
+                System.out.println("Time to generate lineSegments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
                 return lineSegments;
             }
             // we are out of time.
@@ -246,6 +248,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
     // assign dancers to points in line segments.
     int generateStartEndPairs(Instance assignment) {
+        Instant startTime = Instant.now();
 		startEndPairs = new Point[this.numOfColor * this.k][2];
 		int minCost = 0;
         // run max flow on each line segment to assign dancers to a point in the line segment.
@@ -319,11 +322,13 @@ public class RandomAssignmentChoreographer extends Choreographer {
                 }
             }
 		}
+        System.out.println("Time to generate assignment of dancers to endcoors = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
 		return minCost;
     }
 
     // Generate assignment of dancers to lines minimizing the maximum Manhattan distance.
     Instance assignDancersToLines(ArrayList<Dancer> dancers, ArrayList<LineSegment> lines) {
+        Instant startTime = Instant.now();
         // binary search min cost + assingment
         int lo = 0;
         int hi = 100;
@@ -368,6 +373,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
                 workingAssignmentDinic = dinic;
             } else lo = mid;
         }
+        System.out.println("Time to generate assignment of dancers to line segments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return generateInstance(dancers, lines, workingAssignmentDinic, hi);
     }
 
