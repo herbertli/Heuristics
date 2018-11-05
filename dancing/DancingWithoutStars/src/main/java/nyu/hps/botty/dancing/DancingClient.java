@@ -6,7 +6,7 @@ public class DancingClient {
 
     private String name;
     private boolean isSpoiler;
-    private Spoiler spoiler = new HerbertSpoiler();
+    private Spoiler spoiler = new ClusterSpoiler();
     private Choreographer choreographer = new RandomAssignmentChoreographer();
     private SocketClient socketClient;
 
