@@ -25,20 +25,26 @@ public class ClusterSpoiler extends Spoiler {
 
     private void placeInDense() {
         String[][] cGrid = createGrid();
-
-        PriorityQueue<Triple> l = new PriorityQueue<>((Triple o1, Triple o2) -> Integer.compare(o2.d, o1.d));
-        int[][] dancersInRange = new int[boardSize][boardSize];
+        System.out.println("Trying to place stars in dense places...");
+        PriorityQueue<Triple> l = new PriorityQueue<>((Triple o1, Triple o2) -> {
+            if (o1.d == o2.d && o1.x == o2.x) {
+                return Integer.compare(o1.y, o2.y);
+            } else if (o1.d == o2.d) {
+                return Integer.compare(o1.x, o2.x);
+            }
+            return Integer.compare(o2.d, o1.d);
+        });
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                dancersInRange[i][j] = bfs(cGrid, i, j);
-                l.add(new Triple(i, j, dancersInRange[i][j]));
+                l.add(new Triple(i, j, bfs(cGrid, i, j)));
             }
         }
 
+        System.out.println("Picking top k points...");
         stars = new ArrayList<>();
         int placed = 0;
         outer:
-        while (placed < k) {
+        while (placed < k && !l.isEmpty()) {
             Triple t = l.poll();
             if (t == null) continue;
             Point candidate = new Point(t.x, t.y);
@@ -103,6 +109,24 @@ public class ClusterSpoiler extends Spoiler {
     }
 
     private void placeSimple() {
+        System.out.println("Falling back to circle packing...");
+        stars = new ArrayList<>();
+        CirclePack.load();
+        if (!CirclePack.m.containsKey(k)) {
+            placeRandom();
+        }
+        ArrayList<Point> centers = CirclePack.m.get(k);
+        for (Point p: centers) {
+            Point scaled = new Point(p.x * boardSize / 1000, p.y * boardSize / 1000);
+            stars.add(scaled);
+        }
+        if (stars.size() != k) {
+            placeRandom();
+        }
+    }
+
+    private void placeRandom() {
+        System.out.println("Falling back to place stars in random places...");
         while (true) {
             stars = new ArrayList<>();
             String[][] cGrid = createGrid();
