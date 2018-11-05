@@ -173,20 +173,23 @@ class Utils {
             Arrays.fill(dist[i], Integer.MAX_VALUE);
             if(pred != null) Arrays.fill(pred[i], null);
         }
+        boolean[][] vis = new boolean[boardSize][boardSize];
         q.add(s);
         dist[s.x][s.y] = 0;
         while(!q.isEmpty()) {
             Point cur = q.poll();
             int x = cur.x;
             int y = cur.y;
+            if(vis[x][y]) continue;
+            vis[x][y] = true;
             for(int[] dir : moves) {
                 int nx = x + dir[0];
                 int ny = y + dir[1];
                 if(nx < 0 || nx >= boardSize || ny < 0 || ny >= boardSize) continue;
-                if(grid[nx][ny] != " ") continue;
+                if(!grid[nx][ny].equals(" ")) continue;
                 if(dist[nx][ny] > dist[x][y] + 1){
                     dist[nx][ny] = dist[x][y] + 1;
-                    if(pred != null) pred[ny][ny] = cur;
+                    if(pred != null) pred[nx][ny] = cur;
                     q.add(new Point(nx, ny));
                 }
             }
@@ -197,7 +200,7 @@ class Utils {
      * Process Dancers in order from greatest to least by dijkstra distance.
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
-    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePaths2(Point[][] startEndP, String[][] grid) {
         int boardSize = grid.length;
         int numDancers = startEndP.length;
         List<Point>[] res = new List[startEndP.length];
@@ -245,11 +248,11 @@ class Utils {
 
             Utils.printGrid(gridAtT);
             ArrayList<Integer> byDist = new ArrayList<>();
-            int globalMaxDistThisT = 0;
+            //int globalMaxDistThisT = 0;
             for (int i = 0; i < numDancers; i++) {
                 byDist.add(i);
                 bfs(currentLocs[i], gridAtT, dist[i], null);
-                globalMaxDistThisT = Math.max(globalMaxDistThisT, dist[i][startEndP[i][1].x][startEndP[i][1].y]);
+                //globalMaxDistThisT = Math.max(globalMaxDistThisT, dist[i][startEndP[i][1].x][startEndP[i][1].y]);
             }
             // sort (start, end) pairs by their bfs distance
             // this way, we'll look at longer paths before shorter ones
@@ -271,13 +274,12 @@ class Utils {
                     Point endP = startEndP[dancer][1];
 
                     int straightDist = dist[dancer][endP.x][endP.y];
-
+                    if(straightDist > 0) System.out.println(dancer + " " + currentLocs[dancer].x + " " + currentLocs[dancer].y + " " + straightDist);
                     // Maybe the best move is a swap, idk.
                     int x = currentLocs[dancer].x;
                     int y = currentLocs[dancer].y;
                     int bestSwapDir = -1;
                     int bestSwapee = -1;
-                    int bestSwapGain = 0;
                     for(int i = 0; i < moves.length; i++) {
                         int nx = x + moves[i][0];
                         int ny = y + moves[i][1];
@@ -289,13 +291,13 @@ class Utils {
                         if(movedThisT[nd]) continue;
                         Point nEndPoint = startEndP[nd][1];
                         int swappeeDist = dist[nd][nEndPoint.x][nEndPoint.y];
-                        if(dist[nd][endP.x][endP.y] < straightDist - 1 &&
-                            dist[dancer][nEndPoint.x][nEndPoint.y] < swappeeDist - 1 &&
-                            straightDist - dist[nd][endP.x][endP.y] + swappeeDist - dist[dancer][endP.x][endP.y] > bestSwapGain) {
+                        /*
+                        if((dist[nd][endP.x][endP.y] < straightDist - 5 &&
+                            dist[dancer][nEndPoint.x][nEndPoint.y] < swappeeDist - 5) || straightDist == Integer.MAX_VALUE) {
                                 bestSwapDir = i;
-                                bestSwapGain = straightDist - dist[nd][endP.x][endP.y] + swappeeDist - dist[dancer][endP.x][endP.y];
                                 bestSwapee = nd;
                         }
+                        */
                     }
 
                     Point nextMove;
@@ -326,7 +328,7 @@ class Utils {
                         if (path.size() == 1) {
                             nextMove = path.get(0);
                         } else {
-                            nextMove = path.get(path.size() - 1);
+                            nextMove = path.get(path.size() - 2);
                             gridAtT[currentLocs[dancer].x][currentLocs[dancer].y] = " ";
                             gridAtT[nextMove.x][nextMove.y] = "$";
                         }
@@ -378,7 +380,7 @@ class Utils {
         return res;
     }
 
-    static List<Point>[] generatePaths2(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
         Scanner sc = new Scanner(System.in);
         int boardSize = grid.length;
         List<Point>[] res = new List[startEndP.length];
