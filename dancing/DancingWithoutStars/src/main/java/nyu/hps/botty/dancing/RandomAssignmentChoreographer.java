@@ -47,6 +47,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
         RandomAssignmentChoreographer rac = new RandomAssignmentChoreographer();
         rac.receiveInput(sb.toString());
         rac.receiveGameInfo("30 4 40");
+        // below is output from spoiler running on dancedata...
+        rac.receiveStars("27 22 22 6 7 4 14 1 11 7 28 2 25 27 19 8 7 13 6 22 3 1 1 17 1 24 26 15 3 14 19 16 13 17 2 8 25 9 16 19 17 27 9 24 6 27 23 21 16 14 5 18 12 13 20 12 15 10 9 16 0 12 18 22 10 20 9 10 21 24 13 22 17 5 12 26 26 5 20 3");
         rac.solve();
     }
 
@@ -82,7 +84,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
             List<Point>[] newPaths = Utils.generatePathsWithoutSwaps(startEndPairs, starGrid, minTurns);
             if (newPaths == null) continue;
             if (paths == null || minTurns > newPaths[0].size()) {
-                System.out.println("Found an optimal solution!");
+                System.out.println("Found an good solution!");
                 this.bestLineSegments = lines;
                 this.paths = newPaths;
                 minTurns = this.paths[0].size();
@@ -170,8 +172,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
             // place one more line
             while (Instant.now().isBefore(withSwapsEnd) && Instant.now().isBefore(end) && lineSegments.size() < k) {
                 boolean dir = rand.nextBoolean();
-                int x = rand.nextInt(dir ? this.boardSize - this.k + 1 : this.boardSize);
-                int y = rand.nextInt(dir ? this.boardSize : this.boardSize - k + 1);
+                int x = rand.nextInt(dir ? this.boardSize - this.numOfColor + 1 : this.boardSize);
+                int y = rand.nextInt(dir ? this.boardSize : this.boardSize - this.numOfColor + 1);
                 boolean placable = true;
                 int curx = x;
                 int cury = y;

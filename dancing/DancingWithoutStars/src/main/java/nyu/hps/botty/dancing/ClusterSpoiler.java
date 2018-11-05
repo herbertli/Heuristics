@@ -34,6 +34,7 @@ public class ClusterSpoiler extends Spoiler {
             }
             System.out.println();
         }
+        System.out.println(r.getMoveString(r.stars));
     }
 
     private void solve() {
