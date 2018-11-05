@@ -5,6 +5,7 @@ import java.util.*;
 
 public class ClusterSpoiler extends Spoiler {
 
+    // testing
     public static void main(String[] args) throws Exception {
         StringBuilder sb = new StringBuilder();
         if (args.length == 1) {
@@ -21,6 +22,16 @@ public class ClusterSpoiler extends Spoiler {
         r.receiveInput(sb.toString());
         r.receiveGameInfo("30 4 40");
         r.solve();
+        String[][] grid = r.createGrid();
+        for (Point p: r.stars) {
+            grid[p.x][p.y] = "#";
+        }
+        for (String[] s: grid) {
+            for (String t: s) {
+                System.out.print(t);
+            }
+            System.out.println();
+        }
     }
 
     private void solve() {
@@ -28,7 +39,7 @@ public class ClusterSpoiler extends Spoiler {
     }
 
     private void placeInCluster() {
-        System.out.println("Trying to place stars in dense places...");
+        System.out.println("Trying to place stars in cluster centers...");
         ClusteringChoreo.Dancer[] dancers = new ClusteringChoreo.Dancer[k * numOfColor];
         int i = 0;
         for (Map.Entry<Integer, ArrayList<Point>> e : this.dancers.entrySet()) {
@@ -38,7 +49,21 @@ public class ClusterSpoiler extends Spoiler {
         }
         Map<Point, ArrayList<Point>> centerAndPoints = ClusteringChoreo.cluster(dancers, 300, k, numOfColor, boardSize);
         stars = new ArrayList<>(centerAndPoints.keySet());
-        if (!validateStars(stars)) {
+
+        // now try to greedily pick stars from center outwards
+        List<Point> cands = fillOutFromCenter();
+        if (cands.size() + stars.size() == k) {
+            stars.addAll(cands);
+            return;
+        }
+        // if not possible, try to greedily pick stars from corner
+        cands = fillOutFromCorner();
+        if (cands.size() + stars.size() == k) {
+            stars.addAll(cands);
+            return;
+        }
+
+        if (!validateStars(stars) || stars.size() < k) {
             placeInDense();
         }
     }
@@ -73,6 +98,58 @@ public class ClusterSpoiler extends Spoiler {
         if (stars.size() != k) {
             placeSimple();
         }
+    }
+
+    private List<Point> fillOutFromCenter() {
+        int[][] moves = {
+                {0, 1},
+                {0, -1},
+                {1, 0},
+                {-1, 0},
+                {1, -1},
+                {-1, -1},
+                {1, 1},
+                {-11, 1}
+        };
+        List<Point> cands = new ArrayList<>();
+        List<Point> allStars = new ArrayList<>(stars);
+        Point current = new Point(boardSize / 2, boardSize / 2);
+        ArrayDeque<Point> q = new ArrayDeque<>();
+        boolean[][] visited = new boolean[boardSize][boardSize];
+        visited[current.x][current.y] = true;
+        q.add(current);
+        while (!q.isEmpty()) {
+            Point p = q.pollFirst();
+            if (p == null) continue;
+            if (validateStars(allStars, p)) {
+                cands.add(p);
+                allStars.add(p);
+            }
+            for (int[] d: moves) {
+                int newX = p.x + d[0];
+                int newY = p.y + d[1];
+                if (newX < 0 || newX >= boardSize || newY < 0 || newY >= boardSize) continue;
+                if (visited[newX][newY]) continue;
+                visited[newX][newY] = true;
+                q.add(new Point(newX, newY));
+            }
+        }
+        return cands;
+    }
+
+    private List<Point> fillOutFromCorner() {
+        List<Point> cands = new ArrayList<>();
+        List<Point> allStars = new ArrayList<>(stars);
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                Point cand = new Point(i, j);
+                if (validateStars(allStars, cand)) {
+                    cands.add(cand);
+                    allStars.add(cand);
+                }
+            }
+        }
+        return cands;
     }
 
     private int bfs(String[][] cGrid, int i, int j) {
@@ -122,17 +199,34 @@ public class ClusterSpoiler extends Spoiler {
     }
 
     private void placeSimple() {
-        System.out.println("Falling back to circle packing...");
+        System.out.println("Trying circle packing...");
         stars = new ArrayList<>();
         CirclePack.load();
-        if (!CirclePack.m.containsKey(k)) {
+        int scaledRadius = (numOfColor + 1) * 1000 / boardSize;
+        Integer key = CirclePack.m.ceilingKey(scaledRadius);
+        if (key == null) {
             placeRandom();
         }
-        ArrayList<Point> centers = CirclePack.m.get(k);
+        ArrayList<Point> centers = CirclePack.m.get(key);
         for (Point p: centers) {
             Point scaled = new Point(p.x * boardSize / 1000, p.y * boardSize / 1000);
             stars.add(scaled);
         }
+        if (stars.size() == k) return;
+
+        // now try to greedily pick stars from center outwards
+        List<Point> cands = fillOutFromCenter();
+        if (cands.size() + stars.size() == k) {
+            stars.addAll(cands);
+            return;
+        }
+        // if not possible, try to greedily pick stars from corner
+        cands = fillOutFromCorner();
+        if (cands.size() + stars.size() == k) {
+            stars.addAll(cands);
+            return;
+        }
+
         if (stars.size() != k || !validateStars(stars)) {
             placeRandom();
         }
