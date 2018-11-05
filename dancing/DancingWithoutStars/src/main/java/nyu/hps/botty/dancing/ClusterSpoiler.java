@@ -128,11 +128,6 @@ public class ClusterSpoiler extends Spoiler {
         }
     }
 
-    @Override
-    void placeStars() {
-        solve();
-    }
-
     private void solve() {
         placeInDense();
     }
