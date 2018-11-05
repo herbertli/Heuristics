@@ -45,7 +45,7 @@ class Utils {
      * Process Dancers in order from greatest to least by dijkstra distance.
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
-    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid, int minTurns) {
         int boardSize = grid.length;
         int numDancers = startEndP.length;
         List<Point>[] res = new List[startEndP.length];
@@ -64,7 +64,8 @@ class Utils {
 
         int t = 1; // current time
         while(true) { // while there are dancers who haven't reached their goals.
-            System.out.println("Generating positions for time: " + t);
+            if(t >= minTurns) return null; // early termination
+            // System.out.println("Generating positions for time: " + t);
 
             // count how many dancers aren't at their start locations (since we're going backwards)
             int stillRunning = 0;
@@ -73,7 +74,7 @@ class Utils {
                     stillRunning++;
                 }
             }
-            System.out.println("# dancers still running: " + stillRunning);
+            // System.out.println("# dancers still running: " + stillRunning);
             if (stillRunning == 0) break; // They all reached their goals.
 
             int[][][] dist = new int[numDancers][boardSize][boardSize];
@@ -91,7 +92,7 @@ class Utils {
                 dancerToIndex[currentLocs[i].x][currentLocs[i].y] = i;
             }
 
-//            Utils.printGrid(gridAtT);
+            // Utils.printGrid(gridAtT);
             ArrayList<Integer> byDist = new ArrayList<>();
             //int globalMaxDistThisT = 0;
             for (int i = 0; i < numDancers; i++) {
@@ -119,7 +120,7 @@ class Utils {
                     Point endP = startEndP[dancer][1];
 
                     int straightDist = dist[dancer][endP.x][endP.y];
-                    if(straightDist > 0) System.out.println(dancer + " " + currentLocs[dancer].x + " " + currentLocs[dancer].y + " " + straightDist);
+                    // if(straightDist > 0) System.out.println(dancer + " " + currentLocs[dancer].x + " " + currentLocs[dancer].y + " " + straightDist);
                     // Maybe the best move is a swap, idk.
                     int x = currentLocs[dancer].x;
                     int y = currentLocs[dancer].y;

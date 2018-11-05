@@ -71,15 +71,14 @@ public class RandomAssignmentChoreographer extends Choreographer {
             iterations++;
             if (Instant.now().isAfter(withSwapsEnd)) break;
 
-            // what happens if we can't find any lines?
-            if (lines != null) {
-                allPossibleLineSegments.add(lines);
-            }
-
+			// what happens if we can't find any lines?
+			if(lines == null) continue;
             Instance assignment = assignDancersToLines(dancers, lines);
-
             if (assignment == null) continue;
-            generateStartEndPairs(assignment);
+			if(assignment.cost - this.numOfColor >= minTurns) continue; // Impossible to be better than the current best paths we have.
+            int cost = generateStartEndPairs(assignment);
+			if(cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
+			allPossibleLineSegments.add(lines); //TODO: maybe instead of saving line segments, we can save assignments
 
             List<Point>[] newPaths = Utils.generatePathsWithoutSwaps(startEndPairs, starGrid, minTurns);
             if (newPaths == null) continue;
@@ -108,7 +107,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
             Instance assignment = assignDancersToLines(dancers, lines);
             generateStartEndPairs(assignment);
-            List<Point>[] newPaths = Utils.generatePaths(startEndPairs, starGrid);
+            List<Point>[] newPaths = Utils.generatePaths(startEndPairs, starGrid, minTurns);
             if (newPaths == null) continue;
 
             if (paths == null || minTurns > newPaths[0].size()) {
@@ -246,8 +245,9 @@ public class RandomAssignmentChoreographer extends Choreographer {
     }
 
     // assign dancers to points in line segments.
-    Point[][] generateStartEndPairs(Instance assignment) {
-        startEndPairs = new Point[this.numOfColor * this.k][2];
+    int generateStartEndPairs(Instance assignment) {
+		startEndPairs = new Point[this.numOfColor * this.k][2];
+		int minCost = 0;
         // run max flow on each line segment to assign dancers to a point in the line segment.
         for (int ii = 0; ii < this.k; ii++) {
             Point[] pointsInLine = new Point[this.numOfColor];
@@ -305,7 +305,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
                     hi = mid;
                     workingAssignmentDinic = dinic;
                 } else lo = mid;
-            }
+			}
+			minCost = Math.max(minCost, hi);
             for (int i = 0; i < this.numOfColor; i++) {
                 for (int j = 0; j < workingAssignmentDinic.graph[i].length; j++) {
                     // if saturated edge
@@ -317,8 +318,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
                     }
                 }
             }
-        }
-        return startEndPairs;
+		}
+		return minCost;
     }
 
     // Generate assignment of dancers to lines minimizing the maximum Manhattan distance.

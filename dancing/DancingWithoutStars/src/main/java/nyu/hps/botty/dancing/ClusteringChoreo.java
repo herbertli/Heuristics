@@ -27,7 +27,7 @@ class ClusteringChoreo extends Choreographer {
         Point[][] startAndEndPairs = assignLines(centerAndPoints);
 
         // generate paths from each dancer to their assigned line
-        pathSolution = Utils.generatePaths(startAndEndPairs, grid);
+        pathSolution = Utils.generatePaths(startAndEndPairs, grid, 1000);
 
     }
 
