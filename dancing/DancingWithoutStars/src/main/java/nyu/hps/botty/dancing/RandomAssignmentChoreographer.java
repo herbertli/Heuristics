@@ -18,7 +18,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
     static final int SECONDS_PER_SEGMENT = 2;       // Seconds to look to non-intersecting lines
     static final int TOTAL_SECONDS_TO_SOLVE = 110;  // Number of seconds given to look for assignments.
-    static final int SECONDS_TO_SOLVE = 80;         // Number of seconds given to look for GOOD assignments.
+    static final int SECONDS_TO_SOLVE = 86;         // Number of seconds given to look for GOOD assignments.
 
     Point[][] startEndPairs; // [i][0] = dancer's start position. [i][1] = dancer's end position.
     List<Point>[] paths = null; // Paths for the dancers using the startEndPairs.
@@ -212,7 +212,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 					System.out.println();
 				}
                 */
-                System.out.println("Time to generate lineSegments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+                //System.out.println("Time to generate lineSegments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
                 return lineSegments;
             }
             // we are out of time.
@@ -322,7 +322,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
                 }
             }
 		}
-        System.out.println("Time to generate assignment of dancers to endcoors = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        //System.out.println("Time to generate assignment of dancers to endcoors = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
 		return minCost;
     }
 
@@ -373,7 +373,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
                 workingAssignmentDinic = dinic;
             } else lo = mid;
         }
-        System.out.println("Time to generate assignment of dancers to line segments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        //System.out.println("Time to generate assignment of dancers to line segments = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return generateInstance(dancers, lines, workingAssignmentDinic, hi);
     }
 
