@@ -219,6 +219,10 @@ class Utils {
                 }
             }
             for (Point p : currentLocs) {
+                if (p.time != t - 1) {
+                    System.out.println("Time mismatch");
+                    System.exit(0);
+                }
                 gridAtT[p.x][p.y] = "$";
             }
 
