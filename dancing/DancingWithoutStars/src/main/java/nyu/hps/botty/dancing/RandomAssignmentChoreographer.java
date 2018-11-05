@@ -4,20 +4,26 @@ import java.io.File;
 import java.time.Instant;
 import java.util.*;
 
-// Continuously generate k line segments of length c.
-// See whats the max distance to any line such that every line has a dancer of
-// each color and all dancers are assigned to a line.
-// An Instance is an assignment of dancers to line segments.
+/** 
+ * 
+ * Continuously generate k line segments of length c.
+ * See whats the max distance to any line such that every line has a dancer of
+ * each color and all dancers are assigned to a line.
+ * An Instance is an assignment of dancers to line segments.
+ */
 public class RandomAssignmentChoreographer extends Choreographer {
 
-	Instant globalEnd;
+	Instant globalEnd; // Moment when we need to start generating paths with what we have.
 	static final int SECONDS_PER_SEGMENT = 2;
-	static final int SECONDS_TO_SOLVE = 5;
-	Instance best;
-	Point[][] startEndPairs;
-	List<Point>[] paths;
+	static final int SECONDS_TO_SOLVE = 1; // Number of seconds given to look for good assignments.
+	Instance best; // Best assignment we have so far.
+	Point[][] startEndPairs; // [i][0] = dancer's start position. [i][1] = dancer's end position.
+	List<Point>[] paths; // Paths for the dancers using the startEndPairs.
 	Random rand = new Random();
 
+	/**
+	 * Testing code.
+	 */
     public static void main(String[] args) throws Exception {
         StringBuilder sb = new StringBuilder();
         if (args.length > 0) {
@@ -41,7 +47,6 @@ public class RandomAssignmentChoreographer extends Choreographer {
 	}
 	
 	public void solve() {
-    	rand.setSeed(1234);
 		globalEnd = Instant.now().plusSeconds(SECONDS_TO_SOLVE);
 		ArrayList<Dancer> dancers = new ArrayList<>();
 		for(int color : this.dancers.keySet()) {
@@ -50,10 +55,13 @@ public class RandomAssignmentChoreographer extends Choreographer {
 				dancers.add(new Dancer(dancerCoor, color));
 			}
 		}
+		int iterations = 0;
 		// Try to generate Instances while keeping the best one.
         while(Instant.now().isBefore(globalEnd)) {
+			if(iterations % 10000 == 0) System.out.println("Iterations: " + iterations);
             // generate line segments
 			ArrayList<LineSegment> lines = generateRandomNonIntersectingLines(SECONDS_PER_SEGMENT);
+			iterations++;
 			if(Instant.now().isAfter(globalEnd)) break;
 			/*****************************************
 			 what happens if we can't find any lines?
@@ -106,11 +114,11 @@ public class RandomAssignmentChoreographer extends Choreographer {
 			}
 			if(best == null || hi < best.cost) {
 				best = generateInstance(dancers, lines, workingAssignmentDinic, hi);
-				System.out.println(best.cost);
+				System.out.println("Best cost: " + best.cost);
 			}
 		}
 		startEndPairs = new Point[this.numOfColor * this.k][2];
-		// run max flow on line segments.
+		// run max flow on each line segment to assign dancers to a point in the line segment.
 		for(int ii = 0; ii < this.k; ii++) {
 			Point[] pointsInLine = new Point[this.numOfColor];
 			int x = best.lineSegs.get(ii).start.x;
@@ -137,7 +145,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 			while(hi - lo > 1) {
 				int mid = lo + (hi - lo)/2;
 				// 1 edge from s to each dancer with capacity 1.
-				// 1 edge from each lineSegment*color to t with capacity 1.
+				// 1 edge from each cell in segment to t with capacity 1.
 				int s = 2*(this.numOfColor);
 				int t = s + 1;
 				int numEdges = s;
@@ -150,7 +158,6 @@ public class RandomAssignmentChoreographer extends Choreographer {
 						if(Math.abs(dancerCoors[i].x - pointsInLine[j].x) + Math.abs(dancerCoors[i].y - pointsInLine[j].y) <= mid) {
 							g.get(i).add(this.numOfColor+j);
 							numEdges++;
-
 						}
 					}
 				}
@@ -185,14 +192,14 @@ public class RandomAssignmentChoreographer extends Choreographer {
 		String[][] grid = new String[this.boardSize][this.boardSize];
 		for(int i = 0; i < this.boardSize; i++) {
 			for(int j = 0; j < this.boardSize; j++) {
-				grid[i][j] = "";
+				grid[i][j] = " ";
 			}
 		}
 		for(Point star: this.stars) {
 			grid[star.x][star.y] = "#";
 		}
 		this.paths = Utils.generatePaths(startEndPairs, grid);
-		Utils.printMoves(paths);
+		//Utils.printMoves(paths);
 	}
 	@Override
 	Point[][] getLines() {
@@ -232,10 +239,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
     public ArrayList<LineSegment> generateRandomNonIntersectingLines(int secondsPerSegment) {
         ArrayList<LineSegment> lineSegments = new ArrayList<>();
         boolean[][] occupied = new boolean[this.boardSize][this.boardSize];
-		if(stars != null)
-			for(Point p: stars) {
-				occupied[p.x][p.y] = true;
-			}
+		if(stars != null) for(Point p: stars) occupied[p.x][p.y] = true;
+		// Time for current iteration.
 		Instant end = Instant.now().plusSeconds((lineSegments.size() + 1) * secondsPerSegment);
 		while(true) {
 			// place one more line
@@ -247,7 +252,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 				int curx = x;
 				int cury = y;
 				// bounds check
-				if(x + (dir ? this.numOfColor : 0) >= this.boardSize || y + (dir ? 0 : this.numOfColor) >= this.boardSize) continue;
+				if(x + (dir ? this.numOfColor - 1 : 0) >= this.boardSize || y + (dir ? 0 : this.numOfColor - 1) >= this.boardSize) continue;
 				for(int i = 0; placable && i < this.numOfColor; i++) {
 					if(!occupied[curx][cury]) {
 						curx += (dir ? 1 : 0);
@@ -296,6 +301,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 					cury += (dir ? 0 : 1);
 				}
 				lineSegments.remove(lineSegments.size()-1);
+				// recalculate time to find new line segment.
 				end = Instant.now().plusSeconds((lineSegments.size() + 1) * secondsPerSegment);
 			}
 		}
