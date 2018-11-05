@@ -20,7 +20,7 @@ public class Point implements Comparable<Point> {
     @Override
     public int compareTo(Point o) {
         if (this.x == o.x && this.y == o.y) return 0;
-        if (this.x == o.x) return Integer.compare(this.x, o.x);
-        return Integer.compare(this.y, o.y);
+        if (this.x == o.x) return Integer.compare(this.y, o.y);
+        return Integer.compare(this.x, o.x);
     }
 }
