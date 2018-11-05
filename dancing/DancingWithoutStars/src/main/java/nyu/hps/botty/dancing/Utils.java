@@ -200,7 +200,7 @@ class Utils {
      * Process Dancers in order from greatest to least by dijkstra distance.
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
-    static List<Point>[] generatePaths2(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
         int boardSize = grid.length;
         int numDancers = startEndP.length;
         List<Point>[] res = new List[startEndP.length];
@@ -380,7 +380,7 @@ class Utils {
         return res;
     }
 
-    static List<Point>[] generatePaths(Point[][] startEndP, String[][] grid) {
+    static List<Point>[] generatePathsWithoutSwaps(Point[][] startEndP, String[][] grid, int minTurns) {
         Scanner sc = new Scanner(System.in);
         int boardSize = grid.length;
         List<Point>[] res = new List[startEndP.length];
@@ -418,7 +418,8 @@ class Utils {
         int t = 1;
 
         while (true) {
-            System.out.println("Generating positions for time: " + t);
+            if(t >= minTurns) return null;
+            //System.out.println("Generating positions for time: " + t);
 
             // count how many dancers aren't at their start locations (since we're going backwards)
             int stillRunning = 0;
@@ -427,7 +428,7 @@ class Utils {
                     stillRunning++;
                 }
             }
-            System.out.println("# dancers still running: " + stillRunning);
+            //System.out.println("# dancers still running: " + stillRunning);
             if (stillRunning == 0) break;
 
             // generate initial grid, will be used to mark occupied squares
