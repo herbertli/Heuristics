@@ -1,77 +1,38 @@
 package nyu.hps.botty.dancing;
 
-import java.io.File;
 import java.util.*;
 
-public class HerbertChoreo extends Choreographer {
-
-    private static int numIter = 200;
-    private static boolean DEBUG = true;
-
-    public static void main(String[] args) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        if (args.length > 0) {
-            for (String s : args) {
-                if (sb.length() == 0) {
-                    Scanner sc = new Scanner(new File(args[0]));
-                    while (sc.hasNextLine()) {
-                        sb.append(sc.nextLine()).append("\n");
-                    }
-                    sc.close();
-                }
-                String[] splitArg = s.split("=");
-                switch (splitArg[0]) {
-                    case "n":
-                        numIter = Integer.parseInt(splitArg[1]);
-                        break;
-                    case "d":
-                        DEBUG = Boolean.parseBoolean(splitArg[1]);
-                        break;
-                }
-            }
-        } else {
-            System.out.println("Please specify an input file!");
-            System.exit(0);
-        }
-        HerbertChoreo h = new HerbertChoreo();
-        h.receiveInput(sb.toString());
-        h.receiveGameInfo("30 4 40");
-        h.solve();
-    }
+class ClusteringChoreo extends Choreographer {
 
     private Point[][] lineSolution;
     private List<Point>[] pathSolution;
     private String[][] grid;
+
     void solve() {
+
         // generate cluster centers
-        Map<Point, ArrayList<Point>> centerAndPoints = cluster(numIter, k);
-        if (DEBUG) printCenters(centerAndPoints);
+        Dancer[] dancers = new Dancer[k * numOfColor];
+        int i = 0;
+        for (Map.Entry<Integer, ArrayList<Point>> e : this.dancers.entrySet()) {
+            for (Point p : e.getValue()) {
+                dancers[i++] = new Dancer(p, e.getKey());
+            }
+        }
+        Map<Point, ArrayList<Point>> centerAndPoints = cluster(dancers, 200, k, numOfColor, boardSize);
 
         // create grid
         grid = createGrid(centerAndPoints);
-//        if (DEBUG) Utils.printGrid(grid);
 
         // create lines and generate pairs from each dancer to their final position
         Point[][] startAndEndPairs = assignLines(centerAndPoints);
-        if (DEBUG) printPairs(startAndEndPairs);
-
-        // print out the lines
-        String lineString = getLineString(lineSolution);
-        if (DEBUG) System.out.println(lineString);
 
         // generate paths from each dancer to their assigned line
         pathSolution = Utils.generatePaths(startAndEndPairs, grid);
-        if (DEBUG) Utils.printMoves(pathSolution);
-
-        // finally, get the move string
-//        String moveString = getMoveString(pathSolution);
-//        if (DEBUG) System.out.println(moveString);
 
     }
 
     @Override
     List<Point>[] getPaths() {
-        solve();
         return pathSolution;
     }
 
@@ -80,16 +41,10 @@ public class HerbertChoreo extends Choreographer {
         return lineSolution;
     }
 
-    private HashMap<Point, ArrayList<Point>> cluster(int iter, int numClusters) {
+    static HashMap<Point, ArrayList<Point>> cluster(Dancer[] dancers, int iter, int numClusters, int numOfColor, int boardSize) {
         Random random = new Random();
         Point[] centers = new Point[numClusters];
-        Dancer[] dancers = new Dancer[this.k * this.numOfColor];
-        int i = 0;
-        for (Map.Entry<Integer, ArrayList<Point>> e : this.dancers.entrySet()) {
-            for (Point p : e.getValue()) {
-                dancers[i++] = new Dancer(p, e.getKey());
-            }
-        }
+
 
         // randomly get initial cluster centers
         for (int c = 0; c < numClusters; c++) {
@@ -100,7 +55,7 @@ public class HerbertChoreo extends Choreographer {
         boolean converged = false;
         for (int n = 0; n < iter && !converged; n++) {
             for (int c = 1; c <= numOfColor; c++) {
-                bipartiteMatch(assignments, centers, dancers, c);
+                bipartiteMatch(assignments, centers, dancers, c, numClusters);
             }
             int[] xs = new int[numClusters];
             int[] ys = new int[numClusters];
@@ -136,7 +91,7 @@ public class HerbertChoreo extends Choreographer {
         return res;
     }
 
-    private void bipartiteMatch(int[] assignments, Point[] centers, Dancer[] dancers, int color) {
+    private static void bipartiteMatch(int[] assignments, Point[] centers, Dancer[] dancers, int color, int k) {
         // points holds all dancers of color
         Point[] points = new Point[k];
         int j = 0;
@@ -192,7 +147,7 @@ public class HerbertChoreo extends Choreographer {
         int iter = 0;
         while (true) {
             iter++;
-            if (iter % 100 == 0 && DEBUG) {
+            if (iter % 100 == 0) {
                 System.out.println("Iteration: " + iter);
             }
             boolean hasIntersection = false;
@@ -208,19 +163,11 @@ public class HerbertChoreo extends Choreographer {
                     if (!allHori && a.center.x != b.center.x) continue;
                     if (a.start <= b.end && a.start >= b.start) {
                         hasIntersection = true;
-                        if (DEBUG) {
-                            System.out.printf("Line(%d,%d) intersects with Line(%d,%d)\n",
-                                    a.start, a.end, b.start, b.end);
-                        }
                         inter1 = i;
                         inter2 = j;
                         break outer;
                     } else if (b.start <= a.end && b.start >= a.start) {
                         hasIntersection = true;
-                        if (DEBUG) {
-                            System.out.printf("Line(%d,%d) intersects with Line(%d,%d)\n",
-                                    a.start, a.end, b.start, b.end);
-                        }
                         inter1 = i;
                         inter2 = j;
                         break outer;
@@ -260,17 +207,6 @@ public class HerbertChoreo extends Choreographer {
                     }
                     boolean valid = calculateCluster(newCenter, newCluster, worseGroup.points, allHori);
                     lines[worseInd] = newCluster;
-                    if (allHori) {
-                        if (DEBUG) {
-                            System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
-                                    worseGroup.end, worseGroup.center.y, newCluster.start, newCluster.end, newCenter.y);
-                        }
-                    } else {
-                        if (DEBUG) {
-                            System.out.printf("Replacing Line(%d,%d,%d) with Line(%d,%d,%d)\n", worseGroup.start,
-                                    worseGroup.end, worseGroup.center.x, newCluster.start, newCluster.end, newCenter.x);
-                        }
-                    }
                     if (valid) break;
                     shift++;
                 }
@@ -393,20 +329,6 @@ public class HerbertChoreo extends Choreographer {
             grid[p.x][p.y] = "X";
         }
         return grid;
-    }
-
-    private void printCenters(Map<Point, ArrayList<Point>> centerAndPoints) {
-        for (Point p : centerAndPoints.keySet()) {
-            System.out.printf("Point(%d,%d)\n", p.x, p.y);
-        }
-    }
-
-    private void printPairs(Point[][] pairs) {
-        for (Point[] pair : pairs) {
-            Point start = pair[0];
-            Point end = pair[1];
-            System.out.printf("Point(%d,%d) goes to Point(%d,%d)\n", start.x, start.y, end.x, end.y);
-        }
     }
 
     static class Dancer {

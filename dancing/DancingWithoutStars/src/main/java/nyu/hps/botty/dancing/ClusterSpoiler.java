@@ -23,6 +23,26 @@ public class ClusterSpoiler extends Spoiler {
         r.solve();
     }
 
+    private void solve() {
+        placeInCluster();
+    }
+
+    private void placeInCluster() {
+        System.out.println("Trying to place stars in dense places...");
+        ClusteringChoreo.Dancer[] dancers = new ClusteringChoreo.Dancer[k * numOfColor];
+        int i = 0;
+        for (Map.Entry<Integer, ArrayList<Point>> e : this.dancers.entrySet()) {
+            for (Point p : e.getValue()) {
+                dancers[i++] = new ClusteringChoreo.Dancer(p, e.getKey());
+            }
+        }
+        Map<Point, ArrayList<Point>> centerAndPoints = ClusteringChoreo.cluster(dancers, 300, k, numOfColor, boardSize);
+        stars = new ArrayList<>(centerAndPoints.keySet());
+        if (!validateStars(stars)) {
+            placeInDense();
+        }
+    }
+
     private void placeInDense() {
         String[][] cGrid = createGrid();
         System.out.println("Trying to place stars in dense places...");
@@ -40,23 +60,16 @@ public class ClusterSpoiler extends Spoiler {
             }
         }
 
-        System.out.println("Picking top k points...");
         stars = new ArrayList<>();
         int placed = 0;
-        outer:
         while (placed < k && !l.isEmpty()) {
             Triple t = l.poll();
             if (t == null) continue;
             Point candidate = new Point(t.x, t.y);
-            for (Point p: stars) {
-                int dist = Math.abs(p.x - candidate.x) + Math.abs(p.y - candidate.y);
-                if (dist < numOfColor + 1) {
-                    continue outer;
-                }
+            if (validateStars(stars, candidate)) {
+                stars.add(candidate);
             }
-            stars.add(candidate);
         }
-
         if (stars.size() != k) {
             placeSimple();
         }
@@ -120,29 +133,23 @@ public class ClusterSpoiler extends Spoiler {
             Point scaled = new Point(p.x * boardSize / 1000, p.y * boardSize / 1000);
             stars.add(scaled);
         }
-        if (stars.size() != k) {
+        if (stars.size() != k || !validateStars(stars)) {
             placeRandom();
         }
     }
 
     private void placeRandom() {
         System.out.println("Falling back to place stars in random places...");
-        while (true) {
+        int iter = 10000;
+        for (int i = 0; i < iter; i++) {
             stars = new ArrayList<>();
             String[][] cGrid = createGrid();
             int placed = 0;
             Random random = new Random();
-            outer:
             while (placed < k) {
                 int x = random.nextInt(boardSize);
                 int y = random.nextInt(boardSize);
-                for (Point p : stars) {
-                    int dist = Math.abs(p.x - x) + Math.abs(p.y - y);
-                    if (dist < numOfColor + 1) {
-                        continue outer;
-                    }
-                }
-                if (cGrid[x][y].equals(" ")) {
+                if (cGrid[x][y].equals(" ") && validateStars(stars, new Point(x, y))) {
                     placed++;
                     stars.add(new Point(x, y));
                     cGrid[x][y] = "#";
@@ -150,10 +157,48 @@ public class ClusterSpoiler extends Spoiler {
             }
             if (stars.size() == k) break;
         }
+        if (!validateStars(stars)) {
+            HashSet<Integer> toRemove = new HashSet<>();
+            for (int i = 0; i < stars.size(); i++) {
+                for (int j = i + 1; j < stars.size(); j++) {
+                    if (toRemove.contains(i) || toRemove.contains(j)) continue;
+                    Point p = stars.get(i);
+                    Point q = stars.get(j);
+                    int dist = Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
+                    if (dist < numOfColor + 1) {
+                        toRemove.add(j);
+                    }
+                }
+            }
+            List<Point> newStars = new ArrayList<>();
+            for (int i = 0; i < stars.size(); i++) {
+                if (!toRemove.contains(i)) {
+                    newStars.add(stars.get(i));
+                }
+            }
+            stars = newStars;
+        }
     }
 
-    private void solve() {
-        placeInDense();
+    private boolean validateStars(List<Point> stars, Point newS) {
+        for (Point p: stars) {
+            int dist = Math.abs(p.x - newS.x) + Math.abs(p.y - newS.y);
+            if (dist < numOfColor + 1) return false;
+        }
+        return validateStars(stars);
+    }
+
+    private boolean validateStars(List<Point> stars) {
+        for (int i = 0; i < stars.size(); i++) {
+            for (int j = 0; j < stars.size(); j++) {
+                if (i == j) continue;
+                Point p = stars.get(i);
+                Point q = stars.get(j);
+                int dist = Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
+                if (dist < numOfColor + 1) return false;
+            }
+        }
+        return true;
     }
 
     @Override
