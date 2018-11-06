@@ -1,0 +1,17 @@
+Things that are farther away move first. Move if able. Swap if beneficial for both. dist after swap < dist 
+
+attributes = {1...n}
+weights = w_1 ... w_n from (-1 ... 1)
+
+In each response, P may modify 5% of the criteria (P may choose which ones) by 20% each with respect to the original weights. 
+w_i' = w_i +/- (.05 * w_i)
+
+attributes <= 200 
+0 <= a_i <= 1
+
+Candidate = c_1 ... c_n
+
+Take dot product of w_i' * c_i to get score
+-1 <= score <= 1
+
+Compare players by (score, num turns).
