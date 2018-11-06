@@ -155,7 +155,10 @@ class Utils {
             System.out.println("time = " + t);
             for(int i = 0; i < res.length; i++) {
                 System.out.println("Dancer " + i + " " + res[i].size());
-                for(Point p : res[i]) System.out.println(p.x + " " + p.y);
+                for(int j = 0; j < 2; j++) {
+                    Point p = res[i].get(res[i].size() - j - 1);
+                    System.out.println(p.x + " " + p.y);
+                }
                 System.out.println("EndPoint = " + startEndP[i][1].x + " " + startEndP[i][1].y);
             }
             */
@@ -174,6 +177,15 @@ class Utils {
                         Point a = res[i].get(ti);
                         Point b = res[j].get(ti);
                         if (a.x == b.x && a.y == b.y) {
+                            //System.out.println("time = " + t);
+                            //System.out.println(i + " " + j);
+                            /*
+                            for(int ii = 0; ii < currentLocs.length; ii++) {
+                                Point p = currentLocs[ii];
+                                System.out.println("Dancer " + ii + " " + p.x + " " + p.y);
+                                System.out.println("EndPoint = " + startEndP[i][1].x + " " + startEndP[i][1].y);
+                            }
+                            */
                             //sc.next();
                             System.out.println("Same location!");
                             return null;
@@ -188,11 +200,14 @@ class Utils {
         return res;
     }
 
+    // returns true if the dancer moves from where it was before. else false.
     static boolean processMove(int t, int dancer, Point[] nextMoves, 
         int[][] dancerToIndex, int[][] assignAtNextT, Point[] currentLocs,
         boolean[] movedThisT, List<Point>[] res, int congoHead, 
         int boardSize, String[][] starGrid) {
-        if(movedThisT[dancer]) return true;
+        if(movedThisT[dancer]) {
+            return !(res[dancer].get(res[dancer].size() - 1).equals(res[dancer].get(res[dancer].size() - 2)));
+        }
         Point nextMove = nextMoves[dancer];
         if(nextMove == null) { // try to find a spot
             Point cur = new Point(currentLocs[dancer].x, currentLocs[dancer].y);
@@ -209,6 +224,7 @@ class Utils {
                             assignAtNextT[possibleNextMove.x][possibleNextMove.y] = dancer;
                             if(processMove(t, possDancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, congoHead, boardSize, starGrid)) {
                                 nextMove = possibleNextMove;
+                                assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
                                 break;
                             }
                             assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
@@ -216,7 +232,7 @@ class Utils {
                 }
             }
             boolean ret = true;
-            if(nextMove == null || dancerToIndex[nextMove.x][nextMove.y] != -1) {
+            if(nextMove == null || assignAtNextT[nextMove.x][nextMove.y] != -1) {
                 nextMove = cur;
                 ret = false;
             }
@@ -243,12 +259,10 @@ class Utils {
                 movedThisT[dancer] = true;
                 return true;
             } else {
-                assignAtNextT[nextMove.x][nextMove.y] = -1;
                 Point cur = currentLocs[dancer];
                 for(int i = 0; i < moves.length; i++) { // Try to find a temporary move.
                     Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
                     if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
-                    int possibleNextMoveInt = pointToInt(possibleNextMove, boardSize);
                     int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
                     if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") && 
                         assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
@@ -259,15 +273,15 @@ class Utils {
                                 assignAtNextT[possibleNextMove.x][possibleNextMove.y] = dancer;
                                 if(processMove(t, possDancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, congoHead, boardSize, starGrid)) {
                                     nextMove = possibleNextMove;
+                                    assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
                                     break;
                                 }
                                 assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
                             }
-
                     }
                 }
                 boolean ret = true;
-                if(dancerToIndex[nextMove.x][nextMove.y] != -1) {
+                if(assignAtNextT[nextMove.x][nextMove.y] != -1) {
                     nextMove = cur;
                     ret = false;
                 }
