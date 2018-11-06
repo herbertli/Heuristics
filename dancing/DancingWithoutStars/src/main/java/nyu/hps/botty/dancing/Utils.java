@@ -16,7 +16,7 @@ class Utils {
     static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred, boolean ignoreObs) {
 =======
     static int pointToInt(Point p, int boardSize) {
-        return p.x / boardSize + p.y;
+        return p.x * boardSize + p.y;
     }
 
     static Point intToPoint(int i, int boardSize) {
@@ -28,7 +28,8 @@ class Utils {
      * Process Dancers in order from greatest to least by dijkstra distance.
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
-    static List<Point>[] generatePathsWithFloydWarshall(Point[][] startEndP, int[][] fwDist, int[][] fwNext, int minTurns) {
+    static List<Point>[] generatePathsWithFloydWarshall(String[][] starGrid, Point[][] startEndP, int[][] fwDist, int minTurns) {
+        Scanner sc = new Scanner(System.in);
         int boardSize = (int)(Math.sqrt((double)fwDist.length));
         Instant startTime = Instant.now();
         int numDancers = startEndP.length;
@@ -65,8 +66,10 @@ class Utils {
             // System.out.println("# dancers still running: " + stillRunning);
             if (stillRunning == 0) break; // They all reached their goals.
 
-            boolean[][] assignAtNextT = new boolean[boardSize][boardSize];
+            int[][] assignAtNextT = new int[boardSize][boardSize];
+            for(int i = 0; i < boardSize; i++) Arrays.fill(assignAtNextT[i], -1);
             int[][] dancerToIndex = new int[boardSize][boardSize];
+            for(int i = 0; i < boardSize; i++) Arrays.fill(dancerToIndex[i], -1);
             int globalMaxDist = 0;
             for (int i = 0; i < numDancers; i++) {
                 dancerToIndex[currentLocs[i].x][currentLocs[i].y] = i;
@@ -76,6 +79,7 @@ class Utils {
 
             // Utils.printGrid(gridAtT);
             ArrayList<Integer> byDist = new ArrayList<>();
+            for(int i = 0; i < numDancers; i++) byDist.add(i);
             // sort (start, end) pairs by their bfs distance
             // this way, we'll look at longer paths before shorter ones
             Comparator<Integer> comp = (o1, o2) -> {
@@ -89,38 +93,73 @@ class Utils {
             };
             byDist.sort(comp);
 
-            boolean[] movedThisT = new boolean[numDancers];
-            while (true) {
-                int moved = 0;
-                for(int dancer : byDist) {
-                    if(movedThisT[dancer]) continue;
-
-                    Point endP = startEndP[dancer][1];
-
-                    int x = currentLocs[dancer].x;
-                    int y = currentLocs[dancer].y;
-
-                    for(int i = 0; i < moves.length; i++) {
-                        int nx = x + moves[i][0];
-                        int ny = y + moves[i][1];
+            Point[] nextMoves = new Point[numDancers];
+            /**
+             * 3 phases.
+             * 1. Find a new location for each dancer along their floyd warshall path if possible.
+             * 1. a. Also try to find an alternative location if the best location is blocked.
+             * 2. Try to move all. Swap any two where one is moving and the second isn't.
+             * 3. Anything that doesn't move stays in place.
+             */
+            for(int dancer : byDist) {
+                //System.out.println("Dancer " + dancer + " is looking for a move");
+                Point currentLoc = currentLocs[dancer];
+                Point endP = startEndP[dancer][1];
+                if(currentLoc.equals(endP)){
+                    //System.out.println("Dancer " + dancer + " thinks they're at the end");
+                    continue;
+                }
+                int currentLocInt = pointToInt(currentLocs[dancer], boardSize);
+                int endPInt = pointToInt(endP, boardSize);
+                Point nextMove = null;
+                int nextDist = fwDist[currentLocInt][endPInt];
+                for(int i = 0; i < moves.length; i++) {
+                    Point possibleNextMove = new Point(currentLoc.x + moves[i][0], currentLoc.y + moves[i][1]);
+                    if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
+                    int possibleNextMoveInt = pointToInt(possibleNextMove, boardSize);
+                    if(fwDist[possibleNextMoveInt][endPInt] < nextDist && assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
+                        nextMove = possibleNextMove;
+                        nextDist = fwDist[possibleNextMoveInt][endPInt];
                     }
-                    Point nextMove;
-
                 }
-                // resort
-                byDist.sort(comp);
-                if (moved == 0) break;
-            }
-
-            for (int i = 0; i < movedThisT.length; i++) {
-                if (!movedThisT[i]) {
-                    Point move = new Point(currentLocs[i].x, currentLocs[i].y);
-                    move.time = t;
-                    res[i].add(move);
-                    currentLocs[i] = move;
+                if(nextMove != null) {
+                    nextMoves[dancer] = nextMove;
+                    assignAtNextT[nextMove.x][nextMove.y] = dancer;
+                } else {
+                    //System.out.println("Dancer " + dancer + " thinks there's no move");
                 }
             }
-
+            /*
+            System.out.println("After Stage 1:");
+            for(int i = 0; i < res.length; i++) {
+                Point p = nextMoves[i];
+                if(p == null) System.out.printf("Dancer %d has not found a move.\n", i);
+                else System.out.printf("Dancer %d wants to move to %d %d\n", i, p.x, p.y);
+            }
+            */
+            boolean omgplsno = false;
+            boolean[] movedThisT = new boolean[numDancers];
+            for(int dancer : byDist) {
+                if(movedThisT[dancer]) continue;
+                if(nextMoves[dancer] == null) continue;
+                processMove(t, dancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, dancer, boardSize, starGrid);
+            }
+            for(int i = 0; i < numDancers; i++) {
+                if(movedThisT[i]) continue;
+                Point move = new Point(currentLocs[i].x, currentLocs[i].y);
+                move.time = t;
+                res[i].add(move);
+                currentLocs[i] = move;
+            }
+            /*
+            System.out.println("time = " + t);
+            for(int i = 0; i < res.length; i++) {
+                System.out.println("Dancer " + i + " " + res[i].size());
+                for(Point p : res[i]) System.out.println(p.x + " " + p.y);
+                System.out.println("EndPoint = " + startEndP[i][1].x + " " + startEndP[i][1].y);
+            }
+            */
+            //sc.next();
             // sanity check
             for (List<Point> l: res) {
                 if (l.size() != t + 1) {
@@ -135,6 +174,7 @@ class Utils {
                         Point a = res[i].get(ti);
                         Point b = res[j].get(ti);
                         if (a.x == b.x && a.y == b.y) {
+                            //sc.next();
                             System.out.println("Same location!");
                             return null;
                         }
@@ -146,6 +186,100 @@ class Utils {
         }
         System.out.println("Time to paths with fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return res;
+    }
+
+    static boolean processMove(int t, int dancer, Point[] nextMoves, 
+        int[][] dancerToIndex, int[][] assignAtNextT, Point[] currentLocs,
+        boolean[] movedThisT, List<Point>[] res, int congoHead, 
+        int boardSize, String[][] starGrid) {
+        if(movedThisT[dancer]) return true;
+        Point nextMove = nextMoves[dancer];
+        if(nextMove == null) { // try to find a spot
+            Point cur = new Point(currentLocs[dancer].x, currentLocs[dancer].y);
+            for(int i = 0; i < moves.length; i++) { // Try to find a temporary move.
+                Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
+                if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
+                int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
+                if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") && 
+                    assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
+                        if(possDancer == -1 || possDancer == congoHead) {
+                            nextMove = possibleNextMove;
+                            break;
+                        } else {
+                            assignAtNextT[possibleNextMove.x][possibleNextMove.y] = dancer;
+                            if(processMove(t, possDancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, congoHead, boardSize, starGrid)) {
+                                nextMove = possibleNextMove;
+                                break;
+                            }
+                            assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
+                        }
+                }
+            }
+            boolean ret = true;
+            if(nextMove == null || dancerToIndex[nextMove.x][nextMove.y] != -1) {
+                nextMove = cur;
+                ret = false;
+            }
+            assignAtNextT[nextMove.x][nextMove.y] = dancer;
+            nextMoves[dancer] = nextMove;
+            nextMove.time = t;
+            res[dancer].add(nextMove);
+            currentLocs[dancer] = new Point(nextMove.x, nextMove.y);
+            movedThisT[dancer] = true;
+            return ret;
+        }
+        int nextDancer = dancerToIndex[nextMove.x][nextMove.y];
+        if(nextDancer == -1 || nextDancer == congoHead) {
+            nextMove.time = t;
+            res[dancer].add(nextMove);
+            currentLocs[dancer] = new Point(nextMove.x, nextMove.y);
+            movedThisT[dancer] = true;
+            return true;
+        } else {
+            if(processMove(t, nextDancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, congoHead, boardSize, starGrid)) {
+                nextMove.time = t;
+                res[dancer].add(nextMove);
+                currentLocs[dancer] = new Point(nextMove.x, nextMove.y);
+                movedThisT[dancer] = true;
+                return true;
+            } else {
+                assignAtNextT[nextMove.x][nextMove.y] = -1;
+                Point cur = currentLocs[dancer];
+                for(int i = 0; i < moves.length; i++) { // Try to find a temporary move.
+                    Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
+                    if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
+                    int possibleNextMoveInt = pointToInt(possibleNextMove, boardSize);
+                    int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
+                    if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") && 
+                        assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
+                            if(possDancer == -1 || possDancer == congoHead) {
+                                nextMove = possibleNextMove;
+                                break;
+                            } else {
+                                assignAtNextT[possibleNextMove.x][possibleNextMove.y] = dancer;
+                                if(processMove(t, possDancer, nextMoves, dancerToIndex, assignAtNextT, currentLocs, movedThisT, res, congoHead, boardSize, starGrid)) {
+                                    nextMove = possibleNextMove;
+                                    break;
+                                }
+                                assignAtNextT[possibleNextMove.x][possibleNextMove.y] = -1;
+                            }
+
+                    }
+                }
+                boolean ret = true;
+                if(dancerToIndex[nextMove.x][nextMove.y] != -1) {
+                    nextMove = cur;
+                    ret = false;
+                }
+                assignAtNextT[nextMove.x][nextMove.y] = dancer;
+                nextMoves[dancer] = nextMove;
+                nextMove.time = t;
+                res[dancer].add(nextMove);
+                currentLocs[dancer] = new Point(nextMove.x, nextMove.y);
+                movedThisT[dancer] = true;
+                return ret;
+            }
+        }
     }
 
     static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred) {
@@ -619,6 +753,20 @@ class Utils {
 
         System.out.println("Time to paths without swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
         return res;
+    }
+
+    static void generateGrid(String[][] starGrid, Point[] currentLocs) {
+        int n = starGrid.length;
+        String[][] grid = new String[n][n];
+        for(Point p: currentLocs) {
+            grid[p.x][p.y] = "$";
+        }
+        for(int i = 0; i < n; i++) {
+            for(int j = 0; j < n; j++) {
+                if(grid[i][j] == null) grid[i][j] = starGrid[i][j];
+            }
+        }
+        printGrid(grid);
     }
 
     static void printGrid(String[][] grid) {

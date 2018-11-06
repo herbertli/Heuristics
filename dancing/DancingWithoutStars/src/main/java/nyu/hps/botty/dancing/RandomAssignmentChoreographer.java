@@ -24,7 +24,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
     List<Point>[] paths = null; // Paths for the dancers using the startEndPairs.
     ArrayList<LineSegment> bestLineSegments = null;
     ArrayList<ArrayList<LineSegment>> allPossibleLineSegments = new ArrayList<>();
-    int minTurns = 200;
+    int minTurns = 100;
     Random rand = new Random();
 
     /**
@@ -59,8 +59,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
         ArrayList<Dancer> dancers = getDancersAsArrayList();
         String[][] starGrid = buildStarGrid();
         int[][] dist = new int[this.boardSize * this.boardSize][this.boardSize * this.boardSize];
-        int[][] next = new int[this.boardSize * this.boardSize][this.boardSize * this.boardSize];
-        fw(boardSize, starGrid, dist, next);
+        fw(boardSize, starGrid, dist);
         int iterations = 0;
 
         // Try to generate Instances while keeping the best one.
@@ -83,7 +82,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 			if(cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
 			allPossibleLineSegments.add(lines); //TODO: maybe instead of saving line segments, we can save assignments
 
-            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(startEndPairs, dist, next, minTurns);
+            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
             if (newPaths == null) continue;
             if (paths == null || minTurns > newPaths[0].size()) {
                 System.out.println("Found an good solution!");
@@ -110,7 +109,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
             Instance assignment = assignDancersToLines(dancers, lines);
             generateStartEndPairs(assignment);
-            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(startEndPairs, dist, next, minTurns);
+            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
             if (newPaths == null) continue;
 
             if (paths == null || minTurns > newPaths[0].size()) {
@@ -395,23 +394,22 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
     static final int INF = 1_000_000_000;
 
-    static void fw(int boardSize, String[][] grid, int[][] dist, int[][] next){
+    static void fw(int boardSize, String[][] grid, int[][] dist){
+        Instant startTime = Instant.now();
         int n = boardSize * boardSize;
         for (int i = 0; i < n; ++i) {
             Point pi = Utils.intToPoint(i, boardSize);
             for (int j = 0; j < n; ++j) {
                 if (grid[pi.x][pi.y].equals("#") || grid[pi.x][pi.y].equals("#")) {
                     dist[i][j] = INF;
-                    next[i][j] = -1;
-                }
-                Point pj = Utils.intToPoint(j, boardSize);
-                int pdist = Math.abs(pi.x - pj.x) + Math.abs(pi.y - pj.y);
-                if (pdist <= 1) {
-                    dist[i][j] = pdist;
-                    next[i][j] = j;
                 } else {
-                    dist[i][j] = INF;
-                    next[i][j] = -1;
+                    Point pj = Utils.intToPoint(j, boardSize);
+                    int pdist = Math.abs(pi.x - pj.x) + Math.abs(pi.y - pj.y);
+                    if (pdist <= 1) {
+                        dist[i][j] = pdist;
+                    } else {
+                        dist[i][j] = INF;
+                    }
                 }
             }
         }
@@ -420,30 +418,12 @@ public class RandomAssignmentChoreographer extends Choreographer {
                 for(int j = 0; j < n; ++j){
                     if(dist[i][j] > dist[i][k] + dist[k][j]){
                         dist[i][j] = dist[i][k] + dist[k][j];
-                        next[i][j] = next[i][k];
                     }
                 }
             }
         }
+        System.out.println("Time to run fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
     }
-
-    /**
-     * Recovers the shortest path from u to v, give the next matrix created from fw2.
-     * @return the nodes on the shortest path from u to v, in order
-     */
-    static ArrayList<Integer> path(int[][] next, int u, int v){
-        ArrayList<Integer> path = new ArrayList<Integer>();
-        if(next[u][v] == -1){
-            return path;
-        }
-        path.add(u);
-        while(u != v){
-            u = next[u][v];
-            path.add(u);
-        }
-        return path;
-    }
-
 }
 
 // Set of line segments and assignments.
