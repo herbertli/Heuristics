@@ -1,7 +1,16 @@
 package nyu.hps.botty.dancing;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Scanner;
 
 class Utils {
 
@@ -12,9 +21,6 @@ class Utils {
             {-1, 0}
     };
 
-<<<<<<< HEAD
-    static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred, boolean ignoreObs) {
-=======
     static int pointToInt(Point p, int boardSize) {
         return p.x * boardSize + p.y;
     }
@@ -201,9 +207,9 @@ class Utils {
     }
 
     // returns true if the dancer moves from where it was before. else false.
-    static boolean processMove(int t, int dancer, Point[] nextMoves, 
+    static boolean processMove(int t, int dancer, Point[] nextMoves,
         int[][] dancerToIndex, int[][] assignAtNextT, Point[] currentLocs,
-        boolean[] movedThisT, List<Point>[] res, int congoHead, 
+        boolean[] movedThisT, List<Point>[] res, int congoHead,
         int boardSize, String[][] starGrid) {
         if(movedThisT[dancer]) {
             return !(res[dancer].get(res[dancer].size() - 1).equals(res[dancer].get(res[dancer].size() - 2)));
@@ -215,7 +221,7 @@ class Utils {
                 Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
                 if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
                 int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
-                if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") && 
+                if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") &&
                     assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
                         if(possDancer == -1 || possDancer == congoHead) {
                             nextMove = possibleNextMove;
@@ -264,7 +270,7 @@ class Utils {
                     Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
                     if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
                     int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
-                    if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") && 
+                    if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") &&
                         assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
                             if(possDancer == -1 || possDancer == congoHead) {
                                 nextMove = possibleNextMove;
@@ -296,8 +302,7 @@ class Utils {
         }
     }
 
-    static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred) {
->>>>>>> FW WIP
+    static void bfs(Point s, String[][] grid, int[][] dist, Point[][] pred, boolean ignoreObs) {
         int boardSize = grid.length;
         Queue<Point> q = new LinkedList<>();
         for(int i = 0; i < dist.length; i++) {
