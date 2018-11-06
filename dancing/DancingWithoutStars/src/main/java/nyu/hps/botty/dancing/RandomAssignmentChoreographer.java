@@ -18,7 +18,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
     static final int SECONDS_PER_SEGMENT = 2;       // Seconds to look to non-intersecting lines
     static final int TOTAL_SECONDS_TO_SOLVE = 110;  // Number of seconds given to look for assignments.
-    static final int SECONDS_TO_SOLVE = 86;         // Number of seconds given to look for GOOD assignments.
+    static final int SECONDS_TO_SOLVE = 110;         // Number of seconds given to look for GOOD assignments.
 
     Point[][] startEndPairs; // [i][0] = dancer's start position. [i][1] = dancer's end position.
     List<Point>[] paths = null; // Paths for the dancers using the startEndPairs.
