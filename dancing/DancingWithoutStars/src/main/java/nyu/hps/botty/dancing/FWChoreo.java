@@ -10,7 +10,7 @@ import java.util.*;
  * each color and all dancers are assigned to a line.
  * An Instance is an assignment of dancers to line segments.
  */
-public class RandomAssignmentChoreographer extends Choreographer {
+public class FWChoreo extends Choreographer {
 
     Instant globalEnd;      // Moment when we need to start generating paths with what we have.
     Instant withSwapsEnd;   // Moment when we need to stop generating optimal solutions and
@@ -24,7 +24,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
     List<Point>[] paths = null; // Paths for the dancers using the startEndPairs.
     ArrayList<LineSegment> bestLineSegments = null;
     ArrayList<ArrayList<LineSegment>> allPossibleLineSegments = new ArrayList<>();
-    int minTurns = 200;
+    int minTurns = 100;
     Random rand = new Random();
 
     /**
@@ -58,6 +58,8 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
         ArrayList<Dancer> dancers = getDancersAsArrayList();
         String[][] starGrid = buildStarGrid();
+        int[][] dist = new int[this.boardSize * this.boardSize][this.boardSize * this.boardSize];
+        fw(boardSize, starGrid, dist);
         int iterations = 0;
 
         // Try to generate Instances while keeping the best one.
@@ -80,7 +82,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 			if(cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
 			allPossibleLineSegments.add(lines); //TODO: maybe instead of saving line segments, we can save assignments
 
-            List<Point>[] newPaths = Utils.generatePathsWithoutSwaps(startEndPairs, starGrid, minTurns);
+            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
             if (newPaths == null) continue;
             if (paths == null || minTurns > newPaths[0].size()) {
                 System.out.println("Found an good solution!");
@@ -107,7 +109,7 @@ public class RandomAssignmentChoreographer extends Choreographer {
 
             Instance assignment = assignDancersToLines(dancers, lines);
             generateStartEndPairs(assignment);
-            List<Point>[] newPaths = Utils.generatePaths(startEndPairs, starGrid, minTurns);
+            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
             if (newPaths == null) continue;
 
             if (paths == null || minTurns > newPaths[0].size()) {
@@ -388,5 +390,38 @@ public class RandomAssignmentChoreographer extends Choreographer {
             starGrid[star.x][star.y] = "#";
         }
         return starGrid;
+    }
+
+    static final int INF = 1_000_000_000;
+
+    static void fw(int boardSize, String[][] grid, int[][] dist){
+        Instant startTime = Instant.now();
+        int n = boardSize * boardSize;
+        for (int i = 0; i < n; ++i) {
+            Point pi = Utils.intToPoint(i, boardSize);
+            for (int j = 0; j < n; ++j) {
+                if (grid[pi.x][pi.y].equals("#") || grid[pi.x][pi.y].equals("#")) {
+                    dist[i][j] = INF;
+                } else {
+                    Point pj = Utils.intToPoint(j, boardSize);
+                    int pdist = Math.abs(pi.x - pj.x) + Math.abs(pi.y - pj.y);
+                    if (pdist <= 1) {
+                        dist[i][j] = pdist;
+                    } else {
+                        dist[i][j] = INF;
+                    }
+                }
+            }
+        }
+        for(int k = 0; k < n; ++k){
+            for(int i = 0; i < n; ++i){
+                for(int j = 0; j < n; ++j){
+                    if(dist[i][j] > dist[i][k] + dist[k][j]){
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    }
+                }
+            }
+        }
+        System.out.println("Time to run fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
     }
 }

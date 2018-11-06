@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.Map;
 
 class Utils {
 
@@ -824,4 +825,178 @@ class Utils {
         }
     }
 
+}
+
+// Set of line segments and assignments.
+class Instance {
+    List<LineSegment> lineSegs;
+    Map<Dancer, Integer> assignment;
+    int cost;
+
+    Instance(List<LineSegment> lineSegs, Map<Dancer, Integer> assignment, int cost) {
+        this.lineSegs = lineSegs;
+        this.assignment = assignment;
+        this.cost = cost;
+    }
+}
+
+class LineSegment {
+    Point start, end;
+    boolean horizontal; // true --> line segment goes right. else down.
+    int length;
+
+    LineSegment(Point start, boolean horizontal, int length) {
+        this.start = start;
+        this.horizontal = horizontal;
+        this.length = length;
+        this.end = new Point(start.x + (horizontal ? length - 1 : 0), start.y + (horizontal ? 0 : length - 1));
+    }
+}
+
+class Dancer {
+    Point loc;
+    int color;
+
+    Dancer(Point loc, int color) {
+        this.loc = loc;
+        this.color = color;
+    }
+
+    @Override
+    public int hashCode() {
+        return (this.loc.x * this.loc.y) ^ this.color;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // self check
+        if (this == o)
+            return true;
+        // null check
+        if (o == null)
+            return false;
+        // type check and cast
+        if (getClass() != o.getClass())
+            return false;
+        Dancer dancer = (Dancer) o;
+        // field comparison
+        return this.loc.x == dancer.loc.x && this.loc.y == dancer.loc.y && this.color == dancer.color;
+    }
+
+}
+
+/**
+ * Java Implementation of Dinitz's max flow algorithm.
+ * https://en.wikipedia.org/wiki/Dinic%27s_algorithm
+ */
+class Dinic {
+
+    final int INF = 2000000000;
+    int n, m;
+    int[][] edgeList;
+    int e = 0;
+    int[] deg;
+    Edge[][] graph;
+    int[] curEdge;
+    int[] dist;
+
+    void init(int n, int m) {
+        this.n = n;
+        this.m = m;
+        edgeList = new int[m][3];
+        deg = new int[n];
+    }
+
+    void addEdge(int u, int v, int cap) {
+        edgeList[e][0] = u;
+        edgeList[e][1] = v;
+        edgeList[e][2] = cap;
+        ++deg[u];
+        ++deg[v];
+        ++e;
+    }
+
+    void buildGraph() {
+        graph = new Edge[n][];
+        for (int i = 0; i < n; i++) {
+            graph[i] = new Edge[deg[i]--];
+        }
+        for (int i = 0; i < m; i++) {
+            int u = edgeList[i][0];
+            int v = edgeList[i][1];
+            int cap = edgeList[i][2];
+            Edge uv = new Edge(v, cap);
+            Edge vu = new Edge(u, 0);
+            uv.rev = vu;
+            vu.rev = uv;
+            graph[u][deg[u]--] = uv;
+            graph[v][deg[v]--] = vu;
+        }
+    }
+
+    int maxflow(int s, int t) {
+        int flow = 0;
+        // While there is an augmenting path from source to destination
+        while (bfs(s, t) < INF) {
+            curEdge = new int[n];
+            while (true) {
+                int minf = INF;
+                minf = dfs(s, t, minf);
+                if (minf == 0) break;
+                flow += minf;
+            }
+        }
+        return flow;
+    }
+
+    /**
+     * Finds the distance of the shortest path from the source to destination
+     */
+    private int bfs(int s, int t) {
+        dist = new int[n];
+        for (int i = 0; i < n; i++) dist[i] = INF;
+        dist[s] = 0;
+        Queue<Integer> q = new ArrayDeque<>();
+        q.add(s);
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            if (dist[u] > dist[t]) break;
+            for (Edge e : graph[u]) {
+                if (dist[u] + 1 < dist[e.v] && e.cap > 0) {
+                    dist[e.v] = dist[u] + 1;
+                    q.add(e.v);
+                }
+            }
+        }
+        return dist[t];
+    }
+
+    /**
+     * Finds an augmenting path, while removing edges leading to nonaugmenting paths.
+     */
+    private int dfs(int u, int t, int inflow) {
+        if (u == t) return inflow;
+        for (; curEdge[u] < graph[u].length; ++curEdge[u]) {
+            Edge e = graph[u][curEdge[u]];
+            if (e.cap > 0 && dist[e.v] == dist[u] + 1) {
+                int outflow = dfs(e.v, t, Math.min(inflow, e.cap));
+                if (outflow > 0) {
+                    e.cap -= outflow;
+                    e.rev.cap += outflow;
+                    return outflow;
+                }
+            }
+        }
+        return 0;
+    }
+
+    class Edge {
+        int v, cap;
+        Edge rev;
+
+        Edge(int _v, int _cap) {
+            this.v = _v;
+            this.cap = _cap;
+        }
+    }
 }

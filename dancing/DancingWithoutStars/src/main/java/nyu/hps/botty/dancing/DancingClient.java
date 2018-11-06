@@ -7,7 +7,7 @@ public class DancingClient {
     private String name;
     private boolean isSpoiler;
     private Spoiler spoiler = new ClusterSpoiler();
-    private Choreographer choreographer = new RandomAssignmentChoreographer();
+    private Choreographer choreographer = new FWChoreo();
     private SocketClient socketClient;
 
     private DancingClient(String name, String host, int port, boolean isSpoiler) throws IOException {
