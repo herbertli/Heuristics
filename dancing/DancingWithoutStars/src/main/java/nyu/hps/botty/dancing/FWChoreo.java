@@ -4,26 +4,31 @@ import java.io.File;
 import java.time.Instant;
 import java.util.*;
 
+//TODO: Discuss time per segment
+
+
 /**
- * Continuously generate k line segments of length c.
- * See whats the max distance to any line such that every line has a dancer of
- * each color and all dancers are assigned to a line.
- * An Instance is an assignment of dancers to line segments.
+ * Compute Floyd Warshall on the entire graph.
+ * Maintain the set of best line segments and of shortest paths found so far from dancers to 
+ * positions in line segments.
+ * Continuously generate k non-intersecting line segments of length numColors.
+ * Assign Dancers to line segments using Floyd Warshall. 
+ * If the maximum distance from the dancer to the line segment is greater than the 
+ * best time found so far, find another set of line segments.
+ * Assign dancers to points in the line segments.
+ * If the max distance from a dancer to their designated point is greater than the best time
+ * we have so far, skip it.
  */
 public class FWChoreo extends Choreographer {
 
-    Instant globalEnd;      // Moment when we need to start generating paths with what we have.
-    Instant withSwapsEnd;   // Moment when we need to stop generating optimal solutions and
-                            // fall back to non-optimal method
+    Instant globalEnd;      // Moment when we send what we have.
 
     static final int SECONDS_PER_SEGMENT = 2;       // Seconds to look to non-intersecting lines
-    static final int TOTAL_SECONDS_TO_SOLVE = 110;  // Number of seconds given to look for assignments.
-    static final int SECONDS_TO_SOLVE = 110;         // Number of seconds given to look for GOOD assignments.
+    static final int TOTAL_SECONDS_TO_SOLVE = 115;  // Number of seconds given to look for assignments.
 
     Point[][] startEndPairs; // [i][0] = dancer's start position. [i][1] = dancer's end position.
     List<Point>[] paths = null; // Paths for the dancers using the startEndPairs.
     ArrayList<LineSegment> bestLineSegments = null;
-    ArrayList<ArrayList<LineSegment>> allPossibleLineSegments = new ArrayList<>();
     int minTurns = 100;
     Random rand = new Random();
 
@@ -53,25 +58,22 @@ public class FWChoreo extends Choreographer {
     }
 
     public void solve() {
-        withSwapsEnd = Instant.now().plusSeconds(SECONDS_TO_SOLVE);
         globalEnd = Instant.now().plusSeconds(TOTAL_SECONDS_TO_SOLVE);
 
         ArrayList<Dancer> dancers = getDancersAsArrayList();
-        String[][] starGrid = buildStarGrid();
+        boolean[][] starGrid = buildStarGrid();
         int[][] dist = new int[this.boardSize * this.boardSize][this.boardSize * this.boardSize];
         fw(boardSize, starGrid, dist);
         int iterations = 0;
 
-        // Try to generate Instances while keeping the best one.
-        // until we should fall back to non-optimal way
-        System.out.println("Generating paths with swaps...");
-        while (Instant.now().isBefore(withSwapsEnd)) {
-            if (iterations % 10000 == 0) System.out.println("Iterations: " + iterations);
+        System.out.println("Generating paths...");
+        while (Instant.now().isBefore(globalEnd)) {
+            if (iterations % 10000 == 0) System.out.println("Generated " + iterations + " line segments.");
 
             // generate line segments
             ArrayList<LineSegment> lines = generateRandomNonIntersectingLines();
             iterations++;
-            if (Instant.now().isAfter(withSwapsEnd)) break;
+            if (Instant.now().isAfter(globalEnd)) break;
 
 			// what happens if we can't find any lines?
 			if(lines == null) continue;
@@ -80,7 +82,6 @@ public class FWChoreo extends Choreographer {
 			if(assignment.cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
             int cost = generateStartEndPairs(assignment);
 			if(cost >= minTurns) continue; // Impossible to be better than the current best paths we have.
-			allPossibleLineSegments.add(lines); //TODO: maybe instead of saving line segments, we can save assignments
 
             List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
             if (newPaths == null) continue;
@@ -94,32 +95,7 @@ public class FWChoreo extends Choreographer {
             //Utils.printMoves(paths);
         }
         System.out.printf("Ran %d iterations.\n", iterations);
-        System.out.printf("Generated %d possible arrangements of line segments.\n", allPossibleLineSegments.size());
 
-        if (paths == null) {
-            System.out.println("No optimal solution found...");
-            System.out.println("Generating paths the non-optimal way...");
-        } else {
-            System.out.println("Returning optimal solution...");
-            return;
-        }
-
-        for (ArrayList<LineSegment> lines: allPossibleLineSegments) {
-            if (Instant.now().isAfter(globalEnd)) break;
-
-            Instance assignment = assignDancersToLines(dancers, lines);
-            generateStartEndPairs(assignment);
-            List<Point>[] newPaths = Utils.generatePathsWithFloydWarshall(starGrid, startEndPairs, dist, minTurns);
-            if (newPaths == null) continue;
-
-            if (paths == null || minTurns > newPaths[0].size()) {
-                System.out.println("Found a non-optimal solution!");
-                this.bestLineSegments = lines;
-                this.paths = newPaths;
-                minTurns = this.paths[0].size();
-                System.out.println(this.paths[0].size());
-            }
-        }
     }
 
     @Override
@@ -172,16 +148,13 @@ public class FWChoreo extends Choreographer {
         Instant end = Instant.now().plusSeconds((lineSegments.size() + 1) * SECONDS_PER_SEGMENT);
         while (true) {
             // place one more line
-            while (Instant.now().isBefore(withSwapsEnd) && Instant.now().isBefore(end) && lineSegments.size() < k) {
+            while (Instant.now().isBefore(globalEnd) && Instant.now().isBefore(end) && lineSegments.size() < k) {
                 boolean dir = rand.nextBoolean();
                 int x = rand.nextInt(dir ? this.boardSize - this.numOfColor + 1 : this.boardSize);
                 int y = rand.nextInt(dir ? this.boardSize : this.boardSize - this.numOfColor + 1);
                 boolean placable = true;
                 int curx = x;
                 int cury = y;
-                // bounds check
-                if (x + (dir ? this.numOfColor - 1 : 0) >= this.boardSize || y + (dir ? 0 : this.numOfColor - 1) >= this.boardSize)
-                    continue;
                 for (int i = 0; placable && i < this.numOfColor; i++) {
                     if (!occupied[curx][cury]) {
                         curx += (dir ? 1 : 0);
@@ -218,7 +191,7 @@ public class FWChoreo extends Choreographer {
                 return lineSegments;
             }
             // we are out of time.
-            if (Instant.now().isAfter(withSwapsEnd)) return null;
+            if (Instant.now().isAfter(globalEnd)) return null;
             // can't find a placement, remove last.
             if (lineSegments.size() > 0) {
                 LineSegment last = lineSegments.get(lineSegments.size() - 1);
@@ -250,7 +223,7 @@ public class FWChoreo extends Choreographer {
 
     // assign dancers to points in line segments.
     int generateStartEndPairs(Instance assignment) {
-        Instant startTime = Instant.now();
+        //Instant startTime = Instant.now();
 		startEndPairs = new Point[this.numOfColor * this.k][2];
 		int minCost = 0;
         // run max flow on each line segment to assign dancers to a point in the line segment.
@@ -330,7 +303,7 @@ public class FWChoreo extends Choreographer {
 
     // Generate assignment of dancers to lines minimizing the maximum Manhattan distance.
     Instance assignDancersToLines(ArrayList<Dancer> dancers, ArrayList<LineSegment> lines) {
-        Instant startTime = Instant.now();
+        //Instant startTime = Instant.now();
         // binary search min cost + assingment
         int lo = 0;
         int hi = 100;
@@ -379,28 +352,23 @@ public class FWChoreo extends Choreographer {
         return generateInstance(dancers, lines, workingAssignmentDinic, hi);
     }
 
-    String[][] buildStarGrid() {
-        String[][] starGrid = new String[this.boardSize][this.boardSize];
-        for (int i = 0; i < this.boardSize; i++) {
-            for (int j = 0; j < this.boardSize; j++) {
-                starGrid[i][j] = " ";
-            }
-        }
+    boolean[][] buildStarGrid() {
+        boolean[][] starGrid = new boolean[this.boardSize][this.boardSize];
         for (Point star : this.stars) {
-            starGrid[star.x][star.y] = "#";
+            starGrid[star.x][star.y] = true;
         }
         return starGrid;
     }
 
     static final int INF = 1_000_000_000;
 
-    static void fw(int boardSize, String[][] grid, int[][] dist){
+    static void fw(int boardSize, boolean[][] starGrid, int[][] dist){
         Instant startTime = Instant.now();
         int n = boardSize * boardSize;
         for (int i = 0; i < n; ++i) {
             Point pi = Utils.intToPoint(i, boardSize);
             for (int j = 0; j < n; ++j) {
-                if (grid[pi.x][pi.y].equals("#") || grid[pi.x][pi.y].equals("#")) {
+                if (starGrid[pi.x][pi.y] || starGrid[pi.x][pi.y]) {
                     dist[i][j] = INF;
                 } else {
                     Point pj = Utils.intToPoint(j, boardSize);
@@ -422,6 +390,6 @@ public class FWChoreo extends Choreographer {
                 }
             }
         }
-        System.out.println("Time to run fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        System.out.println("Time to run fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()) / 1000.0);
     }
 }

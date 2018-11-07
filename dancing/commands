@@ -2,3 +2,12 @@ python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/dancedata
 mvn clean package
 java -cp target/DancingWithoutStars-1.0-SNAPSHOT-jar-with-dependencies.jar nyu.hps.botty.dancing.DancingClient 127.0.0.1 9999 c
 java -cp target/DancingWithoutStars-1.0-SNAPSHOT-jar-with-dependencies.jar nyu.hps.botty.dancing.DancingClient 127.0.0.1 9999 s
+
+python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata.1 -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/dancedata.2 -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/dancedata.3 -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 40 -f sample_dancedata/dancedata.4 -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata.5 -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/sample_dancedata.txt -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/smoltest -u

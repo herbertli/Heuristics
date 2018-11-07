@@ -35,8 +35,8 @@ class Utils {
      * Process Dancers in order from greatest to least by dijkstra distance.
      * Can swap 2 dancers if that doesn't increase the max dijkstra distance.
      */
-    static List<Point>[] generatePathsWithFloydWarshall(String[][] starGrid, Point[][] startEndP, int[][] fwDist, int minTurns) {
-        Scanner sc = new Scanner(System.in);
+    static List<Point>[] generatePathsWithFloydWarshall(boolean[][] starGrid, Point[][] startEndP, int[][] fwDist, int minTurns) {
+        //Scanner sc = new Scanner(System.in);
         int boardSize = (int)(Math.sqrt((double)fwDist.length));
         Instant startTime = Instant.now();
         int numDancers = startEndP.length;
@@ -77,10 +77,8 @@ class Utils {
             for(int i = 0; i < boardSize; i++) Arrays.fill(assignAtNextT[i], -1);
             int[][] dancerToIndex = new int[boardSize][boardSize];
             for(int i = 0; i < boardSize; i++) Arrays.fill(dancerToIndex[i], -1);
-            int globalMaxDist = 0;
             for (int i = 0; i < numDancers; i++) {
                 dancerToIndex[currentLocs[i].x][currentLocs[i].y] = i;
-                globalMaxDist = Math.max(globalMaxDist, fwDist[pointToInt(currentLocs[i], boardSize)][pointToInt(startEndP[i][1], boardSize)]);
             }
 
 
@@ -99,7 +97,13 @@ class Utils {
                 return Integer.compare(o2Dist, o1Dist);
             };
             byDist.sort(comp);
-
+            int farthestDancer = byDist.get(0);
+            int farthestDancerInt = pointToInt(currentLocs[farthestDancer], boardSize);
+            int farthestDancerEndInt = pointToInt(startEndP[farthestDancer][1], boardSize);
+            if(fwDist[farthestDancerInt][farthestDancerEndInt] + t > minTurns) {
+                System.out.println("Impossible to find a better solution with current line segments.");
+                return null;
+            }
             Point[] nextMoves = new Point[numDancers];
             /**
              * 3 phases.
@@ -211,7 +215,7 @@ class Utils {
     static boolean processMove(int t, int dancer, Point[] nextMoves,
         int[][] dancerToIndex, int[][] assignAtNextT, Point[] currentLocs,
         boolean[] movedThisT, List<Point>[] res, int congoHead,
-        int boardSize, String[][] starGrid) {
+        int boardSize, boolean[][] starGrid) {
         if(movedThisT[dancer]) {
             return !(res[dancer].get(res[dancer].size() - 1).equals(res[dancer].get(res[dancer].size() - 2)));
         }
@@ -222,7 +226,7 @@ class Utils {
                 Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
                 if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
                 int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
-                if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") &&
+                if(!starGrid[possibleNextMove.x][possibleNextMove.y] &&
                     assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
                         if(possDancer == -1 || possDancer == congoHead) {
                             nextMove = possibleNextMove;
@@ -271,7 +275,7 @@ class Utils {
                     Point possibleNextMove = new Point(cur.x + moves[i][0], cur.y + moves[i][1]);
                     if(possibleNextMove.x < 0 || possibleNextMove.x >= boardSize || possibleNextMove.y < 0 || possibleNextMove.y >= boardSize) continue;
                     int possDancer = dancerToIndex[possibleNextMove.x][possibleNextMove.y];
-                    if(!starGrid[possibleNextMove.x][possibleNextMove.y].equals("#") &&
+                    if(!starGrid[possibleNextMove.x][possibleNextMove.y] &&
                         assignAtNextT[possibleNextMove.x][possibleNextMove.y] == -1) {
                             if(possDancer == -1 || possDancer == congoHead) {
                                 nextMove = possibleNextMove;
