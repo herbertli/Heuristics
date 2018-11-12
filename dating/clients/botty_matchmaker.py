@@ -8,8 +8,8 @@ from clients.client import Player
 
 
 class BottyMatchMaker(Player):
-    def __init__(self, name):
-        super().__init__(name=name, is_player=False)
+    def __init__(self):
+        super().__init__(name="BottyMcBotFace", is_player=False)
         game_info = json.loads(self.client.receive_data(size=32368))
         print('Matchmaker', game_info)
         self.random_candidates_and_scores = game_info['randomCandidateAndScores']
@@ -22,7 +22,6 @@ class BottyMatchMaker(Player):
 
     def play_game(self):
         response = json.loads(self.client.receive_data())
-
         while True:
             candidate = self.my_candidate()
             self.client.send_data(json.dumps(candidate))
@@ -89,7 +88,7 @@ class BottyMatchMaker(Player):
             else:
                 for i in range(turn * interval_size, self.n):
                     w.append(0)
-        else: 
+        else:
             interval_size = self.n // 19
             # print("interval_size", interval_size)
             # print((turn * interval_size), ((turn + 1) * interval_size))
