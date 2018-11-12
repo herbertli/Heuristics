@@ -6,19 +6,21 @@ from time import sleep
 
 from dating_server import GameServer
 
-from clients.matchmaker_client import MatchMaker
-from clients.player_client import Player
+# from clients.matchmaker_client import MatchMaker
+# from clients.player_client import Player
+from clients.botty_matchmaker import BottyMatchMaker
+from clients.botty_player import BottyPlayer
 
 
-def init_matchmaker(name):
-    sleep(1)
-    player = MatchMaker(name=name)
-    player.play_game()
+# def init_matchmaker(name):
+#     sleep(1)
+#     player = MatchMaker(name=name)
+#     player.play_game()
 
-def init_player(name):
-    sleep(1)
-    player = Player(name=name)
-    player.play_game()
+# def init_player(name):
+#     sleep(1)
+#     player = Player(name=name)
+#     player.play_game()
 
 def main():
 
@@ -30,10 +32,12 @@ def main():
     # player_2.start()
 
     if sys.argv[1] == "m":
-        player = MatchMaker(name="MatchMaker")
+        # player = MatchMaker(name="MatchMaker")
+        player = BottyMatchMaker(name="MatchMaker")
         player.play_game()
     elif sys.argv[1] == "p":
-        player = Player()
+        player = BottyPlayer()
+        # player = Player(name="Player")
         player.play_game()
     else:
         n = sys.argv[1]

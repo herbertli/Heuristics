@@ -79,11 +79,13 @@ class GameServer(object):
             w = cur_weights[i]
             a = Decimal(w) / Decimal(1)
             if (float)(a) != w:
+                raise ValueError("decimals")
                 return False
 
         # check whether change of every weight is in 20% range
         for i in range(0, self.n):
             if abs(cur_weights[i] - orig_weights[i]) > 0.2 * abs(orig_weights[i]):
+                raise ValueError("percentage")
                 return False
 
         # check atmost 5% of weights changed from previous turn
@@ -93,6 +95,7 @@ class GameServer(object):
                 modified_weights += 1
 
         if (modified_weights > 0.05 * self.n):
+            raise ValueError("number")
             return False
 
         # check pos weights sum to 1, neg weights sum to -1
@@ -106,8 +109,10 @@ class GameServer(object):
                 neg_sum += Decimal(w)
 
         if pos_sum != 1:
+            raise ValueError("positive")
             return False
         if neg_sum != -1:
+            raise ValueError("negative")
             return False
 
         return True
