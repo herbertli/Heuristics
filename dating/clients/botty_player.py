@@ -75,25 +75,25 @@ class BottyPlayer(Player):
         last = [i * 100 for i in self.weight_history[-1]]
         new = last[:]
 
-        diffs = [(last[i] * last_cand[i], i) for i in range(self.n) if first[i] > 0]
+        diffs = [(last[i] * last_cand[i], i) for i in range(self.n) if last[i] > 0]
         diffs = sorted(diffs, reverse=True)
 
         max_modified = math.floor(.05 * self.n)
         modified = 0
 
         while modified < max_modified and len(diffs) > 0:
-            diff, ind = diffs.pop(0)
+            _, ind = diffs.pop(0)
             inds_to_incr = []
 
             new_val = math.ceil(first[ind] * .8)
 
-            difference = abs(first[ind] - new_val)
+            difference = abs(last[ind] - new_val)
             if difference == 0:
                 continue
 
             for _, i in reversed(diffs):
-                new_incr_val = min(first[i] + difference, math.floor(first[i] * 1.2))
-                difference -= abs(new_incr_val - first[i])
+                new_incr_val = min(last[i] + difference, math.floor(first[i] * 1.2))
+                difference -= abs(new_incr_val - last[i])
                 inds_to_incr.append((i, new_incr_val))
                 if difference == 0:
                     break
