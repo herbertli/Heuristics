@@ -101,9 +101,17 @@ class BottyPlayer(Player):
             if len(inds_to_incr) + 1 + modified <= max_modified and difference == 0:
                 print(f"CHANGED INDEX {ind} SOMETHING")
                 modified += 1 + len(inds_to_incr)
+
                 for i, v in inds_to_incr:
-                    diffs.pop(i)
                     new[i] = v
+
+                excluded = [i for i, v in inds_to_incr]
+                new_diffs = []
+                for i in range(len(diffs)):
+                    if i not in excluded:
+                        new_diffs.append(diffs[i])
+                diffs = new_diffs
+
                 new[ind] = new_val
 
         # if not self.isValidModification([i / 100.0 for i in new]):

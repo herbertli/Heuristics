@@ -6,7 +6,7 @@ from time import sleep
 
 from dating_server import GameServer
 
-# from clients.matchmaker_client import MatchMaker
+from clients.matchmaker_client import MatchMaker
 # from clients.player_client import Player
 from clients.botty_matchmaker import BottyMatchMaker
 from clients.botty_player import BottyPlayer
