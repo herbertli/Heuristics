@@ -14,8 +14,8 @@ from clients.botty_player import BottyPlayer
 
 def init_matchmaker(name):
     sleep(1)
-    # player = MatchMaker(name=name)
-    player = BottyMatchMaker()
+    player = MatchMaker(name=name)
+    # player = BottyMatchMaker()
     player.play_game()
 
 def init_player(name):

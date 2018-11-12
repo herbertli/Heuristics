@@ -15,7 +15,7 @@ class MatchMaker(Player):
         self.time_left = 120
 
     def play_game(self):
-
+        response = json.loads(self.client.receive_data())
         while True:
             candidate = self.my_candidate()
             self.client.send_data(json.dumps(candidate))

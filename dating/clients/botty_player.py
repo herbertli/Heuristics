@@ -2,12 +2,14 @@ import json
 import random
 import math
 from collections import deque, namedtuple
+from decimal import *
 
 from .client import Player
 
 
 class BottyPlayer(Player):
     def __init__(self):
+        getcontext().prec = 6
         super().__init__(name="BottyMcBotFace", is_player=True)
         game_info = json.loads(self.client.receive_data())
         print('Player', game_info)
@@ -44,7 +46,7 @@ class BottyPlayer(Player):
             cand = self.generateFirst()
         else:
             cand = self.generateModified()
-        cand = [i / 100.0 for i in cand]
+        cand = [float(Decimal(i) / Decimal(100)) for i in cand]
         print(f"Candidate #{len(self.candidate_history) + 1}:", cand)
         return cand
 
@@ -100,19 +102,25 @@ class BottyPlayer(Player):
 
             if len(inds_to_incr) + 1 + modified <= max_modified and difference == 0:
                 print(f"CHANGED INDEX {ind} SOMETHING")
+                temp = new[:]
                 modified += 1 + len(inds_to_incr)
 
                 for i, v in inds_to_incr:
-                    new[i] = v
+                    temp[i] = v
+                temp[ind] = new_val
 
                 excluded = [i for i, v in inds_to_incr]
                 new_diffs = []
                 for i in range(len(diffs)):
                     if i not in excluded:
                         new_diffs.append(diffs[i])
-                diffs = new_diffs
 
-                new[ind] = new_val
+                pos_sum = sum([i for i in temp if i > 0])
+                neg_sum = sum([i for i in temp if i < 0])
+                if pos_sum == 100 and neg_sum == -100:
+                    new = temp
+
+                diffs = new_diffs
 
         # if not self.isValidModification([i / 100.0 for i in new]):
             # print("Warning: Not a valid candidate")
