@@ -33,7 +33,7 @@ def main():
         player = MatchMaker(name="MatchMaker")
         player.play_game()
     elif sys.argv[1] == "p":
-        player = BottyPlayer()
+        player = Player()
         player.play_game()
     else:
         n = sys.argv[1]
