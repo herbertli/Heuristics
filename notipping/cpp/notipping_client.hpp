@@ -2,7 +2,7 @@
 #define SOCKET_CLIENT_H
 
 #include <bits/stdc++.h>
-#include "json.hpp"
+#include "../../json/json.hpp"
 #include "socket_client.h"
 
 using namespace std;

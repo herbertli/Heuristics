@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include "AlgoAI.cpp"
-#include "json.hpp"
+#include "../../json/json.hpp"
 
 const std::string bot_name = "Botty McBotFace";
 
@@ -28,10 +28,10 @@ struct player_info {
 
 int order;          // 0 = first, 1 = second
 AlgoAI my_ai;
-int stones_left; 
+int stones_left;
 int current_max;    // Note: most we can currently take
                     // Not most taken so far.
-int stones_removed; 
+int stones_removed;
 bool finished;
 player_info player_0;
 player_info player_1;
@@ -96,7 +96,7 @@ void get_move(){
 
 int main(int argc, char *argv[])
 {
-    int opt; 
+    int opt;
     order = 1; //0 if going first, 1 otherwise.
     /*
     if(argc == 2 && strcmp(argv[1], "f") == 0){
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
             default: /* '?' */
                 break;
         }
-    } 
+    }
 
     // connect to server
     // https://www.geeksforgeeks.org/socket-programming-cc/
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(PORT);
 
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, ADDR.c_str(), &serv_addr.sin_addr)<=0) 
+    if(inet_pton(AF_INET, ADDR.c_str(), &serv_addr.sin_addr)<=0)
     {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
@@ -149,10 +149,10 @@ int main(int argc, char *argv[])
         printf("\nConnection Failed \n");
         return -1;
     }
-    
+
     // send initial message
     nlohmann::json init_json = {
-        {"name", bot_name}, 
+        {"name", bot_name},
         {"order", order}
     };
     std::string dump = init_json.dump();
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     // std::cout << init_c_str << std::endl;
     valread = send(sock , init_c_str, strlen(init_c_str), 0 );
     printf("Initial message sent\n");
-    // std::cout << valread << std::endl; 
+    // std::cout << valread << std::endl;
     valread = read( sock , buffer, 2048);
     nlohmann::json init_state = nlohmann::json::parse(buffer);
     // std::cout << valread << std::endl;
