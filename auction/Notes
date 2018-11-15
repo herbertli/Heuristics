@@ -1,0 +1,10 @@
+Selfish Strategy:
+========================
+Choose an artist to focus on...
+create lists for each artist a of when on of their paintings is on sale at time t
+a1 = [t1a1...tna1]
+...
+an = [t1an...tnan]
+pick artist such that an[n] is early as possible, and the time between an[n]...an[n+c] is as small as possible
+
+Wait and see...
