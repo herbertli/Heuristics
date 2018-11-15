@@ -26,6 +26,7 @@ player 0 wins t4 with 8 (AND WINS THE GAME)
 
 ## Get Started
 ```
+Python3:
 To start auction game, run start_game.py with following arguments:
     python start_game.py -h <host> [-p <port> -t <seconds>] m k n
 

@@ -110,6 +110,7 @@ class AuctionManager:
 
         auction_round = 0
         print(self.auction_items)
+
         while self.__game_state['remain_players'] > 0:
             # self.reset_players_timer() # start timer
             remain_times = self.get_player_remain_time()
@@ -165,11 +166,11 @@ class AuctionManager:
             max_bid['received_time'] = None
 
             bid_item = self.auction_items[auction_round]
-            bids = sorted(bids, key = itemgetter('received_time'))
-            #print("sorted bids: ", bids)
+            # Deal with invalid players for sorting bids
             for idx in range(len(bids)):
                 player_id = bids[idx]['player']
                 if self.players[player_id]['valid'] is False: # skip invalid players
+                    bids[idx]['received_time'] = datetime.now()
                     continue
 
                 elif bids[idx]['timeout'] is True: # player was timed out during bidding
@@ -177,7 +178,15 @@ class AuctionManager:
                     self.players[player_id]['remain_time'] = -1
                     print(('Player {} was timed out on round {}.'
                            .format(self.players[player_id]['name'], auction_round)))
+                    bids[idx]['received_time'] = datetime.now()
+                    continue
 
+            bids = sorted(bids, key = itemgetter('received_time'))
+            print("sorted bids: ", bids)
+            # Handle valid bidders in received order
+            for idx in range(len(bids)):
+                player_id = bids[idx]['player']
+                if self.players[player_id]['valid'] is False: # skip invalid players
                     continue
 
                 start_time = bids[idx]['start_time']
@@ -228,12 +237,14 @@ class AuctionManager:
             game_state['auction_round'] = auction_round
 
             remain_player_count = 0
+            onlyone = 0
             for idx in range(len(self.players)):
                 player_name = self.get_player_name(idx)
                 game_state[player_name] = self.players[idx]._dict
 
                 if self.players[idx]['valid'] is True:
                     remain_player_count += 1
+                    onlyone = idx
 
             game_state['remain_players'] = remain_player_count
 
@@ -241,6 +252,11 @@ class AuctionManager:
                 # game ends
                 game_state['finished'] = True
                 game_state['reason'] = 'No valid players remaining'
+
+            if remain_player_count == 1:
+                game_state['finished'] = True
+                game_state['reason'] = ('Only one player left. Automatically win. Player {} won the game! Congrats!'
+                                        .format(self.players[onlyone]['name']))
 
             if auction_round == len(self.auction_items) - 1 and game_state['finished'] is False:
                 # last round and no winner, then set game to finished
