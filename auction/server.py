@@ -4,12 +4,15 @@ from datetime import datetime
 from multiprocessing import Pool
 
 
-def recv_from_client(socket, player, remain_time):
+def recv_from_client(socket, player, remain_time, valid_player):
 
     player_bid = dict()
     player_bid['player'] = player
     player_bid['start_time'] = datetime.now()
     player_bid['timeout'] = False
+    if valid_player == False:
+        player_bid['timeout'] = True
+        return player_bid
 
     try:
         socket.settimeout(remain_time)
@@ -51,6 +54,7 @@ class Server():
         """Establishes connection with players"""
         for i in range(self.num_player):
             self.player_sockets[i], _ = self.socket.accept()
+            print("Player {} connected to the server".format(i))
         res = map(self.receive, range(self.num_player))
         return res
 
@@ -66,12 +70,12 @@ class Server():
         """Receive a bid from a specific player"""
         return self.player_sockets[player].recv(self.DATA_SIZE)
 
-    def receive_any(self, remain_times):
+    def receive_any(self, remain_times, valid_players):
         """Receive a bid from any player"""
         bids = []
 
         for player in range(self.num_player):
-            r = self.pool.apply_async(recv_from_client, (self.player_sockets[player], player, remain_times[player]))
+            r = self.pool.apply_async(recv_from_client, (self.player_sockets[player], player, remain_times[player], valid_players[player]))
             bids.append(r)
 
         bids = [b.get() for b in bids]

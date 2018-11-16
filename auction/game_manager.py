@@ -114,8 +114,8 @@ class AuctionManager:
         while self.__game_state['remain_players'] > 0:
             # self.reset_players_timer() # start timer
             remain_times = self.get_player_remain_time()
-
-            next_bids = self.__server.receive_any(remain_times)
+            valid_players = self.get_valid_players()
+            next_bids = self.__server.receive_any(remain_times, valid_players)
 
             game_state = self.handle_bids(auction_round, next_bids)
             #game_state_bytes = bytes(json.dumps(game_state), 'utf-8')
@@ -132,7 +132,7 @@ class AuctionManager:
                     return_state['remain_time'][name] = self.players[idx]['remain_time']
                 else:
                     return_state['wealth_table'][name] = -1
-                    return_state['remain_time'][name] = -1
+                    return_state['remain_time'][name] = 0
 
             game_state_bytes = bytes(json.dumps(return_state), 'utf-8')
             self.__server.update_all_clients(game_state_bytes, self.get_valid_players())
@@ -175,14 +175,14 @@ class AuctionManager:
 
                 elif bids[idx]['timeout'] is True: # player was timed out during bidding
                     self.players[player_id]['valid'] = False
-                    self.players[player_id]['remain_time'] = -1
+                    self.players[player_id]['remain_time'] = 0
                     print(('Player {} was timed out on round {}.'
                            .format(self.players[player_id]['name'], auction_round)))
                     bids[idx]['received_time'] = datetime.now()
                     continue
 
             bids = sorted(bids, key = itemgetter('received_time'))
-            print("sorted bids: ", bids)
+            #print("sorted bids: ", bids)
             # Handle valid bidders in received order
             for idx in range(len(bids)):
                 player_id = bids[idx]['player']
