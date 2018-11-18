@@ -2,8 +2,10 @@ import sys
 import random
 from sample import SamplePlayer
 from botty import BottyClient
+from improved import McBotFaceClient
+from passive import Passive
 
-players = [SamplePlayer("A"), BottyClient("Botty"), SamplePlayer("C")]
+players = [McBotFaceClient("McBot"), BottyClient("Botty"), Passive("Passive")]
 still_playing = [1] * len(players)
 
 num_players = len(players)
@@ -36,9 +38,8 @@ def update_playing():
 
 if __name__ == "__main__":
 
-    num_players = int(sys.argv[1])
-    num_artists = int(sys.argv[2])
-    required_count = int(sys.argv[3])
+    num_artists = int(sys.argv[1])
+    required_count = int(sys.argv[2])
 
     for artist_id in range(num_artists):
         item_id = 't' + str(artist_id)
@@ -59,14 +60,14 @@ if __name__ == "__main__":
         bid_winners[p.name] = []
 
     for p in players:
-        game_state = {
+        init_state = {
             'artists_types': num_artists,
             'required_count': required_count,
             'auction_items': auction_items,
             'player_count': num_players,
             'wealth_table': wealth_table
         }
-        p.receive_init(game_state)
+        p.receive_init(init_state)
 
     current_round = 0
     game_state = {
@@ -104,7 +105,6 @@ if __name__ == "__main__":
         game_state['auction_round'] = current_round
         game_state['wealth_table'] = wealth_table
         game_state['winning_bid'] = max_bid
-
         for i, p in enumerate(players):
             if still_playing[i] != 1:
                 continue

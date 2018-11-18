@@ -36,17 +36,17 @@ class PassiveClient(Client):
             exit(0)
 
     def calculate_bid(self, game_state, wealth, wealth_table):
-        if self.target_artist is not None and self.holdings[self.name][self.target_artist] == self.required_count - 1 and self.auction_items[self.current_round] == self.target_artist:
-            print("I really want this...")
-            return self.wealth
-
-        needToPrevent = self.preventWin(self.auction_items[self.current_round])
-        if needToPrevent > 0:
-            print("I really need to prevent this...")
-            return needToPrevent
+        if self.target_artist is not None and self.auction_items[self.current_round] == self.target_artist:
+            return self.bid_list[0]
+        elif self.target_artist is None:
+            needToPrevent = self.preventWin(self.auction_items[self.current_round])
+            if needToPrevent > 0 and self.wealth - needToPrevent - 1 >= self.required_count - 1:
+                print(f"I really need to prevent this... round {self.current_round}")
+                return needToPrevent + 1
+            else:
+                return self.bet_amount
         else:
-            print("Ehhh... it's whatever...")
-            return self.bet_amount
+            return 0
 
     def recalculateAmount(self):
         maxRounds = (self.player_count - 1) * (self.required_count - 1) + self.required_count
@@ -68,7 +68,11 @@ class PassiveClient(Client):
                 self.wealth -= game_state['winning_bid']
                 if self.target_artist == None:
                     self.target_artist = game_state['bid_item']
-            self.recalculateAmount()
+                    self.bid_list = [0] * (self.required_count - 1)
+                    for i in range(self.wealth):
+                        self.bid_list[i % (self.required_count - 1)] += 1
+                elif self.target_artist == game_state['bid_item']:
+                    self.bid_list = self.bid_list[1:]
 
             if game_state['bid_winner'] not in self.holdings:
                 self.holdings[game_state['bid_winner']] = {}
