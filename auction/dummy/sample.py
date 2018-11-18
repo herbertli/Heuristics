@@ -10,11 +10,6 @@ class SamplePlayer():
     def __init__(self, name):
         self.name = name
 
-    def check_game_status(self, state):
-        if state['finished']:
-            exit(0)
-
-
     def calculate_bid(self, game_state, wealth, wealth_table):
         return random.randrange(0, wealth)
 

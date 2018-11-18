@@ -56,7 +56,7 @@ class BottyClient(Client):
                 bid_amt = self.calculate_bid(None, wealth, self.wealth_table)
             else:
                 bid_amt = self.calculate_bid(game_state, wealth, game_state['wealth_table'])
-            time.sleep(1)
+
             client.make_bid(self.auction_items[self.current_round], bid_amt)
 
             game_state = client.receive_round()

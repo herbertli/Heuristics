@@ -2,17 +2,23 @@ import atexit
 
 class BottyClient():
     def __init__(self, name):
-        print("Received init.")
         self.name = name
 
+    def receive_init(self, init_status):
+        self.artists_num = init_status['artists_types']
+        self.required_count = init_status['required_count']
+        self.auction_items = init_status['auction_items']
+        self.player_count = init_status['player_count']
+        self.wealth_table = init_status['wealth_table']
+        self.wealth = 100
         # once we have our target, these are the amounts we should bet
         self.bet_list = [0] * self.required_count
-        for i in range(100):
+        for i in range(self.wealth):
             self.bet_list[i % self.required_count] += 1
         self.target_artist = None
         self.current_round = 0
-        print("Calculating target artist...")
         self.calculate_target(self.current_round)
+        self.obtained_count = 0
 
     def calculate_target(self, round_num):
         artist_times = dict()
@@ -30,13 +36,10 @@ class BottyClient():
         self.target_artist = target
 
     def shouldRecalculate(self):
-        if self.target_artist is not None:
+        if self.obtained_count > 0:
             return False
-        return True
-
-    def check_game_status(self, state):
-        if state['finished']:
-            exit(0)
+        else:
+            return True
 
     def calculate_bid(self, game_state, wealth, wealth_table):
         if self.auction_items[self.current_round] != self.target_artist:
@@ -44,31 +47,19 @@ class BottyClient():
         else:
             return self.bet_list[0]
 
-    def play(self):
-        wealth = 100
-        while True:
-            if self.current_round == 0:
-                bid_amt = self.calculate_bid(None, wealth, self.wealth_table)
+    def receive_round(self, game_state):
+        self.game_state = game_state
+        if game_state['bid_winner'] == self.name:
+            print("Hey, we won a painting")
+            if game_state['bid_item'] != self.target_artist:
+                print("But for some reason it was for something we didn't want in the first place")
             else:
-                bid_amt = self.calculate_bid(game_state, wealth, game_state['wealth_table'])
-            print("Sending bid...")
-            client.make_bid(self.auction_items[self.current_round], bid_amt)
-
-            game_state = client.receive_round()
-            game_state['remain_time'] = game_state['remain_time'][self.name]
-
-            if game_state['bid_winner'] == name:
-                print("Hey, we won a painting")
-                if game_state['bid_item'] != self.target_artist:
-                    print("But for some reason it was for something we didn't want in the first place")
-                else:
-                    self.bet_list = self.bet_list[1:]
-                wealth -= game_state['winning_bid']
-            elif game_state['bid_item'] == self.target_artist:
-                print("We missed our chance :(")
-                if self.shouldRecalculate():
-                    print("Recalculating target...")
-                    self.calculate_target(self.current_round + 1)
-            self.wealth_table[game_state['bid_winner']] -= game_state['winning_bid']
-            self.check_game_status(game_state)
-            self.current_round += 1
+                self.bet_list = self.bet_list[1:]
+                self.obtained_count += 1
+            self.wealth -= game_state['winning_bid']
+        elif game_state['bid_item'] == self.target_artist:
+            print("We missed our chance :(")
+            if self.shouldRecalculate():
+                print("Recalculating target...")
+                self.calculate_target(self.current_round + 1)
+        self.current_round += 1
