@@ -19,16 +19,14 @@ class PassiveClient(Client):
         self.wealth = 100
         self.current_round = 0
         self.target_artist = None
-        self.holdings = dict()
+        self.holdings = None
 
     def preventWin(self, n_artist):
-        if len(self.holdings.keys()) == 0:
-            return 0
         amount = 0
-        for p, pos in self.holdings.items():
-            for artist, quantity in pos.items():
+        for name, poss in self.holdings.items():
+            for artist, quantity in poss.items():
                 if quantity == self.required_count - 1 and artist == n_artist:
-                    amount = max(amount, self.wealth_table[p])
+                    amount = max(amount, self.wealth_table[name])
         return amount
 
     def check_game_status(self, state):
@@ -36,23 +34,60 @@ class PassiveClient(Client):
             exit(0)
 
     def calculate_bid(self, game_state, wealth, wealth_table):
+        my_poss = self.holdings[self.name]
         if self.target_artist is not None and self.auction_items[self.current_round] == self.target_artist:
-            return self.bid_list[0]
-        elif self.target_artist is None:
+            needed = self.required_count - my_poss[self.target_artist]
             needToPrevent = self.preventWin(self.auction_items[self.current_round])
-            if needToPrevent > 0 and self.wealth - needToPrevent - 1 >= self.required_count - 1:
-                print(f"I really need to prevent this... round {self.current_round}")
+            if self.wealth - needToPrevent - 1 >= needed:
                 return needToPrevent + 1
             else:
-                return self.bet_amount
-        else:
-            return 0
+                return self.bid_list[0]
 
-    def recalculateAmount(self):
-        maxRounds = (self.player_count - 1) * (self.required_count - 1) + self.required_count
-        self.bet_amount = int(100 / maxRounds)
+        needed = self.required_count - my_poss[self.target_artist]
+        needToPrevent = self.preventWin(self.auction_items[self.current_round])
+        if needToPrevent > 0:
+            print(f"Need to prevent (round {self.current_round})...")
+            if self.wealth - needToPrevent - 1 >= needed - 1:
+                print(f"Preventing (round {self.current_round})...")
+                return needToPrevent + 1
+            else:
+                return 0
+
+        if self.target_artist is not None:
+            return 0
+        else:
+            return self.bet_amount
+
+    def recalculateAmount(self, item):
+        if self.target_artist is None:
+            self.target_artist = item
+        needed = self.required_count - self.holdings[self.name][item]
+        self.bid_list = [0] * needed
+        for i in range(self.wealth):
+            self.bid_list[i % (needed)] += 1
+
+    def select_best_target(self):
+        artist_names = set(self.auction_items)
+        item_times = {artist: [] for artist in artist_names}
+        for i, v in enumerate(self.auction_items):
+            if i < self.current_round:
+                continue
+            item_times[v].append(i)
+        min_win_time = 1001
+        best_target = None
+        for artist, num_poss in self.holdings[self.name].items():
+            needed = self.required_count - num_poss
+            win_time = item_times[artist][needed]
+            if win_time < min_win_time:
+                min_win_time = win_time
+                best_target = artist
+        return best_target, min_win_time
 
     def play(self):
+        artist_names = set(self.auction_items)
+        player_names = self.wealth_table.keys()
+        self.holdings = {name: {artist: 0 for artist in artist_names} for name in player_names}
+        print(self.holdings)
         while True:
             if self.current_round == 0:
                 bid_amt = self.calculate_bid(None, self.wealth, self.wealth_table)
@@ -63,25 +98,18 @@ class PassiveClient(Client):
             game_state = client.receive_round()
             game_state['remain_time'] = game_state['remain_time'][self.name]
 
-            if game_state['bid_winner'] == name:
+            self.holdings[game_state['bid_winner']][game_state['bid_item']] += 1
+            self.wealth_table[game_state['bid_winner']] -= game_state['winning_bid']
+
+            if game_state['bid_winner'] == self.name:
                 print("Holy crap, we won something")
-                self.wealth -= game_state['winning_bid']
-                if self.target_artist == None:
-                    self.target_artist = game_state['bid_item']
-                    self.bid_list = [0] * (self.required_count - 1)
-                    for i in range(self.wealth):
-                        self.bid_list[i % (self.required_count - 1)] += 1
-                elif self.target_artist == game_state['bid_item']:
+                self.wealth -= self.wealth_table[self.name]
+                new_target_artist, _ = self.select_best_target()
+                if self.target_artist != new_target_artist:
+                    self.recalculateAmount(new_target_artist)
+                elif self.target_artist == new_target_artist:
                     self.bid_list = self.bid_list[1:]
 
-            if game_state['bid_winner'] not in self.holdings:
-                self.holdings[game_state['bid_winner']] = {}
-            if game_state['bid_item'] not in self.holdings[game_state['bid_winner']]:
-                self.holdings[game_state['bid_winner']][game_state['bid_item']] = 1
-            else:
-                self.holdings[game_state['bid_winner']][game_state['bid_item']] += 1
-
-            self.wealth_table[game_state['bid_winner']] -= game_state['winning_bid']
             self.check_game_status(game_state)
             self.current_round += 1
 
