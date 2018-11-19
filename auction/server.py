@@ -13,18 +13,24 @@ def recv_from_client(socket, player, remain_time, valid_player):
     if valid_player == False:
         player_bid['timeout'] = True
         return player_bid
-
-    start = datetime.now()
+       
     elapse = 0
+    start = datetime.now()
     while elapse < remain_time:
         try:
-            data = socket.recv(Server.DATA_SIZE).decode('utf-8')
-            player_bid['bid'] = json.loads(data)
+            data = socket.recv(Server.DATA_SIZE).decode('utf-8')       
             player_bid['received_time'] = datetime.now()
-            return player_bid
+            player_bid['start_time'] = start
+            player_bid['bid'] = json.loads(data)
+            elapse = (player_bid['received_time'] - start).total_seconds()
+            if elapse < remain_time:
+                return player_bid
+            else:
+                player_bid['bid'] = -1
+                player_bid['timeout'] = True
+                return player_bid
         except:
-            end = datetime.now()
-            elapse = (end - start).total_seconds()
+            elapse = (datetime.now() - start).total_seconds()
     player_bid['bid'] = -1
     player_bid['timeout'] = True
     return player_bid
