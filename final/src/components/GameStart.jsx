@@ -15,58 +15,119 @@ const styles = theme => ({
   },
 });
 
-const GameStart = (props) => {
+class GameStart extends React.Component {
 
-  const { classes } = props;
+  constructor(props) {
+    super(props);
+    this.state = {
+      numPlayers: 2,
+      numStones: 1,
+      gravPer: 1000,
+      minDist: 60,
+      showErrorPlayers: false,
+      showErrorStones: false,
+      showErrorGrav: false,
+      showErrorDist: false,
+    }
+  }
 
-  return <Paper className={classes.root} elevation={3}>
-    <Typography variant="h4" component="h3">
-      Game Options
+  handleChange = name => event => {
+    this.setState({
+      [name]: event.target.value,
+    });
+  }
+
+  handleSubmit = () => {
+    const { showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist } = this.validateState();
+    if (showErrorPlayers || showErrorStones || showErrorGrav || showErrorDist) {
+      this.setState({
+        showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist
+      });
+    } else {
+      let { numPlayers, numStones, gravPer, minDist } = this.state;
+      numPlayers = parseInt(numPlayers);
+      numStones = parseInt(numStones);
+      gravPer = parseInt(gravPer);
+      minDist = parseInt(minDist);
+      const newOptions = {
+        numPlayers, numStones, gravPer, minDist
+      }
+      this.props.handleSubmit(newOptions);
+    }
+  }
+
+  validateState = () => {
+    const { numPlayers, numStones, gravPer, minDist } = this.state;
+    const nNum = parseInt(numPlayers);
+    const nStone = parseInt(numStones);
+    const nGrav = parseInt(gravPer);
+    const nDist = parseInt(minDist);
+    const showErrorPlayers = isNaN(nNum) || !Number.isInteger(nNum);
+    const showErrorStones = isNaN(nStone) || !Number.isInteger(nStone);
+    const showErrorGrav = isNaN(nGrav) || !Number.isInteger(nGrav);
+    const showErrorDist = isNaN(nDist);
+    return {
+      showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist
+    };
+  }
+
+  render() {
+    const { numPlayers, gravPer, numStones, minDist, showErrorDist, showErrorPlayers, showErrorGrav, showErrorStones } = this.state;
+    const { classes } = this.props;
+
+    return <Paper className={classes.root} elevation={3}>
+      <Typography variant="h4" component="h3">
+        Game Options
       </Typography>
-    <Grid container direction="column" justify="center" alignItems="center" spacing={8}>
-      <Grid item>
-        <TextField
-          label="Number Of Players"
-          value={props.numPlayers}
-          onChange={props.handleChange('numPlayers')}
-          margin="normal"
-          variant="outlined"
-        />
-      </Grid>
-      <Grid item>
-        <TextField
-          label="Available Gravity Per Player"
-          value={props.gravPer}
-          onChange={props.handleChange('gravPer')}
-          margin="normal"
-          variant="outlined"
-        />
-      </Grid>
-      <Grid item>
-        <TextField
-          label="Max Stones Per Player"
-          value={props.numStones}
-          onChange={props.handleChange('numStones')}
-          margin="normal"
-          variant="outlined"
-        />
-      </Grid>
-      <Grid item>
-        <TextField
-          label="Minimum Distance"
-          value={props.minDist}
-          onChange={props.handleChange('minDist')}
-          margin="normal"
-          variant="outlined"
-        />
-      </Grid>
-      <Grid item>
-        <Button variant="contained" color="primary" onClick={props.handleSubmit}>
-          Submit
+      <Grid container direction="column" justify="center" alignItems="center" spacing={8}>
+        <Grid item>
+          <TextField
+            label="Number Of Players"
+            value={numPlayers}
+            onChange={this.handleChange("numPlayers")}
+            margin="normal"
+            variant="outlined"
+            error={showErrorPlayers}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label="Available Gravity Per Player"
+            value={gravPer}
+            onChange={this.handleChange("gravPer")}
+            margin="normal"
+            variant="outlined"
+            error={showErrorGrav}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label="Max Stones Per Player"
+            value={numStones}
+            onChange={this.handleChange("numStones")}
+            margin="normal"
+            variant="outlined"
+            error={showErrorStones}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label="Minimum Distance"
+            value={minDist}
+            onChange={this.handleChange("minDist")}
+            margin="normal"
+            variant="outlined"
+            error={showErrorDist}
+          />
+        </Grid>
+        <Grid item>
+          <Button variant="contained" color="primary" onClick={() => this.handleSubmit()}>
+            Submit
           </Button>
+        </Grid>
       </Grid>
-    </Grid>
-  </Paper>
+    </Paper>
+  }
 }
 
 export default withStyles(styles)(GameStart);

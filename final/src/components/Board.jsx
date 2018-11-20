@@ -9,25 +9,25 @@ class Board extends React.Component {
   }
 
   componentDidMount() {
-    const { piecesList, owners } = this.props;
+    const { piecesList, owners, newPiece } = this.props;
     const ctx = this.canvas.current.getContext('2d');
     this.drawBoard(ctx, owners);
-    this.drawStones(ctx, piecesList);
+    this.drawStones(ctx, piecesList, newPiece);
   }
 
   componentDidUpdate() {
-    const { piecesList, owners } = this.props;
+    const { piecesList, owners, newPiece } = this.props;
     const ctx = this.canvas.current.getContext('2d');
     this.clearCanvas(ctx);
     this.drawBoard(ctx, owners);
-    this.drawStones(ctx, piecesList);
+    this.drawStones(ctx, piecesList, newPiece);
   }
 
   clearCanvas(ctx) {
     ctx.clearRect(0, 0, 500, 500);
   }
 
-  drawStones(ctx, piecesList) {
+  drawStones(ctx, piecesList, newPiece) {
     const radius = 5;
     for (let b = 0; b < piecesList.length; b += 1) {
       const { x, y, playerInd } = piecesList[b];
@@ -37,6 +37,16 @@ class Board extends React.Component {
       ctx.fill();
       ctx.lineWidth = 1;
       ctx.strokeStyle = '#003300';
+      ctx.stroke();
+    }
+    if (newPiece) {
+      const { x, y, playerInd } = newPiece;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+      ctx.fillStyle = colors[playerInd];
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffcc00';
       ctx.stroke();
     }
   }

@@ -11,7 +11,8 @@ class WeightModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedWeight: 0,
+      selectedWeight: null,
+      showErrorWeight: false,
     }
   }
 
@@ -20,6 +21,28 @@ class WeightModal extends React.Component {
       [name]: event.target.value,
     });
   };
+
+  validateState = () => {
+    const { selectedWeight } = this.state;
+    const nWeight = parseInt(selectedWeight);
+    const showErrorWeight = isNaN(nWeight) || !Number.isInteger(nWeight);
+    return {
+      showErrorWeight
+    };
+  }
+
+  handleSubmit = () => {
+    const { showErrorWeight } = this.validateState();
+    if (showErrorWeight) {
+      this.setState({
+        showErrorWeight
+      });
+    } else {
+      let { selectedWeight } = this.state;
+      selectedWeight = parseInt(selectedWeight);
+      this.props.handleClose(selectedWeight)
+    }
+  }
 
   render() {
     return (
@@ -38,15 +61,16 @@ class WeightModal extends React.Component {
             onChange={this.handleChange('selectedWeight')}
             margin="normal"
             variant="outlined"
+            error={this.state.showErrorWeight}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={this.props.handleCancel} color="primary">
             Cancel
-        </Button>
-          <Button onClick={() => this.props.handleClose(this.state.selectedWeight)} color="primary">
+          </Button>
+          <Button onClick={() => this.handleSubmit()} color="primary">
             Submit
-        </Button>
+          </Button>
         </DialogActions>
       </Dialog>
     );

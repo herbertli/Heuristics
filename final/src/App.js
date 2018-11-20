@@ -5,7 +5,7 @@ import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import QuestionIcon from '@material-ui/icons/HelpOutline';
 
-import PlaceHolder from './components/Placeholder';
+import GameOver from './components/GameOver';
 import Scoreboard from './components/Scoreboard';
 import Board from './components/Board';
 import GameStart from './components/GameStart';
@@ -17,27 +17,24 @@ import './App.css';
 
 class App extends Component {
 
-  constructor() {
-    super();
-    this.state = {
-      stage: 0,
-      numPlayers: 2,
-      numStones: 5,
-      minDist: 60.0,
-      piecesList: [],
-      playersList: [],
-      gravPer: 1000,
-      displayHelpBox: false,
-      showWeightOverlay: false,
-      currentPlayer: -1,
-      isPlaying: false,
-    }
+  initialState = {
+    stage: 0,
+    numPlayers: 2,
+    numStones: 1,
+    minDist: 60.0,
+    piecesList: [],
+    playersList: [],
+    gravPer: 1000,
+    displayHelpBox: false,
+    showWeightOverlay: false,
+    currentPlayer: -1,
+    isPlaying: false,
+    newPiece: null,
   }
 
-  handleInfoChange = name => event => {
-    this.setState({
-      [name]: event.target.value,
-    });
+  constructor() {
+    super();
+    this.state = this.initialState;
   }
 
   createNewPlayer = (i) => {
@@ -45,6 +42,7 @@ class App extends Component {
       name: "Player " + i,
       color: colors[i],
       weightRemaining: this.state.gravPer,
+      piecesPlaced: 0,
     }
   }
 
@@ -57,15 +55,16 @@ class App extends Component {
     }
   }
 
-  handleSubmit = () => {
+  handleSubmit = (newOptions) => {
     let newStage = this.state.stage;
     if (newStage === 0) {
       newStage = 1;
       let newPlayers = [];
-      for (let i = 0; i < this.state.numPlayers; i++) {
+      for (let i = 0; i < newOptions.numPlayers; i++) {
         newPlayers.push(this.createNewPlayer(i));
       }
       this.setState({
+        ...newOptions,
         playersList: newPlayers,
         stage: newStage,
       });
@@ -107,19 +106,44 @@ class App extends Component {
     }
   }
 
+  getValidPlayer = (currentPlayer, playersList) => {
+    const { numPlayers, numStones } = this.state;
+    for (let i = 1; i <= numPlayers; i += 1) {
+      const newPlayer = (currentPlayer + 1) % numPlayers
+      if (playersList[newPlayer].weightRemaining > 0 && playersList[newPlayer].piecesPlaced + 1 <= numStones) {
+        return newPlayer
+      }
+    }
+    return -1;
+  }
+
   handleWeightSelection = (weight) => {
-    const { piecesList, newPiece, currentPlayer, numPlayers, playersList } = this.state;
+    const { piecesList, newPiece, currentPlayer, playersList } = this.state;
     const { x, y, playerInd } = newPiece;
     let newPieces = [...piecesList];
     newPieces.push(this.createNewPiece(x, y, weight, playerInd));
     let newPlayers = [...playersList];
     newPlayers[playerInd].weightRemaining -= weight;
-    this.setState({
-      showWeightOverlay: false,
-      piecesList: newPieces,
-      currentPlayer: (currentPlayer + 1) % numPlayers,
-      playersList: newPlayers,
-    });
+    newPlayers[playerInd].piecesPlaced += 1;
+    const nextPlayer = this.getValidPlayer(currentPlayer, newPlayers);
+    if (nextPlayer === -1) {
+      this.setState({
+        piecesList: newPieces,
+        showWeightOverlay: false,
+        playersList: newPlayers,
+        currentPlayer: -1,
+        stage: 2,
+        newPiece: null,
+      });
+    } else {
+      this.setState({
+        showWeightOverlay: false,
+        piecesList: newPieces,
+        currentPlayer: nextPlayer,
+        playersList: newPlayers,
+        newPiece: null,
+      });
+    }
   }
 
   cancelWeightSelection = () => {
@@ -134,35 +158,25 @@ class App extends Component {
   };
 
   renderOverlay = () => {
-    const {
-      stage,
-      gravPer,
-      numPlayers,
-      numStones,
-      playersList,
-      minDist
-    } = this.state;
+    const { stage, playersList } = this.state;
 
     switch (stage) {
       case 0:
         return <GameStart
-          numPlayers={numPlayers}
-          gravPer={gravPer}
-          handleChange={this.handleInfoChange}
           handleSubmit={this.handleSubmit}
-          numStones={numStones}
-          minDist={minDist}
         />
       case 1:
+      default:
         return <PlayerInfo
           playersList={playersList}
           handleChange={this.handlePlayerChange}
           handleSubmit={this.handleSubmit}
         />
-      case 2:
-      default:
-        return <PlaceHolder text="game over overlay" />;
     }
+  }
+
+  resetGame = () => {
+    this.setState(this.initialState);
   }
 
   renderGame = () => {
@@ -171,19 +185,23 @@ class App extends Component {
       playersList,
       numPlayers,
       currentPlayer,
+      newPiece,
+      stage
     } = this.state;
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
     return (<>
-      <Grid item xs={7}>
+      <Grid item xs={6}>
         <Board
           piecesList={piecesList}
           owners={owners}
           handleCanvasClick={this.handleCanvasClick}
+          newPiece={newPiece}
         />
       </Grid>
-      <Grid item xs={5}>
+      <Grid item xs={6}>
         <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} />
+        { stage === 2 ? <GameOver handleClick={this.resetGame} /> : null }
       </Grid>
     </>);
   }
@@ -206,7 +224,7 @@ class App extends Component {
               </IconButton>
             </Typography>
           </Grid>
-          {stage > 2 ? this.renderGame() : <Grid item xs={4}>{this.renderOverlay()}</Grid>}
+          {stage > 1 ? this.renderGame() : <Grid item xs={4}>{this.renderOverlay()}</Grid>}
         </Grid>
         <HelpModal open={displayHelpBox} handleClose={this.closeHelpModal} />
         <WeightSelectionModal
