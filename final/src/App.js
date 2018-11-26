@@ -20,7 +20,7 @@ class App extends Component {
   initialState = {
     stage: 0,
     numPlayers: 2,
-    numStones: 1,
+    numStones: 5,
     minDist: 60.0,
     piecesList: [],
     playersList: [],

@@ -21,7 +21,7 @@ class GameStart extends React.Component {
     super(props);
     this.state = {
       numPlayers: 2,
-      numStones: 1,
+      numStones: 5,
       gravPer: 1000,
       minDist: 60,
       showErrorPlayers: false,
