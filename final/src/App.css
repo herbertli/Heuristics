@@ -1,9 +1,26 @@
 #canvas {
     width: 100%;
-    text-align:center;
+    text-align: center;
+    position: relative;
+    width: 500px;
+    height: 500px;
 }
 
 canvas {
-    border: 1px solid #000000;
+    border: 1px solid hsl(0, 0%, 0%);
     display: inline;
+}
+
+#physCanvas {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 0;
+}
+
+#hoverCanvas {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 1;
 }

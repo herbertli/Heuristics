@@ -1,11 +1,13 @@
 import React from 'react';
-import { colors, colorRGB } from './../utils';
+import { checkValid, colors, colorRGB } from './../utils';
 
 class Board extends React.Component {
 
   constructor(props) {
     super(props);
     this.canvas = React.createRef();
+    this.hoverCanvas = React.createRef();
+
   }
 
   componentDidMount() {
@@ -77,6 +79,28 @@ class Board extends React.Component {
     if (this.props.handleCanvasClick) this.props.handleCanvasClick(x, y);
   }
 
+  handleHover = (event) => {
+
+    const { currentPlayer, piecesList, minDist } = this.props;
+    const ctx = this.hoverCanvas.current.getContext('2d');
+    var rect = this.hoverCanvas.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const isValid = checkValid(x, y, piecesList, minDist);
+
+    ctx.clearRect(0, 0, 500, 500);
+
+    if (isValid) {
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
+      ctx.fillStyle = colors[currentPlayer];
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffcc00';
+      ctx.stroke();
+    }
+  }
+
   render() {
     return (
       <div id="canvas">
@@ -85,7 +109,14 @@ class Board extends React.Component {
           height={500}
           width={500}
           ref={this.canvas}
+        />
+        <canvas
+          id="hoverCanvas"
+          height={500}
+          width={500}
+          ref={this.hoverCanvas}
           onClick={(e) => this.handleClick(e)}
+          onMouseMove={(e) => this.handleHover(e)}
         />
       </div>
     );

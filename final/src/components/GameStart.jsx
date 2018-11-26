@@ -64,7 +64,7 @@ class GameStart extends React.Component {
     const nDist = parseInt(minDist);
     const showErrorPlayers = isNaN(nNum) || !Number.isInteger(nNum) || nNum <= 1;
     const showErrorStones = isNaN(nStone) || !Number.isInteger(nStone) || nStone < 1;
-    const showErrorGrav = isNaN(nGrav) || !Number.isInteger(nGrav) || nGrav < 0;
+    const showErrorGrav = isNaN(nGrav) || !Number.isInteger(nGrav) || nGrav <= 0;
     const showErrorDist = isNaN(nDist) || nDist < 0;
     return {
       showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist

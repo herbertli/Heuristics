@@ -37,11 +37,11 @@ class App extends Component {
     this.state = this.initialState;
   }
 
-  createNewPlayer = (i) => {
+  createNewPlayer = (i, gravPer) => {
     return {
       name: "Player " + (i + 1),
       color: colors[i],
-      weightRemaining: this.state.gravPer,
+      weightRemaining: gravPer,
       piecesPlaced: 0,
     }
   }
@@ -61,7 +61,7 @@ class App extends Component {
       newStage = 1;
       let newPlayers = [];
       for (let i = 0; i < newOptions.numPlayers; i++) {
-        newPlayers.push(this.createNewPlayer(i));
+        newPlayers.push(this.createNewPlayer(i, newOptions.gravPer));
       }
       this.setState({
         ...newOptions,
@@ -187,7 +187,8 @@ class App extends Component {
       currentPlayer,
       newPiece,
       stage,
-      numStones
+      numStones,
+      minDist,
     } = this.state;
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
@@ -198,6 +199,8 @@ class App extends Component {
           owners={owners}
           handleCanvasClick={stage !== 2 ? this.handleCanvasClick : null}
           newPiece={newPiece}
+          currentPlayer={currentPlayer}
+          minDist={minDist}
         />
       </Grid>
       <Grid item xs={6}>
