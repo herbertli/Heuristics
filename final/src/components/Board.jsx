@@ -80,7 +80,7 @@ class Board extends React.Component {
   }
 
   handleHover = (event) => {
-
+    if (!this.props.handleCanvasClick) return false;
     const { currentPlayer, piecesList, minDist } = this.props;
     const ctx = this.hoverCanvas.current.getContext('2d');
     var rect = this.hoverCanvas.current.getBoundingClientRect();
