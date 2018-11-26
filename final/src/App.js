@@ -39,7 +39,7 @@ class App extends Component {
 
   createNewPlayer = (i) => {
     return {
-      name: "Player " + i,
+      name: "Player " + (i + 1),
       color: colors[i],
       weightRemaining: this.state.gravPer,
       piecesPlaced: 0,
@@ -111,7 +111,7 @@ class App extends Component {
     for (let i = 1; i <= numPlayers; i += 1) {
       const newPlayer = (currentPlayer + 1) % numPlayers
       if (playersList[newPlayer].weightRemaining > 0 && playersList[newPlayer].piecesPlaced + 1 <= numStones) {
-        return newPlayer
+        return newPlayer;
       }
     }
     return -1;
@@ -186,7 +186,8 @@ class App extends Component {
       numPlayers,
       currentPlayer,
       newPiece,
-      stage
+      stage,
+      numStones
     } = this.state;
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
@@ -200,7 +201,7 @@ class App extends Component {
         />
       </Grid>
       <Grid item xs={6}>
-        <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} />
+        <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} />
         { stage === 2 ? <GameOver handleClick={this.resetGame} /> : null }
       </Grid>
     </>);

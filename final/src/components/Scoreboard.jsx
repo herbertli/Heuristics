@@ -6,7 +6,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 
 const Scoreboard = (props) => {
-  const { scores, playersList } = props;
+  const { scores, playersList, numStones } = props;
   let total = 0;
   for (let score of scores) {
     total += score;
@@ -22,18 +22,20 @@ const Scoreboard = (props) => {
       color: player.color,
       score: scores[i],
       weightRemaining: player.weightRemaining,
+      stonesRemaining: numStones - player.piecesPlaced,
       percentage: percentages[i],
       id: i,
     };
   });
 
   return (
-    <Table>
+    <Table padding="dense">
       <TableHead>
         <TableRow>
           <TableCell>Name</TableCell>
           <TableCell numeric>Score</TableCell>
-          <TableCell numeric>Remaining</TableCell>
+          <TableCell numeric>Weight Left</TableCell>
+          <TableCell numeric>Stones Left</TableCell>
           <TableCell numeric>%</TableCell>
           <TableCell numeric>Color</TableCell>
         </TableRow>
@@ -49,6 +51,7 @@ const Scoreboard = (props) => {
               <TableCell numeric>{row.weightRemaining}</TableCell>
               <TableCell numeric>{row.percentage}</TableCell>
               <TableCell style={{ background: row.color }}></TableCell>
+              <TableCell numeric>{row.stonesRemaining}</TableCell>
             </TableRow>
           );
         })}

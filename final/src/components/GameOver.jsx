@@ -7,10 +7,10 @@ const GameOver = (props) => {
   return (<>
     <Typography variant="h5" gutterBottom>
       Game Over!
-        </Typography>
-    <Button variant="contained" color="primary" onClick={props.handleClick}>
-      Restart!
+      <Button variant="contained" color="primary" onClick={props.handleClick}>
+        Restart!
       </Button>
+    </Typography>
   </>);
 }
 
