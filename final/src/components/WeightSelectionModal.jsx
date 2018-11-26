@@ -38,7 +38,7 @@ class WeightModal extends React.Component {
       selectedWeight = this.state.selectedWeight;
     const { weightRemaining } = this.props.currentPlayer;
     const nWeight = parseInt(selectedWeight);
-    const showErrorWeight = isNaN(nWeight) || !Number.isInteger(nWeight) || nWeight > weightRemaining || nWeight < 0;
+    const showErrorWeight = isNaN(nWeight) || !Number.isInteger(nWeight) || nWeight > weightRemaining || nWeight <= 0;
     return {
       showErrorWeight
     };
