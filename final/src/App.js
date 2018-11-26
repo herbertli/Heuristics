@@ -109,7 +109,7 @@ class App extends Component {
   getValidPlayer = (currentPlayer, playersList) => {
     const { numPlayers, numStones } = this.state;
     for (let i = 1; i <= numPlayers; i += 1) {
-      const newPlayer = (currentPlayer + 1) % numPlayers
+      const newPlayer = (currentPlayer + i) % numPlayers
       if (playersList[newPlayer].weightRemaining > 0 && playersList[newPlayer].piecesPlaced + 1 <= numStones) {
         return newPlayer;
       }
