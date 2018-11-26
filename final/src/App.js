@@ -196,13 +196,19 @@ class App extends Component {
         <Board
           piecesList={piecesList}
           owners={owners}
-          handleCanvasClick={this.handleCanvasClick}
+          handleCanvasClick={stage !== 2 ? this.handleCanvasClick : null}
           newPiece={newPiece}
         />
       </Grid>
       <Grid item xs={6}>
-        <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} />
-        { stage === 2 ? <GameOver handleClick={this.resetGame} /> : null }
+        <Grid container>
+          <Grid item xs={12}>
+            <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} />
+          </Grid>
+          <Grid item xs={12}>
+            { stage === 2 ? <GameOver handleClick={this.resetGame} /> : null }
+          </Grid>
+        </Grid>
       </Grid>
     </>);
   }
@@ -212,6 +218,8 @@ class App extends Component {
       stage,
       showWeightOverlay,
       displayHelpBox,
+      playersList,
+      currentPlayer,
     } = this.state;
 
     return (
@@ -231,6 +239,7 @@ class App extends Component {
         <WeightSelectionModal
           open={showWeightOverlay}
           handleClose={this.handleWeightSelection}
+          currentPlayer={playersList[currentPlayer]}
           handleCancel={this.cancelWeightSelection}
         />
 

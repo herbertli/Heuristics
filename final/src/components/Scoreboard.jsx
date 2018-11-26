@@ -49,9 +49,9 @@ const Scoreboard = (props) => {
               </TableCell>
               <TableCell numeric>{row.score}</TableCell>
               <TableCell numeric>{row.weightRemaining}</TableCell>
+              <TableCell numeric>{row.stonesRemaining}</TableCell>
               <TableCell numeric>{row.percentage}</TableCell>
               <TableCell style={{ background: row.color }}></TableCell>
-              <TableCell numeric>{row.stonesRemaining}</TableCell>
             </TableRow>
           );
         })}

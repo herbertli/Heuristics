@@ -52,7 +52,7 @@ class Board extends React.Component {
   }
 
   drawBoard(ctx, owners) {
-    const imageData = ctx.getImageData(0, 0, 500, 500);
+    const imageData = ctx.createImageData(500, 500);
     const { data } = imageData;
     for (let y = 0; y < 500; y += 1) {
       for (let x = 0; x < 500; x += 1) {
@@ -74,13 +74,14 @@ class Board extends React.Component {
     var rect = this.canvas.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    this.props.handleCanvasClick(x, y);
+    if (this.props.handleCanvasClick) this.props.handleCanvasClick(x, y);
   }
 
   render() {
     return (
       <div id="canvas">
         <canvas
+          id="physCanvas"
           height={500}
           width={500}
           ref={this.canvas}

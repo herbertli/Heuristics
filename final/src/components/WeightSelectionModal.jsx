@@ -16,16 +16,29 @@ class WeightModal extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.currentPlayer !== prevProps.currentPlayer) {
+      this.setState({
+        selectedWeight: null,
+        showErrorWeight: false,
+      });
+    }
+  }
+
   handleChange = name => event => {
+    const { showErrorWeight } = this.validateState(event.target.value);
     this.setState({
+      showErrorWeight: showErrorWeight,
       [name]: event.target.value,
     });
   };
 
-  validateState = () => {
-    const { selectedWeight } = this.state;
+  validateState = (selectedWeight) => {
+    if (!selectedWeight)
+      selectedWeight = this.state.selectedWeight;
+    const { weightRemaining } = this.props.currentPlayer;
     const nWeight = parseInt(selectedWeight);
-    const showErrorWeight = isNaN(nWeight) || !Number.isInteger(nWeight);
+    const showErrorWeight = isNaN(nWeight) || !Number.isInteger(nWeight) || nWeight > weightRemaining || nWeight < 0;
     return {
       showErrorWeight
     };
