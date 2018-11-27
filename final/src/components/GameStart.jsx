@@ -80,7 +80,7 @@ class GameStart extends React.Component {
         Game Options
       </Typography>
       <Grid container direction="column" justify="center" alignItems="center" spacing={8}>
-        <Grid item>
+        <Grid item xs={12}>
           <TextField
             label="Number Of Players"
             value={numPlayers}
@@ -90,7 +90,7 @@ class GameStart extends React.Component {
             error={showErrorPlayers}
           />
         </Grid>
-        <Grid item>
+        <Grid item xs={12}>
           <TextField
             label="Available Gravity Per Player"
             value={gravPer}
@@ -100,7 +100,7 @@ class GameStart extends React.Component {
             error={showErrorGrav}
           />
         </Grid>
-        <Grid item>
+        <Grid item xs={12}>
           <TextField
             label="Max Stones Per Player"
             value={numStones}
@@ -110,7 +110,7 @@ class GameStart extends React.Component {
             error={showErrorStones}
           />
         </Grid>
-        <Grid item>
+        <Grid item xs={12}>
           <TextField
             label="Minimum Distance"
             value={minDist}
@@ -120,7 +120,7 @@ class GameStart extends React.Component {
             error={showErrorDist}
           />
         </Grid>
-        <Grid item>
+        <Grid item xs={12}>
           <Button variant="contained" color="primary" onClick={() => this.handleSubmit()}>
             Submit
           </Button>

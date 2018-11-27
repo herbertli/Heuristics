@@ -14,7 +14,6 @@ import PlayerInfo from './components/PlayerInfo';
 import HelpModal from './components/HelpModal';
 import WeightSelectionModal from './components/WeightSelectionModal';
 import { checkValid, colors, calculateBoard } from './utils';
-import './App.css';
 
 class App extends Component {
 
@@ -233,7 +232,7 @@ class App extends Component {
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
     return (<>
-      <Grid item xs={6}>
+      <Grid item xs={12} md={6}>
         <Board
           piecesList={piecesList}
           owners={owners}
@@ -243,7 +242,7 @@ class App extends Component {
           minDist={minDist}
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={12} md={6}>
         <Grid container>
           <Grid item xs={12}>
             { stage === 'GAME_OVER' ? <GameOver handleClick={this.resetGame} playersList={playersList} lastScores={scores} /> :
@@ -259,9 +258,9 @@ class App extends Component {
 
   renderScene(stage) {
     if (stage === 'GAME_SETTINGS') {
-      return (<Grid item xs={4}>{this.renderOverlay()}</Grid>);
+      return (<Grid item xs={10} sm={5}>{this.renderOverlay()}</Grid>);
     } else if (stage === 'PLAYER_LIST') {
-      return (<Grid item xs={4}>{this.renderOverlay()}</Grid>);
+      return (<Grid item xs={10} sm={5}>{this.renderOverlay()}</Grid>);
     } else {
       return this.renderGame();
     }
