@@ -14,11 +14,17 @@ function Transition(props) {
 const styles = theme => ({
   root: {
     ...theme.mixins.gutters(),
-    paddingTop: theme.spacing.unit,
     marginTop: theme.spacing.unit,
   },
-  dialog: {
-
+  screenImg: {
+    width: '50%',
+    margin: '0 auto',
+    display: 'block',
+  },
+  gameoverImg: {
+    width: '80%',
+    margin: '0 auto',
+    display: 'block',
   }
 });
 
@@ -51,6 +57,9 @@ const HelpModal = (props) => {
               such that every point with integer coordinates (x, y) has the color of the stones that
               give it the greatest pull.
             </Text>
+          </Grid>
+          <Grid item>
+            <img src="images/board.png" alt="board" className={classes.screenImg}/>
           </Grid>
           <Grid item>
             <Text variant="h5" paragraph>Playing a Round:</Text>
@@ -86,6 +95,9 @@ const HelpModal = (props) => {
             </Text>
           </Grid>
           <Grid item>
+            <img src="images/options.png" alt="options" className={classes.screenImg}/>
+          </Grid>
+          <Grid item>
             <Text variant="h5" paragraph>Ending a Game:</Text>
             <hr/>
             <ul>
@@ -99,6 +111,9 @@ const HelpModal = (props) => {
                 The player with the highest combined score over all n rounds is declared the winner!
               </LText>
             </ul>
+          </Grid>
+          <Grid item>
+            <img src="images/gameover.png" alt="gameover" className={classes.gameoverImg}/>
           </Grid>
           <Grid item>
             <Text variant="h5" paragraph>Pull Calculation:</Text>

@@ -144,6 +144,7 @@ class Board extends React.Component {
     return (
       <div className={classes.parentDiv}>
         <canvas
+          id="physCanvas"
           className={classes.pCanvas}
           height={500}
           width={500}
