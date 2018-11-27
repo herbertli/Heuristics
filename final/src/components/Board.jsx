@@ -36,6 +36,7 @@ class Board extends React.Component {
   componentDidMount() {
     const { piecesList, owners, newPiece } = this.props;
     const ctx = this.canvas.current.getContext('2d');
+    this.clearCanvas(ctx);
     this.drawBoard(ctx, owners);
     this.drawStones(ctx, piecesList, newPiece);
   }
@@ -43,7 +44,9 @@ class Board extends React.Component {
   componentDidUpdate() {
     const { piecesList, owners, newPiece } = this.props;
     const ctx = this.canvas.current.getContext('2d');
+    const htx = this.hoverCanvas.current.getContext('2d');
     this.clearCanvas(ctx);
+    this.clearCanvas(htx);
     this.drawBoard(ctx, owners);
     this.drawStones(ctx, piecesList, newPiece);
   }
@@ -53,6 +56,7 @@ class Board extends React.Component {
   }
 
   drawStones(ctx, piecesList, newPiece) {
+    // console.log("pieces list:", piecesList);
     const radius = 5;
     for (let b = 0; b < piecesList.length; b += 1) {
       const { x, y, playerInd } = piecesList[b];
@@ -64,6 +68,7 @@ class Board extends React.Component {
       ctx.strokeStyle = '#003300';
       ctx.stroke();
     }
+    // console.log("New Piece:", newPiece);
     if (newPiece) {
       const { x, y, playerInd } = newPiece;
       ctx.beginPath();
@@ -105,18 +110,21 @@ class Board extends React.Component {
   handleHover = (event) => {
     if (!this.props.handleCanvasClick) return false;
     const { currentPlayer, piecesList, minDist } = this.props;
+
     const ctx = this.hoverCanvas.current.getContext('2d');
+    this.clearCanvas(ctx);
+
     var rect = this.hoverCanvas.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const isValid = checkValid(x, y, piecesList, minDist);
-
-    ctx.clearRect(0, 0, 500, 500);
-
+    const r = colorRGB[currentPlayer][0];
+    const g = colorRGB[currentPlayer][1];
+    const b = colorRGB[currentPlayer][2];
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
     if (isValid) {
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
-      ctx.fillStyle = colors[currentPlayer];
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b}, 1)`;
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#ffcc00';

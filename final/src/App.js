@@ -4,7 +4,9 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import QuestionIcon from '@material-ui/icons/HelpOutline';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import CustomSnackbar from './components/CustomSnackbar';
 import GameOver from './components/GameOver';
 import RoundOver from './components/RoundOver'
 import Scoreboard from './components/Scoreboard';
@@ -34,6 +36,7 @@ class App extends Component {
     showWeightOverlay: false,
     currentPlayer: 0,
     newPiece: null,
+    snackOpen: false,
   }
 
   constructor() {
@@ -103,8 +106,7 @@ class App extends Component {
     const isValid = checkValid(x, y, piecesList, minDist);
     if (!isValid) {
       this.setState({
-        showError: true,
-        errorMessage: "Invalid Move!"
+        snackOpen: true,
       });
     } else {
       this.setState({
@@ -155,6 +157,7 @@ class App extends Component {
   }
 
   cancelWeightSelection = () => {
+    console.log("canceled, should remove new piece");
     this.setState({
       showWeightOverlay: false,
       newPiece: null
@@ -218,6 +221,15 @@ class App extends Component {
     }
   }
 
+  handleSnackClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    this.setState({ snackOpen: false });
+  };
+
+
   renderGame = () => {
     const {
       piecesList,
@@ -274,6 +286,7 @@ class App extends Component {
       displayHelpBox,
       playersList,
       currentPlayer,
+      minDist,
     } = this.state;
 
     return (
@@ -296,6 +309,21 @@ class App extends Component {
           currentPlayer={playersList[currentPlayer]}
           handleCancel={this.cancelWeightSelection}
         />
+        <Snackbar
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          open={this.state.snackOpen}
+          autoHideDuration={3000}
+          onClose={this.handleSnackClose}
+        >
+          <CustomSnackbar
+            onClose={this.handleClose}
+            variant="error"
+            message={`Stones must be at least ${minDist} units apart!`}
+          />
+        </Snackbar>
       </div>
     );
   }
