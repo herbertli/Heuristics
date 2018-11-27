@@ -190,29 +190,30 @@ class App extends Component {
   }
 
   resetRound = (scores) => {
-    let newPlayers = this.state.playersList;
+    const { playersList, gravPer, numPlayers, roundNum } = this.state;
+    let newPlayers = [...playersList];
     for (let i = 0; i < newPlayers.length; i += 1) {
       let player = newPlayers[i];
       player.piecesPlaced = 0;
-      player.weightRemaining = this.state.gravPer;
+      player.weightRemaining = gravPer;
       player.scores.push(scores[i]);
     }
     let newStage = 'PLAYING_ROUND';
-    if (this.state.roundNum + 1 === this.state.numPlayers) {
+    if (roundNum + 1 === numPlayers) {
       newStage = 'GAME_OVER'
       this.setState({
         stage: newStage,
         playersList: newPlayers,
-        roundNum: this.state.roundNum + 1,
-        currentPlayer: this.state.roundNum + 1,
+        roundNum: roundNum + 1,
+        currentPlayer: roundNum + 1,
       });
     } else {
       this.setState({
         ...this.initialRound,
         stage: newStage,
         playersList: newPlayers,
-        roundNum: this.state.roundNum + 1,
-        currentPlayer: this.state.roundNum + 1,
+        roundNum: roundNum + 1,
+        currentPlayer: roundNum + 1,
       });
     }
   }

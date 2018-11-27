@@ -6,18 +6,20 @@ import { checkValid, colors, colorRGB } from './../utils';
 const styles = () => ({
   parentDiv: {
     position: 'relative',
-    margin: '0 auto',
     width: '500px',
     height: '500px',
+    margin: 'auto',
   },
   hCanvas: {
     border: "1px solid hsl(0, 0%, 0%)",
     position: "absolute",
+    top: '0px',
+    left: '0px',
     zIndex: 1
   },
   pCanvas: {
     border: "1px solid hsl(0, 0%, 0%)",
-    position: "absolute",
+    position: "relative",
     zIndex: 0
   }
 });
