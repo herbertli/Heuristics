@@ -32,13 +32,27 @@ class GameStart extends React.Component {
   }
 
   handleChange = name => event => {
+    const isValid = this.validateState({
+      [name]: event.target.value
+    });
+    let propName = -1;
+    if (name === 'numPlayers') {
+      propName = 'showErrorPlayers';
+    } else if (name === 'numStones') {
+      propName = 'showErrorStones';
+    } else if (name === 'gravPer') {
+      propName = 'showErrorGrav';
+    } else if (name === 'minDist') {
+      propName = 'showErrorDist';
+    }
     this.setState({
       [name]: event.target.value,
+      [propName]: isValid[propName],
     });
   }
 
   handleSubmit = () => {
-    const { showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist } = this.validateState();
+    const { showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist } = this.validateState(this.state);
     if (showErrorPlayers || showErrorStones || showErrorGrav || showErrorDist) {
       this.setState({
         showErrorPlayers, showErrorStones, showErrorGrav, showErrorDist
@@ -56,8 +70,8 @@ class GameStart extends React.Component {
     }
   }
 
-  validateState = () => {
-    const { numPlayers, numStones, gravPer, minDist } = this.state;
+  validateState = (state) => {
+    const { numPlayers, numStones, gravPer, minDist } = state;
     const nNum = parseInt(numPlayers);
     const nStone = parseInt(numStones);
     const nGrav = parseInt(gravPer);

@@ -51,12 +51,19 @@ class Board extends React.Component {
     this.drawStones(ctx, piecesList, newPiece);
   }
 
+  shouldComponentUpdate(nextProps) {
+    if (nextProps.piecesList !== this.props.piecesList) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   clearCanvas(ctx) {
     ctx.clearRect(0, 0, 500, 500);
   }
 
   drawStones(ctx, piecesList, newPiece) {
-    // console.log("pieces list:", piecesList);
     const radius = 5;
     for (let b = 0; b < piecesList.length; b += 1) {
       const { x, y, playerInd } = piecesList[b];
@@ -68,7 +75,6 @@ class Board extends React.Component {
       ctx.strokeStyle = '#003300';
       ctx.stroke();
     }
-    // console.log("New Piece:", newPiece);
     if (newPiece) {
       const { x, y, playerInd } = newPiece;
       ctx.beginPath();
@@ -82,7 +88,7 @@ class Board extends React.Component {
   }
 
   drawBoard(ctx, owners) {
-    const imageData = ctx.createImageData(500, 500);
+    const imageData = ctx.getImageData(0, 0, 500, 500);
     const { data } = imageData;
     for (let y = 0; y < 500; y += 1) {
       for (let x = 0; x < 500; x += 1) {
@@ -133,6 +139,7 @@ class Board extends React.Component {
   }
 
   render() {
+    console.log("Rerender!");
     const { classes } = this.props;
     return (
       <div className={classes.parentDiv}>
