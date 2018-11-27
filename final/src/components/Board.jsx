@@ -1,5 +1,26 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
 import { checkValid, colors, colorRGB } from './../utils';
+
+
+const styles = () => ({
+  parentDiv: {
+    position: 'relative',
+    margin: '0 auto',
+    width: '500px',
+    height: '500px',
+  },
+  hCanvas: {
+    border: "1px solid hsl(0, 0%, 0%)",
+    position: "absolute",
+    zIndex: 1
+  },
+  pCanvas: {
+    border: "1px solid hsl(0, 0%, 0%)",
+    position: "absolute",
+    zIndex: 0
+  }
+});
 
 class Board extends React.Component {
 
@@ -102,16 +123,17 @@ class Board extends React.Component {
   }
 
   render() {
+    const { classes } = this.props;
     return (
-      <div id="canvas">
+      <div className={classes.parentDiv}>
         <canvas
-          id="physCanvas"
+          className={classes.pCanvas}
           height={500}
           width={500}
           ref={this.canvas}
         />
         <canvas
-          id="hoverCanvas"
+          className={classes.hCanvas}
           height={500}
           width={500}
           ref={this.hoverCanvas}
@@ -123,4 +145,4 @@ class Board extends React.Component {
   }
 }
 
-export default Board;
+export default withStyles(styles)(Board);

@@ -6,6 +6,7 @@ import IconButton from '@material-ui/core/IconButton';
 import QuestionIcon from '@material-ui/icons/HelpOutline';
 
 import GameOver from './components/GameOver';
+import RoundOver from './components/RoundOver'
 import Scoreboard from './components/Scoreboard';
 import Board from './components/Board';
 import GameStart from './components/GameStart';
@@ -18,23 +19,30 @@ import './App.css';
 class App extends Component {
 
   initialState = {
-    stage: 0,
+    stage: 'GAME_SETTINGS',
     numPlayers: 2,
     numStones: 5,
     minDist: 60.0,
-    piecesList: [],
     playersList: [],
     gravPer: 1000,
+    isPlaying: false,
+    roundNum: 0,
+  }
+
+  initialRound = {
+    piecesList: [],
     displayHelpBox: false,
     showWeightOverlay: false,
-    currentPlayer: -1,
-    isPlaying: false,
+    currentPlayer: 0,
     newPiece: null,
   }
 
   constructor() {
     super();
-    this.state = this.initialState;
+    this.state = {
+      ...this.initialRound,
+      ...this.initialState
+    };
   }
 
   createNewPlayer = (i, gravPer) => {
@@ -43,6 +51,7 @@ class App extends Component {
       color: colors[i],
       weightRemaining: gravPer,
       piecesPlaced: 0,
+      scores: [],
     }
   }
 
@@ -57,8 +66,8 @@ class App extends Component {
 
   handleSubmit = (newOptions) => {
     let newStage = this.state.stage;
-    if (newStage === 0) {
-      newStage = 1;
+    if (newStage === 'GAME_SETTINGS') {
+      newStage = 'PLAYER_LIST';
       let newPlayers = [];
       for (let i = 0; i < newOptions.numPlayers; i++) {
         newPlayers.push(this.createNewPlayer(i, newOptions.gravPer));
@@ -68,8 +77,8 @@ class App extends Component {
         playersList: newPlayers,
         stage: newStage,
       });
-    } else if (newStage === 1) {
-      newStage = 3;
+    } else if (newStage === 'PLAYER_LIST') {
+      newStage = 'PLAYING_ROUND';
       this.setState({
         currentPlayer: 0,
         stage: newStage,
@@ -132,7 +141,7 @@ class App extends Component {
         showWeightOverlay: false,
         playersList: newPlayers,
         currentPlayer: -1,
-        stage: 2,
+        stage: 'ROUND_OVER',
         newPiece: null,
       });
     } else {
@@ -159,13 +168,12 @@ class App extends Component {
 
   renderOverlay = () => {
     const { stage, playersList } = this.state;
-
     switch (stage) {
-      case 0:
+      case 'GAME_SETTINGS':
         return <GameStart
           handleSubmit={this.handleSubmit}
         />
-      case 1:
+      case 'PLAYER_LIST':
       default:
         return <PlayerInfo
           playersList={playersList}
@@ -176,7 +184,38 @@ class App extends Component {
   }
 
   resetGame = () => {
-    this.setState(this.initialState);
+    this.setState({
+      ...this.initialState,
+      ...this.initialRound,
+    });
+  }
+
+  resetRound = (scores) => {
+    let newPlayers = this.state.playersList;
+    for (let i = 0; i < newPlayers.length; i += 1) {
+      let player = newPlayers[i];
+      player.piecesPlaced = 0;
+      player.weightRemaining = this.state.gravPer;
+      player.scores.push(scores[i]);
+    }
+    let newStage = 'PLAYING_ROUND';
+    if (this.state.roundNum + 1 === this.state.numPlayers) {
+      newStage = 'GAME_OVER'
+      this.setState({
+        stage: newStage,
+        playersList: newPlayers,
+        roundNum: this.state.roundNum + 1,
+        currentPlayer: this.state.roundNum + 1,
+      });
+    } else {
+      this.setState({
+        ...this.initialRound,
+        stage: newStage,
+        playersList: newPlayers,
+        roundNum: this.state.roundNum + 1,
+        currentPlayer: this.state.roundNum + 1,
+      });
+    }
   }
 
   renderGame = () => {
@@ -189,6 +228,7 @@ class App extends Component {
       stage,
       numStones,
       minDist,
+      roundNum,
     } = this.state;
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
@@ -197,7 +237,7 @@ class App extends Component {
         <Board
           piecesList={piecesList}
           owners={owners}
-          handleCanvasClick={stage !== 2 ? this.handleCanvasClick : null}
+          handleCanvasClick={stage === 'PLAYING_ROUND' ? this.handleCanvasClick : null}
           newPiece={newPiece}
           currentPlayer={currentPlayer}
           minDist={minDist}
@@ -206,14 +246,25 @@ class App extends Component {
       <Grid item xs={6}>
         <Grid container>
           <Grid item xs={12}>
-            <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} />
+            { stage === 'GAME_OVER' ? <GameOver handleClick={this.resetGame} playersList={playersList} lastScores={scores} /> :
+            <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} /> }
           </Grid>
           <Grid item xs={12}>
-            { stage === 2 ? <GameOver handleClick={this.resetGame} /> : null }
+            { stage === 'ROUND_OVER' ? <RoundOver numPlayers={numPlayers} roundNum={roundNum + 1} handleClick={() => this.resetRound(scores)} /> : null }
           </Grid>
         </Grid>
       </Grid>
     </>);
+  }
+
+  renderScene(stage) {
+    if (stage === 'GAME_SETTINGS') {
+      return (<Grid item xs={4}>{this.renderOverlay()}</Grid>);
+    } else if (stage === 'PLAYER_LIST') {
+      return (<Grid item xs={4}>{this.renderOverlay()}</Grid>);
+    } else {
+      return this.renderGame();
+    }
   }
 
   render() {
@@ -236,7 +287,7 @@ class App extends Component {
               </IconButton>
             </Typography>
           </Grid>
-          {stage > 1 ? this.renderGame() : <Grid item xs={4}>{this.renderOverlay()}</Grid>}
+          {this.renderScene(stage)}
         </Grid>
         <HelpModal open={displayHelpBox} handleClose={this.closeHelpModal} />
         <WeightSelectionModal
@@ -245,7 +296,6 @@ class App extends Component {
           currentPlayer={playersList[currentPlayer]}
           handleCancel={this.cancelWeightSelection}
         />
-
       </div>
     );
   }
