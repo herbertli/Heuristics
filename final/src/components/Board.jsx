@@ -139,7 +139,6 @@ class Board extends React.Component {
   }
 
   render() {
-    console.log("Rerender!");
     const { classes } = this.props;
     return (
       <div className={classes.parentDiv}>

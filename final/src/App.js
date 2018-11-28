@@ -28,6 +28,7 @@ class App extends Component {
     gravPer: 1000,
     isPlaying: false,
     roundNum: 0,
+    showTotal: false,
   }
 
   initialRound = {
@@ -229,6 +230,9 @@ class App extends Component {
     this.setState({ snackOpen: false });
   };
 
+  toggleScoreBoard = () => {
+    this.setState({ showTotal: !this.state.showTotal });
+  }
 
   renderGame = () => {
     const {
@@ -241,6 +245,7 @@ class App extends Component {
       numStones,
       minDist,
       roundNum,
+      showTotal,
     } = this.state;
     const { scores, owners } = calculateBoard(500, 500, piecesList, numPlayers);
 
@@ -258,8 +263,13 @@ class App extends Component {
       <Grid item xs={12} sm={12} md={6}>
         <Grid container>
           <Grid item xs={12}>
+            <Typography component="h4" variant="h4" style={{ textAlign: "center" }} gutterBottom>
+              Round {roundNum + 1}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
             { stage === 'GAME_OVER' ? <GameOver handleClick={this.resetGame} playersList={playersList} lastScores={scores} /> :
-            <Scoreboard scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} /> }
+            <Scoreboard handleClick={this.toggleScoreBoard} showTotal={showTotal} scores={scores} playersList={playersList} currentPlayer={currentPlayer} numStones={numStones} /> }
           </Grid>
           <Grid item xs={12}>
             { stage === 'ROUND_OVER' ? <RoundOver numPlayers={numPlayers} roundNum={roundNum + 1} handleClick={() => this.resetRound(scores)} /> : null }
