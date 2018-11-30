@@ -57,11 +57,6 @@ class Utils {
 
         int t = 1; // current time
         while(true) { // while there are dancers who haven't reached their goals.
-            if(t >= minTurns) {
-                System.out.println("Time to fail to find paths with fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
-                return null; // early termination
-            }
-            // System.out.println("Generating positions for time: " + t);
 
             // count how many dancers aren't at their end locations
             int stillRunning = 0;
@@ -72,6 +67,12 @@ class Utils {
             }
             // System.out.println("# dancers still running: " + stillRunning);
             if (stillRunning == 0) break; // They all reached their goals.
+            
+            if(t >= minTurns) {
+                System.out.println("Time to fail to find paths with APSP = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli())/1000.);
+                return null; // early termination
+            }
+            // System.out.println("Generating positions for time: " + t);
 
             int[][] assignAtNextT = new int[boardSize][boardSize];
             for(int i = 0; i < boardSize; i++) Arrays.fill(assignAtNextT[i], -1);
@@ -101,7 +102,8 @@ class Utils {
             int farthestDancerInt = pointToInt(currentLocs[farthestDancer], boardSize);
             int farthestDancerEndInt = pointToInt(startEndP[farthestDancer][1], boardSize);
             if(fwDist[farthestDancerInt][farthestDancerEndInt] + t > minTurns) {
-                System.out.println("Impossible to find a better solution with current line segments.");
+                //System.out.println("Impossible to find a better solution with current line segments.");
+                System.out.println("Bad current line segments");
                 return null;
             }
             Point[] nextMoves = new Point[numDancers];
@@ -207,7 +209,7 @@ class Utils {
 
             t++;
         }
-        System.out.println("Time to paths with fw = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        System.out.println("Time to paths with APSP = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli())/1000.);
         return res;
     }
 
@@ -578,7 +580,7 @@ class Utils {
 
             t++;
         }
-        System.out.println("Time to paths with swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli()));
+        System.out.println("Time to paths with swapping = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli())/1000.);
         return res;
     }
 
