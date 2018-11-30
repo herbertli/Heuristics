@@ -3,6 +3,9 @@ mvn clean package
 java -cp target/DancingWithoutStars-1.0-SNAPSHOT-jar-with-dependencies.jar nyu.hps.botty.dancing.DancingClient 127.0.0.1 9999 c
 java -cp target/DancingWithoutStars-1.0-SNAPSHOT-jar-with-dependencies.jar nyu.hps.botty.dancing.DancingClient 127.0.0.1 9999 s
 
+#### To Run With GUI ####
+node index.js
+127.0.0.1:3000
 python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata.1 -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/dancedata.2 -u
