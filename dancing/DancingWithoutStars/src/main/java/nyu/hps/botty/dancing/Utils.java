@@ -209,7 +209,7 @@ class Utils {
 
             t++;
         }
-        System.out.println("Time to paths with APSP = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli())/1000.);
+        System.out.println("Time to find paths with APSP = " + (Instant.now().toEpochMilli() - startTime.toEpochMilli())/1000.);
         return res;
     }
 

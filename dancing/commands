@@ -13,4 +13,5 @@ python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/dancedata.3 -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 40 -f sample_dancedata/dancedata.4 -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/dancedata.5 -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 30 -f sample_dancedata/sample_dancedata.txt -u
+python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/secret.txt -u
 python3 game.py -H 127.0.0.1 -p 9999 -s 50 -f sample_dancedata/smoltest -u
