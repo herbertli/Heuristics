@@ -53,7 +53,7 @@ const HelpModal = (props) => {
             <hr/>
             <Text paragraph>
               Given a set of point-sized stones of various colors,
-              a Gravitational Voronoi diagram is a tesselation of a plane into colored regions
+              a Weighted Voronoi diagram is a tesselation of a plane into colored regions
               such that every point with integer coordinates (x, y) has the color of the stones that
               give it the greatest pull.
             </Text>

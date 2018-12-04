@@ -158,7 +158,6 @@ class App extends Component {
   }
 
   cancelWeightSelection = () => {
-    console.log("canceled, should remove new piece");
     this.setState({
       showWeightOverlay: false,
       newPiece: null
@@ -289,6 +288,12 @@ class App extends Component {
     }
   }
 
+  handleClose() {
+    this.setState({
+      snackOpen: false
+    });
+  }
+
   render() {
     const {
       stage,
@@ -304,7 +309,7 @@ class App extends Component {
         <Grid container spacing={8} justify="center">
           <Grid item xs={12}>
             <Typography component="h3" variant="h3" style={{ textAlign: "center" }} gutterBottom>
-              Gravitational Voronoi
+              Weighted Voronoi
               <IconButton color="primary" aria-label="Help" onClick={() => this.setState({ displayHelpBox: true})}>
                 <QuestionIcon />
               </IconButton>
@@ -329,7 +334,7 @@ class App extends Component {
           onClose={this.handleSnackClose}
         >
           <CustomSnackbar
-            onClose={this.handleClose}
+            onClose={() => this.handleClose()}
             variant="error"
             message={`Stones must be at least ${minDist} units apart!`}
           />

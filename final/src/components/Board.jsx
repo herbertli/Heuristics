@@ -1,7 +1,7 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { checkValid, colors, colorRGB } from './../utils';
-
+import InfoModal from './InfoModal';
 
 const styles = () => ({
   parentDiv: {
@@ -30,7 +30,10 @@ class Board extends React.Component {
     super(props);
     this.canvas = React.createRef();
     this.hoverCanvas = React.createRef();
-
+    this.state = {
+      showInfo: false,
+      selectedPiece: null,
+    }
   }
 
   componentDidMount() {
@@ -51,7 +54,10 @@ class Board extends React.Component {
     this.drawStones(ctx, piecesList, newPiece);
   }
 
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextState.showInfo !== this.state.showInfo) {
+      return true;
+    }
     if (nextProps.piecesList !== this.props.piecesList) {
       return true;
     } else {
@@ -107,10 +113,29 @@ class Board extends React.Component {
   }
 
   handleClick = (event) => {
+    const { piecesList } = this.props;
     var rect = this.canvas.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    if (this.props.handleCanvasClick) this.props.handleCanvasClick(x, y);
+
+    let hoveringPiece = null;
+    for (let piece of piecesList) {
+      const nx = piece.x;
+      const ny = piece.y;
+      const dist = Math.pow(nx - x, 2) + Math.pow(ny - y, 2);
+      if (dist <= Math.pow(7, 2)) {
+        hoveringPiece = piece;
+        break;
+      }
+    }
+    if (hoveringPiece) {
+      this.setState({
+        showInfo: true,
+        selectedPiece: hoveringPiece,
+      });
+    } else if (this.props.handleCanvasClick) {
+      this.props.handleCanvasClick(x, y);
+    }
   }
 
   handleHover = (event) => {
@@ -124,22 +149,24 @@ class Board extends React.Component {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const isValid = checkValid(x, y, piecesList, minDist);
-    const r = colorRGB[currentPlayer][0];
-    const g = colorRGB[currentPlayer][1];
-    const b = colorRGB[currentPlayer][2];
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
     if (isValid) {
+      const r = colorRGB[currentPlayer][0];
+      const g = colorRGB[currentPlayer][1];
+      const b = colorRGB[currentPlayer][2];
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
       ctx.fillStyle = `rgb(${r}, ${g}, ${b}, 1)`;
-      ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#ffcc00';
+      ctx.fill();
       ctx.stroke();
     }
   }
 
   render() {
     const { classes } = this.props;
+    const { showInfo, selectedPiece } = this.state;
+
     return (
       <div className={classes.parentDiv}>
         <canvas
@@ -157,6 +184,7 @@ class Board extends React.Component {
           onClick={(e) => this.handleClick(e)}
           onMouseMove={(e) => this.handleHover(e)}
         />
+        <InfoModal piece={selectedPiece} open={showInfo} handleClose={() => this.setState({ showInfo: false, })} />
       </div>
     );
   }

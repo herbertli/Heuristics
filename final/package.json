@@ -2,6 +2,7 @@
   "name": "final",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://cims.nyu.edu/~sc6432/drecco2016/games/weighted_voronoi/",
   "dependencies": {
     "@material-ui/core": "^3.5.1",
     "@material-ui/icons": "^3.0.1",
