@@ -6,37 +6,55 @@ Gravitational Voronoi but with weighted pieces
 
 ## Authors:
 
-Botty McBotFace
-Herbert and Aldo
+Botty McBotFace (Herbert and Aldo)
+
+## Architecture:
+
+- React
+- Material-UI
+- HTML5 Canvas
 
 ## Building:
 
-Make sure you have either yarn or npm installed
+Make sure you have either `yarn` or `npm` installed
 
-Build the project using:
-    * yarn build
-    * npm run build
+Build the project using either:
+    * `yarn build`
+    * `npm run build`
 
-## Submitting to Dr. Ecco:
+## Deploying to Dr. Ecco:
 
-Setup:
-1. Change homepage in package.json to be the base url of the server
+### 1. Setup:
+1. Change the homepage in package.json to be the base url of the server
     * e.g. https://cims.nyu.edu/drecco2016/games/weighted_voronoi
 
-If you have rsync:
-1. yarn submit
-2. Deploy!
-
-Or do it the normal way:
-1. Drag contents of build/ folder (only the contents, not the folder itself) into an Empty Template
-2. Make the following changes:
-    * Make any changes to index.php
-    * Change index.html to iframe.html
+### 2a. If you have rsync:
+1. Copy an Empty Template to root directory (it should be in the same directory as package.json)
+2. `yarn submit`
 3. Deploy!
 
-## Details:
+### 2b. Or do it the normal way:
+1. Copy an Empty Template to root directory (it should be in the same directory as package.json)
+2. Drag contents of build/ folder (only the contents, not the folder itself) into an Empty Template
+3. Make the following changes:
+    * Change index.html to iframe.html
+4. Deploy!
+
+Note that using this method of deployment, you will need to embed this game as an `<iframe>` on your webpage.
+
+## Implementation Details:
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+Make sure you have some understanding of React and HTML5 Canvas before continuing...
+
+Folder Structure:
+- public/
+   - images/ - Images used in Help pop-up
+   - index.html - Main page
+- src/
+   - App.js - Main entry point (look here first!!!)
+   - components/ - Various UI components
 
 ## Available Scripts
 
