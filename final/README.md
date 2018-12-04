@@ -9,18 +9,30 @@ Gravitational Voronoi but with weighted pieces
 Botty McBotFace
 Herbert and Aldo
 
-## Setup:
+## Building:
 
 Make sure you have either yarn or npm installed
 
-1. Change homepage in package.json to be the base url of the server
-    * e.g. https://cims.nyu.edu/drecco2016/games/weighted_voronoi
-2. Build the project using:
+Build the project using:
     * yarn build
     * npm run build
-3. Drag contents of build/ folder (only the contents, not the folder itself) into an Empty Template
-4. Make any changes to index.php
-5. Deploy!
+
+## Submitting to Dr. Ecco:
+
+Setup:
+1. Change homepage in package.json to be the base url of the server
+    * e.g. https://cims.nyu.edu/drecco2016/games/weighted_voronoi
+
+If you have rsync:
+1. yarn submit
+2. Deploy!
+
+Or do it the normal way:
+1. Drag contents of build/ folder (only the contents, not the folder itself) into an Empty Template
+2. Make the following changes:
+    * Make any changes to index.php
+    * Change index.html to iframe.html
+3. Deploy!
 
 ## Details:
 
