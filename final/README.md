@@ -19,8 +19,8 @@ Botty McBotFace (Herbert and Aldo)
 Make sure you have either `yarn` or `npm` installed
 
 Build the project using either:
-    * `yarn build`
-    * `npm run build`
+- `yarn build`
+- `npm run build`
 
 ## Deploying to Dr. Ecco:
 
